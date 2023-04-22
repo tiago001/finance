@@ -1,0 +1,33 @@
+<div class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Nome</span>
+    <input type="text" class="form-control nome" aria-label="nome" aria-describedby="basic-addon1">
+</div>
+
+<div class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Valor</span>
+    <input type="number" class="form-control money_value currency" aria-label="valor" aria-describedby="basic-addon1">
+</div>
+
+<div class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Categoria</span>
+    <select class="form-select category" aria-label="Default select example">
+        <option value="Indefinido" selected>Selecione a categoria</option>
+        <option value="Fun">Fun</option>
+        <option value="Transport">Transport</option>
+        <option value="Food">Food</option>
+        <option value="Tech">Tech</option>
+        <option value="Education">Education</option>
+        <option value="Others">Others</option>
+    </select>
+</div>
+
+<div class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Data</span>
+    <input type="date" class="form-control date" data-provide="datepicker">
+</div>
+  
+<button type="button" class="btn btn-primary" onclick="save_expense()">Salvar Despesa</button>
+
+<div class="row expenses">
+
+</div>

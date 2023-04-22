@@ -1,0 +1,35 @@
+<div class="input-group mb-3 row">
+    <div class="col-3">
+        <select class="form-select search" aria-label="Default select example">
+            <option value="category">Categoria</option>
+            <option value="date">Data</option>
+        </select>
+    </div>
+
+    <div class="col-6 category">
+        <select class="form-select category_select" aria-label="Default select example">
+            <option value="Indefinido" selected>Selecione a categoria</option>
+            <option value="Fun">Fun</option>
+            <option value="Transport">Transport</option>
+            <option value="Food">Food</option>
+            <option value="Tech">Tech</option>
+            <option value="Education">Education</option>
+            <option value="Others">Others</option>
+        </select>
+    </div>
+
+    <div class="col-6 date">
+        <span class="input-group-text" id="basic-addon1">Inicio</span>
+        <input type="date" class="form-control date1" data-provide="datepicker">
+        <span class="input-group-text" id="basic-addon1">Fim</span>
+        <input type="date" class="form-control date2" data-provide="datepicker">
+    </div>
+    
+    <div class="col-3">
+        <button type="button" class="btn btn-primary" onclick="search_expenses()">Buscar Despesas</button>
+    </div>
+</div>
+
+<div class="row expenses">
+
+</div>
