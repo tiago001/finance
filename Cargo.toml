@@ -6,14 +6,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rocket = "0.5.0-rc.3"
+rocket = { version ="0.5.0-rc.3", features = ["secrets"] }
 serde = "1.0.160"
 serde_json = "1.0.96"
 sqlx = {version = "0.6.3", features = ["time"]}
-#sqlx = {version = "0.6.3", features = ["time", "chrono"]}
 chrono = { version = "0.4.23", features = ["serde"] }
 
 time = { version = "0.3.4", features = ["serde","serde-human-readable"] }
+
+rust-argon2 = "1.0"
+anyhow = "1.0.70"
 
 [dependencies.rocket_db_pools]
 version = "=0.1.0-rc.3"

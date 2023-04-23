@@ -52,8 +52,11 @@ function load_dashboard(){
     .then((response) => response.text())
     .then((html) => {
         document.getElementById("content").innerHTML = html;
-        fetch("search_expenses_category")
-        .then((response) => response.json())
+        fetch("search_expenses_category", {redirect: 'follow'})
+        .then((response) => {
+            if (response.redirected) window.location.href = response.url;
+            return response.json()
+        })
         .then((json) => {
             let label = []
             let sum = []
@@ -130,8 +133,11 @@ function save_expense(){
 }
 
 function search_last_expenses(){
-    fetch("search_last_expenses")
-    .then((response) => response.json())
+    fetch("search_last_expenses", {redirect: 'follow'})
+    .then((response) => {
+        if (response.redirected) window.location.href = response.url;
+        return response.json()
+    })
     .then((json) => {
         fill_expenses(json)
     })
@@ -205,21 +211,98 @@ function search_expenses(){
         "name": document.getElementsByClassName("search")[0].value,
         "value1": value1,
         "value2": document.getElementsByClassName("date2")[0].value
-    }))
-    .then((response) => response.json())
+    }), {redirect: 'follow'})
+    .then((response) => {
+        if (response.redirected) window.location.href = response.url;
+        return response.json()
+    })
     .then((json) => {
         fill_expenses(json)
+        show_expenses_graph(json)
     })
     .catch((error) => {
         console.warn(error);
     });
 }
 
+let graph
+function show_expenses_graph(json){
+    if(graph){
+        graph.destroy()
+    }
+    let ctx = document.getElementById('graph');
+
+
+    let datas = []
+
+    for (let index = json.length-1; index >= 0; index--) {
+        let e = json[index];
+        
+        found = false
+        datas.forEach(d => {
+            if(d.date == e.date){
+                d.value = d.value + e.value
+                found = true
+            }
+        });
+    
+        if(found == false){
+            datas.push({"date" : e.date, "value" : e.value})
+        }
+    }
+
+    let labels = []
+    let data = []
+    let total = 0
+    let acumulative = []
+    datas.forEach(d => {
+        labels.push(d.date)
+        data.push(d.value.toFixed(2))
+        total = total + d.value
+        acumulative.push(total.toFixed(2))
+    })
+
+    graph = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [ {
+            type: 'line',
+            label: 'Acumulado',
+            data: acumulative,
+            yAxisID: 'myScale',
+            borderColor: '#ff6384',
+            backgroundColor: "#ff6384"
+        },{
+          label: 'Valor',
+          data: data,
+          borderWidth: 1,
+          borderColor: '#36a2eb',
+          backgroundColor: "#36a2eb"
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true
+          },
+          myScale: {
+            // type: 'logarithmic',
+            position: 'right', // `axis` is determined by the position as `'y'`
+          }
+        }
+      }
+    });
+}
+
 function search_last_expenses(){
     fetch("search_expenses?" + new URLSearchParams({
         "name": "last15"
-    }))
-    .then((response) => response.json())
+    }), {redirect: 'follow'})
+    .then((response) => {
+        if (response.redirected) window.location.href = response.url;
+        return response.json()
+    })
     .then((json) => {
         fill_expenses(json)
     })
