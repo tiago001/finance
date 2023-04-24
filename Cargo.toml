@@ -5,9 +5,13 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[workspace]
+members = [".", "entity"]
+
 [dependencies]
 rocket = { version ="0.5.0-rc.3", features = ["secrets"] }
 serde = "1.0.160"
+entity = { path = "entity" }
 serde_json = "1.0.96"
 sqlx = {version = "0.6.3", features = ["time"]}
 chrono = { version = "0.4.23", features = ["serde"] }

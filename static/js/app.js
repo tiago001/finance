@@ -5,6 +5,22 @@ function load_home(){
     .then((response) => response.text())
     .then((html) => {
         document.getElementById("content").innerHTML = html;
+        get_user_info()
+    })
+    .catch((error) => {
+        console.warn(error);
+    });
+}
+
+function get_user_info(){
+    fetch("get_user_info", {redirect: 'follow'})
+    .then((response) => {
+        if (response.redirected) window.location.href = response.url;
+        return response.json()
+    })
+    .then((json) => {
+        console.log(json)
+        document.getElementsByClassName("username")[0].innerHTML = json.email
     })
     .catch((error) => {
         console.warn(error);
