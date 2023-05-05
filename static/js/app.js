@@ -45,9 +45,15 @@ function load_search_expenses(){
     .then((response) => response.text())
     .then((html) => {
         document.getElementById("content").innerHTML = html;
-        search_last_expenses();
-
-        for (let i of document.getElementsByClassName("date")) {i.style.display = "none"}
+        
+        var today = new Date();
+        var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
+        var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        
+        document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
+        document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
+        
+        for (let i of document.getElementsByClassName("category")) {i.style.display = "none"}
         document.getElementsByClassName("search")[0].addEventListener("change", function(){
             if(document.getElementsByClassName("search")[0].value == "date"){
                 document.getElementsByClassName("category")[0].style.display = "none"
@@ -57,6 +63,8 @@ function load_search_expenses(){
                 for (let i of document.getElementsByClassName("date")) {i.style.display = "none"}
             }
         });
+
+        search_expenses()
     })
     .catch((error) => {
         console.warn(error);
@@ -187,8 +195,8 @@ function fill_expenses(json){
             document.getElementsByClassName("expenses")[0].insertAdjacentHTML(
                 "beforeend",
                 `
-                    <div class="col-3" ${e.date != lastDate ? "style=\"border-top: 1px solid #4f4f4f;\"" : ""}>
-                        ${e.name} 
+                    <div class="col-3" expense="${e.id}" value=${e.name} ${e.date != lastDate ? "style=\"border-top: 1px solid #4f4f4f;\"" : ""}>
+                        <span class="name" expense="${e.id}" value=${e.name} contenteditable="true">${e.name}</span> 
                     </div>
                     <div class="col-3 text-center" ${e.date != lastDate ? "style=\"border-top: 1px solid #4f4f4f;\"" : ""}>
                         ${e.value.toFixed(2)} 
@@ -213,6 +221,32 @@ function fill_expenses(json){
             </div>
         `
         )
+
+        $('.name').on('blur', function(e){
+            if(e.target.textContent.trim() != e.target.getAttribute("value")) {
+                e.target.setAttribute("value", e.target.textContent.trim()) 
+                fetch("edit_expense?" + new URLSearchParams({
+                    "name": e.target.textContent.trim(),
+                    "id": e.target.getAttribute("expense")}),
+                {
+                    method: "POST"
+                })
+                .then((response) => response.text())
+                .then((html) => {
+                    Swal.fire({
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Despesa salva com sucesso',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        toast: true
+                      })
+                })
+                .catch((error) => {
+                    console.warn(error);
+                });
+            }
+        })
 }
 
 function search_expenses(){

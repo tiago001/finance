@@ -1,8 +1,8 @@
 use argon2::Config;
+use entity::users::Users;
 use rocket::{response::{Flash, Redirect}, http::{CookieJar, Cookie}, request::{FromRequest, Outcome}, Request};
 use rocket::form::Form;
 use rocket_db_pools::{sqlx, Connection};
-use entity::users::Users;
 
 use crate::db::Logs;
 

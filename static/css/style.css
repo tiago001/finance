@@ -13,3 +13,8 @@ main {
     max-height: 100vh;
     overflow-x: auto;
 }
+
+span.name{
+    width: 100%;
+    display: block;
+}
