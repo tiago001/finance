@@ -115,18 +115,34 @@ pub async fn search_expenses_redirect(name: &str, value1: Option<&str>, value2: 
     redirect_to_login()
 }
 
-#[get("/search_expenses_category")]
-pub async fn search_expenses_category(mut db: Connection<db::Logs>, user: AuthenticatedUser) -> String {
+#[get("/search_expenses_category?<value1>&<value2>")]
+pub async fn search_expenses_category(mut db: Connection<db::Logs>, user: AuthenticatedUser, value1: &str, value2: &str) -> String {
     #[derive(Serialize, Debug)]
-    struct Record {category: String, sum: Option<f64>}
-    // #[derive(Serialize, Debug)]
-    // struct Compras {name: String,sum: Option<f64>}
+    struct Record {category: String, sum: Option<f64>, month: Option<i64>}
 
-    let stream = sqlx::query_as!(Record, "SELECT category, SUM(value) as sum FROM expenses WHERE user_id = ? GROUP BY category ORDER BY 2 DESC", user.user_id)
+    #[derive(Serialize, Debug)]
+    struct ExpensesCategory {category: String, months: Vec<MonthExpenses>}
+    #[derive(Serialize, Debug)]
+    struct MonthExpenses{sum: Option<f64>, month: Option<i64>}
+
+    let stream = sqlx::query_as!(Record, "SELECT sum(value) as sum, category, month(`date`) as month
+        FROM expenses WHERE `date` between ? and ? and user_id = ? group by category,month(`date`) order by 3,2",
+        value1, value2, user.user_id)
         .fetch_all(&mut *db)
         .await.unwrap();
 
-    serde_json::to_string(&stream).unwrap()
+    let mut expenses: Vec<ExpensesCategory> = vec![];
+        
+    for s in stream.into_iter() {
+        let mut expense = expenses.iter_mut().find(|e| e.category == s.category);
+        if expense.is_some() {
+            expense.unwrap().months.push(MonthExpenses{sum: s.sum, month: s.month});
+        } else {
+            expenses.push(ExpensesCategory{ category: s.category, months: vec![MonthExpenses{sum: s.sum, month: s.month}]});
+        }
+    }
+
+    serde_json::to_string(&expenses).unwrap()
 }
 
 #[get("/search_expenses_category", rank = 2)]

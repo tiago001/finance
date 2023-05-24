@@ -2,10 +2,23 @@
     <p>Valor gasto por categoria</p>
 
     <div class="row ">
+        <div style="display: none;">
+            <div class="col-6 date d-flex">
+                <span class="input-group-text" id="basic-addon1">Inicio</span>
+                <input type="date" class="form-control date1" data-provide="datepicker">
+                <span class="input-group-text" id="basic-addon1">Fim</span>
+                <input type="date" class="form-control date2" data-provide="datepicker">
+            </div>
+            <div class="col-1 d-flex">
+                <button type="button" class="btn btn-primary me-2" onclick="previous_month()"><-</button>
+                <button type="button" class="btn btn-primary" onclick="next_month()">-></button>
+            </div>
+            <div class="col-2">
+                <button type="button" class="btn btn-primary" onclick="search_expenses_category()">Buscar</button>
+            </div>
+        </div>
         <div class="col-6">
             <div class="row category_values">
-                <div class="col-6 ">Categoria</div>
-                <div class="col-6 text-center">Total</div>
             </div>
         </div>
         <div class="col-3">
