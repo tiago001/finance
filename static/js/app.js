@@ -1,11 +1,11 @@
-load_home()
+// load_home()
 
 function load_home(){
     fetch("pages/home.html")
     .then((response) => response.text())
     .then((html) => {
         document.getElementById("content").innerHTML = html;
-        get_user_info()
+        // get_user_info()
     })
     .catch((error) => {
         console.warn(error);
@@ -28,11 +28,14 @@ function get_user_info(){
 }
 
 function load_add_expense(){
+    window.history.pushState("","Add expenses", "/addexpenses");
     fetch("pages/add_expense.html")
     .then((response) => response.text())
     .then((html) => {
         document.getElementById("content").innerHTML = html;
-        document.getElementsByClassName("date")[0].valueAsDate = new Date()
+        let date = new Date();
+
+        document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
         search_last_expenses()
     })
     .catch((error) => {
@@ -41,6 +44,8 @@ function load_add_expense(){
 }
 
 function load_search_expenses(){
+    window.history.pushState("","Search expenses", "/searchexpenses");
+
     fetch("pages/search_expenses.html")
     .then((response) => response.text())
     .then((html) => {
@@ -112,15 +117,17 @@ function search_expenses_category(){
         for (let i = startMonth; i <= endMonth; i++) {
             document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                 "beforeend",
-                `<div class="col-2 text-center" style=\"border-top: 1px solid #4f4f4f;\">Mês ${i}</div>`
+                `<div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;\">Mês ${i}</div>`
             )
         }
+
+        let sumMonths = [];
 
         json.forEach(e => {
             document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                 "beforeend",
                 `
-                <div class="col-6" style=\"border-top: 1px solid #4f4f4f;\">
+                <div class="col-6" style=\"border-top: 2px solid #e1e1e1;\">
                 ${e.category} 
                 </div>
                 `
@@ -136,11 +143,16 @@ function search_expenses_category(){
                     }
 
                     if(m.month == i) {
+                        if(sumMonths[i] == undefined){
+                            sumMonths[i] = m.sum
+                        } else {
+                            sumMonths[i] = sumMonths[i] + m.sum;
+                        }
                         found = true;
                         document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                             "beforeend",
                             `
-                                <div class="col-2 text-center" style=\"border-top: 1px solid #4f4f4f;\">
+                                <div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;\">
                                     ${m.sum.toFixed(2)} 
                                 </div>
                             `
@@ -151,12 +163,35 @@ function search_expenses_category(){
                     document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                         "beforeend",
                         `
-                            <div class="col-2 text-center" style=\"border-top: 1px solid #4f4f4f;\"></div>
+                            <div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;\"></div>
                         `
                     )
                 }
             }
+
         })
+
+        console.log(sumMonths);
+
+        document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
+            "beforeend",
+            `
+            <div class="col-6" style=\"border-top: 2px solid #e1e1e1;font-weight: bold;font-size: 17px;\">
+                Total
+            </div>
+            `
+        )
+
+        for (let i = sumMonths.length-3; i < sumMonths.length; i++) {
+            document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
+                "beforeend",
+                `
+                    <div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;font-weight: bold;font-size: 17px;\">
+                        ${sumMonths[i].toFixed(2)} 
+                    </div>
+                `
+            )
+        }
         
         if(graph){
             graph.destroy()
@@ -213,19 +248,19 @@ function save_expense(){
     });
 }
 
-function search_last_expenses(){
-    fetch("search_last_expenses", {redirect: 'follow'})
-    .then((response) => {
-        if (response.redirected) window.location.href = response.url;
-        return response.json()
-    })
-    .then((json) => {
-        fill_expenses(json)
-    })
-    .catch((error) => {
-        console.warn(error);
-    });
-}
+// function search_last_expenses(){
+//     fetch("search_last_expenses", {redirect: 'follow'})
+//     .then((response) => {
+//         if (response.redirected) window.location.href = response.url;
+//         return response.json()
+//     })
+//     .then((json) => {
+//         fill_expenses(json)
+//     })
+//     .catch((error) => {
+//         console.warn(error);
+//     });
+// }
 
 function fill_expenses(json){
     document.getElementsByClassName("expenses")[0].innerHTML = ''
@@ -252,20 +287,29 @@ function fill_expenses(json){
             document.getElementsByClassName("expenses")[0].insertAdjacentHTML(
                 "beforeend",
                 `
-                    <div class="col-3" expense="${e.id}" value=${e.name} ${e.date != lastDate ? "style=\"border-top: 1px solid #4f4f4f;\"" : ""}>
+                    <div class="col-3" expense="${e.id}" value=${e.name} ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
                         <span class="name" expense="${e.id}" value=${e.name} contenteditable="true">${e.name}</span> 
                     </div>
-                    <div class="col-3 text-center" ${e.date != lastDate ? "style=\"border-top: 1px solid #4f4f4f;\"" : ""}>
-                        ${e.value.toFixed(2)} 
+                    <div class="col-3 text-center" expense="${e.id}" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
                     </div>
-                    <div class="col-3 text-center" ${e.date != lastDate ? "style=\"border-top: 1px solid #4f4f4f;\"" : ""}>
+                    <div class="col-3 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
                         ${e.category} 
                     </div>
-                    <div class="col-3 text-center" ${e.date != lastDate ? "style=\"border-top: 1px solid #4f4f4f;\"" : ""}>
+                    <div class="col-2 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
                          ${e.date != lastDate ? e.date : ""}
+                    </div>
+                    <div class="col-1 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        <button class="btn btn-sm btn-outline-info py-0" onclick="delete_expense(${e.id})">
+                            <span><i class="ti ti-x"></i></span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-info py-0" onclick="edit_expense(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                            <span><i class="ti ti-pencil"></i></span>
+                        </button>
                     </div>
                 `
             )
+
             lastDate = e.date
         })
         document.getElementsByClassName("expenses")[0].insertAdjacentHTML("afterbegin",
@@ -304,6 +348,63 @@ function fill_expenses(json){
                 });
             }
         })
+        $('.valor').on('blur', function(e){
+            if(e.target.textContent.trim() != e.target.getAttribute("value")) {
+                e.target.setAttribute("value", e.target.textContent.trim()) 
+                fetch("edit_expense?" + new URLSearchParams({
+                    "value": e.target.textContent.trim(),
+                    "id": e.target.getAttribute("expense")}),
+                {
+                    method: "POST"
+                })
+                .then((response) => response.text())
+                .then((html) => {
+                    Swal.fire({
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Despesa salva com sucesso',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        toast: true
+                      })
+                })
+                .catch((error) => {
+                    console.warn(error);
+                });
+            }
+        })
+}
+
+function delete_expense(id){
+    
+    fetch("delete_expense?" + new URLSearchParams({
+        "id": id}), {method: "POST", redirect: 'follow'})
+        .then((response) => {
+            if (response.redirected) window.location.href = response.url;
+            return
+        })
+        .then(() => {
+            load_add_expense()
+            Swal.fire({
+                position: 'top-end',
+                icon: 'success',
+                title: 'Despesa deletada com sucesso',
+                showConfirmButton: false,
+                timer: 2000,
+                toast: true
+              })
+        })
+        .catch((error) => {
+            console.warn(error);
+        });
+
+    // $('#exampleModal').modal('show')
+}
+
+function edit_expense(expense){
+    console.log(expense)
+
+    // $('#exampleModal').modal('show')
 }
 
 function search_expenses(){
@@ -351,8 +452,10 @@ function show_expenses_graph(json){
 
     let datas = []
 
-    let month = new Date(json[0].date).getMonth()
-    let year = new Date(json[0].date).getFullYear()
+    let endDate = document.getElementsByClassName("date2")[0].value;
+
+    let month = new Date(endDate).getMonth()
+    let year = new Date(endDate).getFullYear()
 
     let daysInMonth = getDaysInMonth(month, year)
 

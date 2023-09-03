@@ -3,22 +3,20 @@ use entity::users::Users as Users;
 use rocket::response::Redirect;
 use rocket_db_pools::{sqlx, Connection};
 use serde::Serialize;
+use time::{PrimitiveDateTime, OffsetDateTime};
 
 use crate::{user_routes, user_routes::AuthenticatedUser, user_routes::redirect_to_login};
 use crate::db::{self, Logs};
 
 #[post("/save_expense?<name>&<value>&<category>&<date>")]
 pub async fn save_expense(mut db: Connection<db::Logs>, name: &str, value: f64, category: &str, date: &str, user: AuthenticatedUser) -> String {
-    
-    sqlx::query("INSERT INTO expenses
-    (name, value, category,date, user_id)
-    VALUES(?, ?, ?, ?, ?)")
-    .bind(name)
-    .bind(value)
-    .bind(category)
-    .bind(date)
-    .bind(user.user_id)
-    .execute(&mut *db).await.unwrap();
+    let now = OffsetDateTime::now_local().unwrap();
+
+    sqlx::query!("INSERT INTO expenses
+        (name, value, category,date, user_id, created_date)
+        VALUES(?, ?, ?, ?, ?, ?)",
+        name, value, category, date, user.user_id, PrimitiveDateTime::new(now.date(), now.time()))
+        .execute(&mut *db).await.unwrap();
 
     "ok".to_string()
 }
@@ -30,17 +28,17 @@ pub async fn save_expense_redirect(name: &str, value: f64, category: &str, date:
 
 #[post("/edit_expense?<id>&<name>&<value>&<category>&<date>")]
 pub async fn edit_expense(mut db: Connection<db::Logs>,id: i64, name: Option<&str>, value: Option<f64>, category: Option<&str>, date: Option<&str>, user: AuthenticatedUser) -> String {
-    
-    if Some(name).is_some() {
+
+    if name.is_some() {
         sqlx::query("UPDATE expenses SET name=? WHERE id = ? and user_id = ?")
             .bind(name).bind(id).bind(user.user_id).execute(&mut *db).await.unwrap();
-    } else if Some(value).is_some() {
+    } else if value.is_some() {
         sqlx::query("UPDATE expenses SET value=? WHERE id = ? and user_id = ?")
         .bind(value).bind(id).bind(user.user_id).execute(&mut *db).await.unwrap();
-    } else if Some(category).is_some() {
+    } else if category.is_some() {
         sqlx::query("UPDATE expenses SET category=? WHERE id = ? and user_id = ?")
         .bind(category).bind(id).bind(user.user_id).execute(&mut *db).await.unwrap();
-    } else if Some(date).is_some() {
+    } else if date.is_some() {
         sqlx::query("UPDATE expenses SET date=? WHERE id = ? and user_id = ?")
         .bind(date).bind(id).bind(user.user_id).execute(&mut *db).await.unwrap();
     }
@@ -147,5 +145,19 @@ pub async fn search_expenses_category(mut db: Connection<db::Logs>, user: Authen
 
 #[get("/search_expenses_category", rank = 2)]
 pub async fn search_expenses_category_redirect() -> Redirect  {
+    redirect_to_login()
+}
+
+#[post("/delete_expense?<id>")]
+pub async fn delete_expense(mut db: Connection<db::Logs>,id: i64, user: AuthenticatedUser) -> String {
+
+    sqlx::query("DELETE from expenses WHERE id = ? and user_id = ?")
+        .bind(id).bind(user.user_id).execute(&mut *db).await.unwrap();
+
+    "ok".to_string()
+}
+
+#[get("/delete_expense", rank = 2)]
+pub async fn delete_expense_redirect() -> Redirect  {
     redirect_to_login()
 }

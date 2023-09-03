@@ -1,0 +1,95 @@
+{% extends "index" %} {% block page %}
+<div class="input-group mb-3 row">
+    <div class="col-12 col-sm-3 p-2">
+        <select class="form-select search" aria-label="Default select example">
+            <option value="date" selected>Data</option>
+            <!-- <option value="category">Categoria</option> -->
+        </select>
+    </div>
+
+    <div class="col-12 col-sm-6 category p-2">
+        <select class="form-select category_select" aria-label="Default select example">
+            <option value="Indefinido" selected>Selecione a categoria</option>
+            <option value="Fun">Fun</option>
+            <option value="Transport">Transport</option>
+            <option value="Food">Food</option>
+            <option value="Tech">Tech</option>
+            <option value="Education">Education</option>
+            <option value="Others">Others</option>
+        </select>
+    </div>
+
+    <div class="col-12 col-sm-7 date d-flex p-2">
+        <span class="input-group-text" id="basic-addon1">Inicio</span>
+        <input type="date" class="form-control date1" data-provide="datepicker">
+        <span class="input-group-text" id="basic-addon1">Fim</span>
+        <input type="date" class="form-control date2" data-provide="datepicker">
+        <button type="button" class="btn btn-primary mx-2" onclick="previous_month()"><-</button>
+        <button type="button" class="btn btn-primary" onclick="next_month()">-></button>
+    </div>
+    <!-- <div class="col-1 d-flex">
+    </div> -->
+    
+    <div class="col-12 col-sm-2 p-2">
+        <button type="button" class="btn btn-primary w-100" onclick="search_expenses()">Buscar Despesas</button>
+    </div>
+</div>
+
+<div class="row" style="height: 400px;">
+    <canvas id="graph"></canvas>
+
+</div>
+
+<div class="row expenses">
+
+</div>
+
+<script>
+    var today = new Date();
+    var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
+    var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
+    document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
+    
+    for (let i of document.getElementsByClassName("category")) {i.style.display = "none"}
+    document.getElementsByClassName("search")[0].addEventListener("change", function(){
+        if(document.getElementsByClassName("search")[0].value == "date"){
+            document.getElementsByClassName("category")[0].style.display = "none"
+            for (let i of document.getElementsByClassName("date")) {i.style.display = "flex"}
+        } else if(document.getElementsByClassName("search")[0].value == "category"){
+            document.getElementsByClassName("category")[0].style.display = "block"
+            for (let i of document.getElementsByClassName("date")) {i.style.display = "none"}
+        }
+    });
+
+    function search_expenses(){
+        let value1
+        if (document.getElementsByClassName("search")[0].value == "category"){
+            value1 = document.getElementsByClassName("category_select")[0].value
+        } else {
+            value1 = document.getElementsByClassName("date1")[0].value
+        }
+    
+        fetch("search_expenses?" + new URLSearchParams({
+            "name": document.getElementsByClassName("search")[0].value,
+            "value1": value1,
+            "value2": document.getElementsByClassName("date2")[0].value
+        }), {redirect: 'follow'})
+        .then((response) => {
+            if (response.redirected) window.location.href = response.url;
+            return response.json()
+        })
+        .then((json) => {
+            fill_expenses(json)
+            show_expenses_graph(json)
+        })
+        .catch((error) => {
+            console.warn(error);
+        });
+    }
+    
+    search_expenses()
+</script>
+
+{% endblock page %}

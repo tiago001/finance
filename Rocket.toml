@@ -15,3 +15,7 @@ limits = { forms = 32768 }
 
 [default.databases.mysql_logs]
 url = "mysql://root:root@127.0.0.1:3306/finance"
+
+[default]
+secret_key = "ZMQgbmDLherQxA450iFHqS8/b1L8JPFFa3VzAhIgdI0="
+template_dir = "templates/"

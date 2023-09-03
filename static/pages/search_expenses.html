@@ -1,12 +1,12 @@
 <div class="input-group mb-3 row">
-    <div class="col-3">
+    <div class="col-12 col-sm-3 p-2">
         <select class="form-select search" aria-label="Default select example">
             <option value="date" selected>Data</option>
-            <option value="category">Categoria</option>
+            <!-- <option value="category">Categoria</option> -->
         </select>
     </div>
 
-    <div class="col-6 category">
+    <div class="col-12 col-sm-6 category p-2">
         <select class="form-select category_select" aria-label="Default select example">
             <option value="Indefinido" selected>Selecione a categoria</option>
             <option value="Fun">Fun</option>
@@ -18,19 +18,19 @@
         </select>
     </div>
 
-    <div class="col-6 date d-flex">
+    <div class="col-12 col-sm-7 date d-flex p-2">
         <span class="input-group-text" id="basic-addon1">Inicio</span>
         <input type="date" class="form-control date1" data-provide="datepicker">
         <span class="input-group-text" id="basic-addon1">Fim</span>
         <input type="date" class="form-control date2" data-provide="datepicker">
-    </div>
-    <div class="col-1 d-flex">
-        <button type="button" class="btn btn-primary me-2" onclick="previous_month()"><-</button>
+        <button type="button" class="btn btn-primary mx-2" onclick="previous_month()"><-</button>
         <button type="button" class="btn btn-primary" onclick="next_month()">-></button>
     </div>
+    <!-- <div class="col-1 d-flex">
+    </div> -->
     
-    <div class="col-2">
-        <button type="button" class="btn btn-primary" onclick="search_expenses()">Buscar Despesas</button>
+    <div class="col-12 col-sm-2 p-2">
+        <button type="button" class="btn btn-primary w-100" onclick="search_expenses()">Buscar Despesas</button>
     </div>
 </div>
 
@@ -42,3 +42,4 @@
 <div class="row expenses">
 
 </div>
+

@@ -3,11 +3,14 @@ use entity::users::Users;
 use rocket::{response::{Flash, Redirect}, http::{CookieJar, Cookie}, request::{FromRequest, Outcome}, Request};
 use rocket::form::Form;
 use rocket_db_pools::{sqlx, Connection};
+use rocket_dyn_templates::Template;
+use rocket::request::FlashMessage;
+use serde_json::json;
 
 use crate::db::Logs;
 
 pub fn redirect_to_login() -> Redirect {
-    Redirect::to("/login.html")
+    Redirect::to("/login")
 }
 
 pub struct AuthenticatedUser {
@@ -50,10 +53,14 @@ fn remove_user_id_cookie(cookies: & CookieJar) {
 #[post("/logout")]
 pub async fn logout(cookies: & CookieJar<'_>) -> Flash<Redirect> {
     remove_user_id_cookie(cookies);
-    Flash::success(Redirect::to("/login.html"), "Logged out succesfully!")
+    Flash::success(Redirect::to("/login"), "Logged out succesfully!")
 }
 
-fn login_error() -> Flash<Redirect> {
+fn login_error() -> Flash<Redirect>  {
+    // Template::render(
+    //     "login",
+    //     teste: "Incorrect email or password";
+    // )
     Flash::error(Redirect::to("/login"), "Incorrect email or password")
 }
 
@@ -62,7 +69,8 @@ pub const USER_PASSWORD_SALT: &[u8] = b"some_random_salt";
 #[derive(FromForm)]
 pub struct InfoLogin {
     pub email: String,
-    pub password: String
+    pub password: String,
+    pub name: Option<String>
 }
 
 #[post("/createaccount", data="<user_form>")]
@@ -70,33 +78,53 @@ pub async fn create_account(mut db: Connection<Logs>, user_form: Form<InfoLogin>
     let user = user_form.into_inner();
 
     if user.email.is_empty() || user.password.is_empty() {
-        return Flash::error(Redirect::to("/signup"), "Please enter a valid email and password");
+        return Flash::error(Redirect::to("/register"), "Please enter a valid email and password");
+        // return Template::render("login",json!({teste: "Please enter a valid email and password";}));
+    }
+
+    let stored_user: Option<Users> = match sqlx::query_as!(Users,
+        "SELECT id, email, password FROM users WHERE email = ?;
+        ",
+        user.email
+    )
+    .fetch_one(&mut *db)
+    .await{
+        Ok(model) => Some(model),
+        Err(_) => None
+    };
+
+    if stored_user.is_some() {
+        return Flash::error(Redirect::to("/register"), "User already registered");
     }
 
     let hash_config = Config::default();
     let hash = match argon2::hash_encoded(user.password.as_bytes(), USER_PASSWORD_SALT, &hash_config) {
         Ok(result) => result,
         Err(_) => {
-            return Flash::error(Redirect::to("/signup"), "Issue creating account");
+            return Flash::error(Redirect::to("/register"), "Issue creating account");
+            // return Template::render("login",json!({teste: "Issue creating account";}))
         }
     };
 
-    sqlx::query("INSERT INTO users (email, password) VALUES(?, ?);")
+    sqlx::query("INSERT INTO users (email, password, name) VALUES(?, ?, ?);")
         .bind(user.email)
         .bind(hash)
+        .bind(user.name)
         .execute(&mut *db).await.unwrap();
 
-    Flash::success(Redirect::to("/login.html"), "Account created succesfully!")
+    Flash::success(Redirect::to("/login"), "Account created succesfully!")
+    
+    // return Template::render("login",json!({teste: "Account created succesfully";}))
 }
 
 #[post("/verifyaccount", data="<user_form>")]
 pub async fn verify_account(mut db: Connection<Logs>, cookies: & CookieJar<'_>, user_form: Form<InfoLogin>) -> Flash<Redirect> {
     let user = user_form.into_inner();
 
+    println!(" teste {}{}", user.email, user.password);
+
     let stored_user = match sqlx::query_as!(Users,
-            "SELECT id, email, password FROM users WHERE email = ?;
-            ",
-            user.email
+            "SELECT id, email, password FROM users WHERE email = ?;",user.email
         )
         .fetch_one(&mut *db)
         .await{
@@ -133,4 +161,16 @@ pub async fn get_user_info(mut db: Connection<Logs>, user: AuthenticatedUser) ->
 #[get("/get_user_info", rank = 2)]
 pub async fn get_user_info_redirect() -> Redirect {
     redirect_to_login()
+}
+
+#[get("/login")]
+pub async fn login(flash: Option<FlashMessage<'_>>) -> Template {
+    // println!("{:?}", flash.map(FlashMessage::into_inner));
+    return Template::render("login",json!({"message": flash.map(FlashMessage::into_inner)}))
+    // return Template::render("login", json!({"message": "teste"}));
+}
+
+#[get("/register")]
+pub async fn register(flash: Option<FlashMessage<'_>>) -> Template {
+    return Template::render("register",json!({"message": flash.map(FlashMessage::into_inner)}))
 }
