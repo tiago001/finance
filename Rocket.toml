@@ -17,5 +17,6 @@ limits = { forms = 32768 }
 url = "mysql://root:root@127.0.0.1:3306/finance"
 
 [default]
-secret_key = "ZMQgbmDLherQxA450iFHqS8/b1L8JPFFa3VzAhIgdI0="
+#Generate your own with the command "openssl rand -base64 32"
+secret_key = ""
 template_dir = "templates/"
