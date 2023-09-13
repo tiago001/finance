@@ -284,6 +284,7 @@ function fill_expenses(json){
         let lastDate = ""
         json.forEach(e => {
             total += e.value
+            // total = parseFloat(total.toFixed(10))
             document.getElementsByClassName("expenses")[0].insertAdjacentHTML(
                 "beforeend",
                 `
@@ -421,6 +422,7 @@ function search_expenses(){
         "value2": document.getElementsByClassName("date2")[0].value
     }), {redirect: 'follow'})
     .then((response) => {
+        console.log(response)
         if (response.redirected) window.location.href = response.url;
         return response.json()
     })
@@ -443,8 +445,23 @@ function getDaysInMonth(month, year) {
     return days;
 }
 
+function get_settings(){
+    return new Promise((resolve, reject) => {
+        fetch("get_settings", {redirect: 'follow'})
+        .then((response) => {
+            if (response.redirected) window.location.href = response.url;
+            return response.json()
+        })
+        .then((json) => {
+            console.log("2")
+            console.log("json "+json)
+            resolve(json)
+        });
+    })
+}
+
 let graph
-function show_expenses_graph(json){
+async function show_expenses_graph(json){
     if(graph){
         graph.destroy()
     }
@@ -459,7 +476,15 @@ function show_expenses_graph(json){
 
     let daysInMonth = getDaysInMonth(month, year)
 
-    let budgetValue = 5000
+    let budgetValue = null
+    
+    console.log("1")
+    let settings = await get_settings();
+    console.log("3")
+    console.log(settings)
+    budgetValue = settings.budget;
+
+    console.log("budgetValue "+budgetValue)
     
     daysInMonth.forEach((v, pos) => {
         let dayFound = false

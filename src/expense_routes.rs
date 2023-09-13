@@ -1,12 +1,10 @@
 use entity::expense::Expense as Expense;
-use entity::users::Users as Users;
-use rocket::response::Redirect;
 use rocket_db_pools::{sqlx, Connection};
 use serde::Serialize;
 use time::{PrimitiveDateTime, OffsetDateTime};
 
-use crate::{user_routes, user_routes::AuthenticatedUser, user_routes::redirect_to_login};
-use crate::db::{self, Logs};
+use crate::{user_routes::AuthenticatedUser};
+use crate::db;
 
 #[post("/save_expense?<name>&<value>&<category>&<date>")]
 pub async fn save_expense(mut db: Connection<db::Logs>, name: &str, value: f64, category: &str, date: &str, user: AuthenticatedUser) -> String {
@@ -19,11 +17,6 @@ pub async fn save_expense(mut db: Connection<db::Logs>, name: &str, value: f64, 
         .execute(&mut *db).await.unwrap();
 
     "ok".to_string()
-}
-
-#[post("/save_expense?<name>&<value>&<category>&<date>", rank = 2)]
-pub async fn save_expense_redirect(name: &str, value: f64, category: &str, date: &str) -> Redirect {
-    redirect_to_login()
 }
 
 #[post("/edit_expense?<id>&<name>&<value>&<category>&<date>")]
@@ -46,12 +39,6 @@ pub async fn edit_expense(mut db: Connection<db::Logs>,id: i64, name: Option<&st
     "ok".to_string()
 }
 
-#[post("/edit_expense?<id>&<name>&<value>&<category>&<date>", rank = 2)]
-pub async fn edit_expense_redirect(id: i64,name: &str, value: f64, category: &str, date: &str) -> Redirect {
-    redirect_to_login()
-}
-
-
 #[get("/search_last_expenses")]
 pub async fn search_last_expenses(mut db: Connection<db::Logs>, user: AuthenticatedUser) -> String {
     let stream = sqlx::query_as!(Expense,
@@ -62,11 +49,6 @@ pub async fn search_last_expenses(mut db: Connection<db::Logs>, user: Authentica
     .await.unwrap();
 
     serde_json::to_string(&stream).unwrap()
-}
-
-#[get("/search_last_expenses", rank = 2)]
-pub async fn search_last_expenses_redirect() -> Redirect {
-    redirect_to_login()
 }
 
 #[get("/search_expenses?<name>&<value1>&<value2>")]
@@ -108,11 +90,6 @@ pub async fn search_expenses(mut db: Connection<db::Logs>, name: &str, value1: O
     serde_json::to_string(&stream).unwrap()
 }
 
-#[get("/search_expenses?<name>&<value1>&<value2>", rank = 2)]
-pub async fn search_expenses_redirect(name: &str, value1: Option<&str>, value2: Option<&str>) -> Redirect {
-    redirect_to_login()
-}
-
 #[get("/search_expenses_category?<value1>&<value2>")]
 pub async fn search_expenses_category(mut db: Connection<db::Logs>, user: AuthenticatedUser, value1: &str, value2: &str) -> String {
     #[derive(Serialize, Debug)]
@@ -132,7 +109,7 @@ pub async fn search_expenses_category(mut db: Connection<db::Logs>, user: Authen
     let mut expenses: Vec<ExpensesCategory> = vec![];
         
     for s in stream.into_iter() {
-        let mut expense = expenses.iter_mut().find(|e| e.category == s.category);
+        let expense = expenses.iter_mut().find(|e| e.category == s.category);
         if expense.is_some() {
             expense.unwrap().months.push(MonthExpenses{sum: s.sum, month: s.month});
         } else {
@@ -143,11 +120,6 @@ pub async fn search_expenses_category(mut db: Connection<db::Logs>, user: Authen
     serde_json::to_string(&expenses).unwrap()
 }
 
-#[get("/search_expenses_category", rank = 2)]
-pub async fn search_expenses_category_redirect() -> Redirect  {
-    redirect_to_login()
-}
-
 #[post("/delete_expense?<id>")]
 pub async fn delete_expense(mut db: Connection<db::Logs>,id: i64, user: AuthenticatedUser) -> String {
 
@@ -155,9 +127,4 @@ pub async fn delete_expense(mut db: Connection<db::Logs>,id: i64, user: Authenti
         .bind(id).bind(user.user_id).execute(&mut *db).await.unwrap();
 
     "ok".to_string()
-}
-
-#[get("/delete_expense", rank = 2)]
-pub async fn delete_expense_redirect() -> Redirect  {
-    redirect_to_login()
 }

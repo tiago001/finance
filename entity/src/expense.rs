@@ -9,6 +9,6 @@ pub struct Expense {
     pub value: f64,
     pub category: String,
     pub date: Date,
-    pub user_id: Option<i64>,
+    pub user_id: i64,
     pub created_date: Option<PrimitiveDateTime>
 }

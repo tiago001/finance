@@ -1,0 +1,35 @@
+{% extends "index" %} {% block page %}
+<div class="input-group mb-3">
+    {%if settings and settings.budget%}
+    {% endif %}
+    <span class="input-group-text" id="basic-addon1">Monthly budget</span>
+    <input type="number" class="form-control budget" aria-label="budget" aria-describedby="basic-addon1" value="{{ settings.budget }}">
+</div>
+  
+<button type="button" class="btn btn-primary w-100" onclick="save_settings()">Save settings</button>
+
+<script>
+    function save_settings(){
+        fetch("save_settings?" + new URLSearchParams({
+            "budget": document.getElementsByClassName("budget")[0].value}),
+            {
+                method: "POST"
+            })
+            .then((response) => response.text())
+            .then((html) => {
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Configuração salva com sucesso',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    toast: true
+                })
+            })
+            .catch((error) => {
+                console.warn(error);
+            });
+    }
+</script>
+
+{% endblock page %}

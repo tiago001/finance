@@ -1,5 +1,5 @@
 use argon2::Config;
-use entity::users::Users;
+use entity::{users::Users, settings::Settings};
 use rocket::{response::{Flash, Redirect}, http::{CookieJar, Cookie}, request::{FromRequest, Outcome}, Request};
 use rocket::form::Form;
 use rocket_db_pools::{sqlx, Connection};
@@ -7,7 +7,11 @@ use rocket_dyn_templates::Template;
 use rocket::request::FlashMessage;
 use serde_json::json;
 
-use crate::db::Logs;
+use rocket::http::Status;
+
+use crate::error::Error;
+
+use crate::db::{self, Logs};
 
 pub fn redirect_to_login() -> Redirect {
     Redirect::to("/login")
@@ -25,13 +29,13 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
         let cookies = req.cookies();
         let user_id_cookie = match get_user_id_cookie(cookies) {
             Some(result) => result,
-            None => return Outcome::Forward(())
+            None => return Outcome::Failure((Status::Unauthorized, Error::UnauthenticatedError.into()))
         };
 
         let logged_in_user_id = match user_id_cookie.value()
             .parse::<i64>() {
                 Ok(result) => result,
-                Err(_err) => return Outcome::Forward(())
+                Err(err) => return Outcome::Failure((Status::Unauthorized, err.into()))
             };
 
         return Outcome::Success(AuthenticatedUser { user_id: logged_in_user_id });
@@ -57,10 +61,6 @@ pub async fn logout(cookies: & CookieJar<'_>) -> Flash<Redirect> {
 }
 
 fn login_error() -> Flash<Redirect>  {
-    // Template::render(
-    //     "login",
-    //     teste: "Incorrect email or password";
-    // )
     Flash::error(Redirect::to("/login"), "Incorrect email or password")
 }
 
@@ -79,7 +79,6 @@ pub async fn create_account(mut db: Connection<Logs>, user_form: Form<InfoLogin>
 
     if user.email.is_empty() || user.password.is_empty() {
         return Flash::error(Redirect::to("/register"), "Please enter a valid email and password");
-        // return Template::render("login",json!({teste: "Please enter a valid email and password";}));
     }
 
     let stored_user: Option<Users> = match sqlx::query_as!(Users,
@@ -102,7 +101,6 @@ pub async fn create_account(mut db: Connection<Logs>, user_form: Form<InfoLogin>
         Ok(result) => result,
         Err(_) => {
             return Flash::error(Redirect::to("/register"), "Issue creating account");
-            // return Template::render("login",json!({teste: "Issue creating account";}))
         }
     };
 
@@ -113,8 +111,6 @@ pub async fn create_account(mut db: Connection<Logs>, user_form: Form<InfoLogin>
         .execute(&mut *db).await.unwrap();
 
     Flash::success(Redirect::to("/login"), "Account created succesfully!")
-    
-    // return Template::render("login",json!({teste: "Account created succesfully";}))
 }
 
 #[post("/verifyaccount", data="<user_form>")]
@@ -158,19 +154,50 @@ pub async fn get_user_info(mut db: Connection<Logs>, user: AuthenticatedUser) ->
     serde_json::to_string(&user).unwrap()
 }
 
-#[get("/get_user_info", rank = 2)]
-pub async fn get_user_info_redirect() -> Redirect {
-    redirect_to_login()
-}
-
 #[get("/login")]
 pub async fn login(flash: Option<FlashMessage<'_>>) -> Template {
-    // println!("{:?}", flash.map(FlashMessage::into_inner));
-    return Template::render("login",json!({"message": flash.map(FlashMessage::into_inner)}))
-    // return Template::render("login", json!({"message": "teste"}));
+    Template::render("login",json!({"message": flash.map(FlashMessage::into_inner)}))
 }
 
 #[get("/register")]
 pub async fn register(flash: Option<FlashMessage<'_>>) -> Template {
-    return Template::render("register",json!({"message": flash.map(FlashMessage::into_inner)}))
+    Template::render("register",json!({"message": flash.map(FlashMessage::into_inner)}))
+}
+
+#[post("/save_settings?<budget>")]
+pub async fn save_settings(mut db: Connection<db::Logs>,budget: Option<f64>, user: AuthenticatedUser) -> String {
+
+    let stream = sqlx::query_as!(Settings,
+            "SELECT * FROM settings WHERE user_id = ?",
+            user.user_id
+        )
+        .fetch_all(&mut *db)
+        .await.unwrap();
+
+    if stream.is_empty() {
+        sqlx::query("INSERT INTO settings (user_id, budget) VALUES(?, ?);")
+            .bind(user.user_id)
+            .bind(budget.unwrap())
+            .execute(&mut *db).await.unwrap();
+            println!("insert");
+    } else {
+        sqlx::query("UPDATE settings SET budget = ? WHERE user_id = ?")
+            .bind(budget.unwrap()).bind(user.user_id).execute(&mut *db).await.unwrap();
+        println!("update");
+    }
+
+    "ok".to_string()
+}
+
+#[get("/get_settings")]
+pub async fn get_settings(mut db: Connection<db::Logs>, user: AuthenticatedUser) -> String {
+
+    let stream = sqlx::query_as!(Settings,
+            "SELECT * FROM settings WHERE user_id = ?",
+            user.user_id
+        )
+        .fetch_one(&mut *db)
+        .await.unwrap();
+
+    serde_json::to_string(&stream).unwrap()
 }

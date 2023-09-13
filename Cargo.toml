@@ -20,6 +20,7 @@ time = { version = "0.3.4", features = ["serde","serde-human-readable", "local-o
 
 rust-argon2 = "1.0"
 anyhow = "1.0.70"
+thiserror = "1.0.48"
 
 [dependencies.rocket_db_pools]
 version = "=0.1.0-rc.3"
