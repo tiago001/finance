@@ -1,15 +1,11 @@
-// load_home()
+let graph
+
+load_home()
 
 function load_home(){
-    fetch("pages/home.html")
-    .then((response) => response.text())
-    .then((html) => {
-        document.getElementById("content").innerHTML = html;
-        // get_user_info()
+    $("#content").load("pages/home.html", function() {
+        get_user_info()
     })
-    .catch((error) => {
-        console.warn(error);
-    });
 }
 
 function get_user_info(){
@@ -19,8 +15,7 @@ function get_user_info(){
         return response.json()
     })
     .then((json) => {
-        console.log(json)
-        document.getElementsByClassName("username")[0].innerHTML = json.email
+        document.getElementById("username").innerHTML = json.name
     })
     .catch((error) => {
         console.warn(error);
@@ -28,29 +23,20 @@ function get_user_info(){
 }
 
 function load_add_expense(){
-    window.history.pushState("","Add expenses", "/addexpenses");
-    fetch("pages/add_expense.html")
-    .then((response) => response.text())
-    .then((html) => {
-        document.getElementById("content").innerHTML = html;
+    // window.history.pushState("","Add expenses", "/addexpenses");
+
+    $("#content").load("pages/add_expense.html", function() {
         let date = new Date();
 
         document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
         search_last_expenses()
     })
-    .catch((error) => {
-        console.warn(error);
-    });
 }
 
 function load_search_expenses(){
-    window.history.pushState("","Search expenses", "/searchexpenses");
+    // window.history.pushState("","Search expenses", "/searchexpenses");
 
-    fetch("pages/search_expenses.html")
-    .then((response) => response.text())
-    .then((html) => {
-        document.getElementById("content").innerHTML = html;
-        
+    $("#content").load("pages/search_expenses.html", function() {
         var today = new Date();
         var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
         var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -71,17 +57,10 @@ function load_search_expenses(){
 
         search_expenses()
     })
-    .catch((error) => {
-        console.warn(error);
-    });
 }
 
 function load_dashboard(){
-    fetch("pages/dashboard.html")
-    .then((response) => response.text())
-    .then((html) => {
-        document.getElementById("content").innerHTML = html;
-
+    $("#content").load("pages/dashboard.html", function() {
         var today = new Date();
         var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
         var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth()-2, 1);
@@ -91,176 +70,7 @@ function load_dashboard(){
 
         search_expenses_category()
     })
-    .catch((error) => {
-        console.warn(error);
-    });
 }
-
-function search_expenses_category(){
-    fetch("search_expenses_category?" + new URLSearchParams({
-        "value1": document.getElementsByClassName("date1")[0].value,
-        "value2": document.getElementsByClassName("date2")[0].value
-    }), {redirect: 'follow'})
-    .then((response) => {
-        if (response.redirected) window.location.href = response.url;
-        return response.json()
-    })
-    .then((json) => {
-
-        document.getElementsByClassName("category_values")[0].innerHTML = `<div class="col-6 ">Categoria</div>`
-
-        let label = []
-        let sum = []
-
-        let startMonth = new Date(document.getElementsByClassName("date1")[0].value.replace(/-/g, '\/')).getMonth()+1
-        let endMonth = new Date(document.getElementsByClassName("date2")[0].value.replace(/-/g, '\/')).getMonth()+1
-        for (let i = startMonth; i <= endMonth; i++) {
-            document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
-                "beforeend",
-                `<div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;\">Mês ${i}</div>`
-            )
-        }
-
-        let sumMonths = [];
-
-        json.forEach(e => {
-            document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
-                "beforeend",
-                `
-                <div class="col-6" style=\"border-top: 2px solid #e1e1e1;\">
-                ${e.category} 
-                </div>
-                `
-            )
-                
-            for (let i = startMonth; i <= endMonth; i++) {
-                let found = false
-                e.months.forEach(m => {
-                    if(m.month == endMonth && i == endMonth){
-                        console.log(m)
-                        label.push(e.category)
-                        sum.push(m.sum)
-                    }
-
-                    if(m.month == i) {
-                        if(sumMonths[i] == undefined){
-                            sumMonths[i] = m.sum
-                        } else {
-                            sumMonths[i] = sumMonths[i] + m.sum;
-                        }
-                        found = true;
-                        document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
-                            "beforeend",
-                            `
-                                <div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;\">
-                                    ${m.sum.toFixed(2)} 
-                                </div>
-                            `
-                        )
-                    }
-                })
-                if(!found){
-                    document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
-                        "beforeend",
-                        `
-                            <div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;\"></div>
-                        `
-                    )
-                }
-            }
-
-        })
-
-        console.log(sumMonths);
-
-        document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
-            "beforeend",
-            `
-            <div class="col-6" style=\"border-top: 2px solid #e1e1e1;font-weight: bold;font-size: 17px;\">
-                Total
-            </div>
-            `
-        )
-
-        for (let i = sumMonths.length-3; i < sumMonths.length; i++) {
-            document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
-                "beforeend",
-                `
-                    <div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;font-weight: bold;font-size: 17px;\">
-                        ${sumMonths[i].toFixed(2)} 
-                    </div>
-                `
-            )
-        }
-        
-        if(graph){
-            graph.destroy()
-        }
-
-        const ctx = document.getElementById('myChart');
-
-        graph = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: label,
-                datasets: [{
-                    label: 'Sum',
-                    data: sum,
-                    borderWidth: 1
-                }]
-            }
-        });
-
-    })
-    .catch((error) => {
-        console.warn(error);
-    });
-}
-
-function save_expense(){
-    fetch("save_expense?" + new URLSearchParams({
-        "name": document.getElementsByClassName("nome")[0].value,
-        "value": document.getElementsByClassName("money_value")[0].value,
-        "category": document.getElementsByClassName("category")[0].value,
-        "date": document.getElementsByClassName("date")[0].value}),
-    {
-        method: "POST"
-    })
-    .then((response) => response.text())
-    .then((html) => {
-        Swal.fire({
-            position: 'top-end',
-            icon: 'success',
-            title: 'Despesa salva com sucesso',
-            showConfirmButton: false,
-            timer: 2000,
-            toast: true
-          })
-        load_add_expense()
-        document.getElementsByClassName("expenses").innerHTML = ''
-        search_last_expenses()
-        setTimeout(() => {
-            document.getElementsByClassName("nome")[0].focus();
-        }, 200);
-    })
-    .catch((error) => {
-        console.warn(error);
-    });
-}
-
-// function search_last_expenses(){
-//     fetch("search_last_expenses", {redirect: 'follow'})
-//     .then((response) => {
-//         if (response.redirected) window.location.href = response.url;
-//         return response.json()
-//     })
-//     .then((json) => {
-//         fill_expenses(json)
-//     })
-//     .catch((error) => {
-//         console.warn(error);
-//     });
-// }
 
 function fill_expenses(json){
     document.getElementsByClassName("expenses")[0].innerHTML = ''
@@ -301,10 +111,10 @@ function fill_expenses(json){
                          ${e.date != lastDate ? e.date : ""}
                     </div>
                     <div class="col-1 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                        <button class="btn btn-sm btn-outline-info py-0" onclick="delete_expense(${e.id})">
+                        <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
                             <span><i class="ti ti-x"></i></span>
-                        </button>
-                        <button class="btn btn-sm btn-outline-info py-0" onclick="edit_expense(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                        </button>-->
+                        <button class="btn btn-sm btn-light py-0" onclick="open_edit_expense(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
                             <span><i class="ti ti-pencil"></i></span>
                         </button>
                     </div>
@@ -393,7 +203,7 @@ function delete_expense(id){
                 showConfirmButton: false,
                 timer: 2000,
                 toast: true
-              })
+            })
         })
         .catch((error) => {
             console.warn(error);
@@ -402,209 +212,61 @@ function delete_expense(id){
     // $('#exampleModal').modal('show')
 }
 
-function edit_expense(expense){
-    console.log(expense)
+function open_edit_expense(id){
+    console.log("edit_expense")
+    var exampleModal = document.getElementById('exampleModal')
+    var modalTitle = exampleModal.querySelector('.modal-title')
 
-    // $('#exampleModal').modal('show')
-}
+    modalTitle.textContent = 'Editar despesa'
 
-function search_expenses(){
-    let value1
-    if (document.getElementsByClassName("search")[0].value == "category"){
-        value1 = document.getElementsByClassName("category_select")[0].value
-    } else {
-        value1 = document.getElementsByClassName("date1")[0].value
-    }
-
-    fetch("search_expenses?" + new URLSearchParams({
-        "name": document.getElementsByClassName("search")[0].value,
-        "value1": value1,
-        "value2": document.getElementsByClassName("date2")[0].value
-    }), {redirect: 'follow'})
-    .then((response) => {
-        console.log(response)
-        if (response.redirected) window.location.href = response.url;
-        return response.json()
-    })
-    .then((json) => {
-        fill_expenses(json)
-        show_expenses_graph(json)
-    })
-    .catch((error) => {
-        console.warn(error);
-    });
-}
-
-function getDaysInMonth(month, year) {
-    var date = new Date(year, month, 1);
-    var days = [];
-    while (date.getMonth() === month) {
-      days.push(new Date(date));
-      date.setDate(date.getDate() + 1);
-    }
-    return days;
-}
-
-function get_settings(){
-    return new Promise((resolve, reject) => {
-        fetch("get_settings", {redirect: 'follow'})
+    $(".modal-body").load("pages/edit_expense.html", function() {
+        fetch("get_expense?" + new URLSearchParams({
+            "id": id
+        }), {redirect: 'follow'})
         .then((response) => {
             if (response.redirected) window.location.href = response.url;
             return response.json()
         })
         .then((json) => {
-            console.log("2")
-            console.log("json "+json)
-            resolve(json)
+            document.getElementsByClassName("editnome")[0].value = json.name
+            document.getElementsByClassName("editmoney_value")[0].value = json.value
+            document.getElementsByClassName("editcategory")[0].value = json.category
+            document.getElementsByClassName("editdate")[0].value = json.date
+
+            console.log(json)
+        })
+        .catch((error) => {
+            console.warn(error);
         });
     })
+    
+    $(".modal .btn-primary")[0].setAttribute('onclick',`edit_expense(${id})`)
+    $(".modal .btn-danger")[0].setAttribute('onclick',`delete_expense(${id})`)
 }
 
-let graph
-async function show_expenses_graph(json){
-    if(graph){
-        graph.destroy()
-    }
-    let ctx = document.getElementById('graph');
-
-    let datas = []
-
-    let endDate = document.getElementsByClassName("date2")[0].value;
-
-    let month = new Date(endDate).getMonth()
-    let year = new Date(endDate).getFullYear()
-
-    let daysInMonth = getDaysInMonth(month, year)
-
-    let budgetValue = null
-    
-    console.log("1")
-    let settings = await get_settings();
-    console.log("3")
-    console.log(settings)
-    budgetValue = settings.budget;
-
-    console.log("budgetValue "+budgetValue)
-    
-    daysInMonth.forEach((v, pos) => {
-        let dayFound = false
-        for (let index = json.length-1; index >= 0; index--) {
-            let e = json[index];
-
-            if(e.date == new Date(v).toISOString().split('T')[0]){
-                dayFound = true
-
-                found = false
-                datas.forEach(d => {
-                    if(d.date == e.date){
-                        d.value = d.value + e.value
-                        found = true
-                    }
-                });
-            
-                if(found == false){
-                    datas.push({"date" : e.date, "value" : e.value, "budget": (budgetValue/daysInMonth.length*(pos+1))})
-                }
-            }
-            
-        }
-
-        if(!dayFound) {
-            datas.push({"date" : new Date(v).toISOString().split('T')[0], "value" : 0, "budget": (budgetValue/daysInMonth.length*(pos+1))})
-        }
-    });
-
-    let labels = []
-    let data = []
-    let total = 0
-    let acumulative = []
-    let budget = []
-    datas.forEach(d => {
-        labels.push(d.date)
-        data.push(d.value.toFixed(2))
-        total = total + d.value
-        acumulative.push(total.toFixed(2))
-        budget.push(d.budget.toFixed(2))
+function edit_expense(id){
+    fetch("edit_expense?" + new URLSearchParams({
+        "id": id,
+        "name": document.getElementsByClassName("editnome")[0].value,
+        "value": document.getElementsByClassName("editmoney_value")[0].value,
+        "category": document.getElementsByClassName("editcategory")[0].value,
+        "date": document.getElementsByClassName("editdate")[0].value}),
+    {
+        method: "POST"
     })
-
-    graph = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [ {
-            type: 'line',
-            label: 'Acumulado',
-            data: acumulative,
-            yAxisID: 'myScale',
-            borderColor: '#ff6384',
-            backgroundColor: "#ff6384"
-        },{
-            type: 'line',
-            label: 'Budget',
-            data: budget,
-            yAxisID: 'myScale',
-            borderColor: '#3bb000',
-            backgroundColor: "#1c7a11"
-        },{
-          label: 'Valor',
-          data: data,
-          borderWidth: 1,
-          borderColor: '#36a2eb',
-          backgroundColor: "#36a2eb"
-        }]
-      },
-      options: {
-        scales: {
-          y: {
-            beginAtZero: true
-          },
-          myScale: {
-            // type: 'logarithmic',
-            position: 'right', // `axis` is determined by the position as `'y'`
-          }
-        }
-      }
-    });
-}
-
-function search_last_expenses(){
-    fetch("search_expenses?" + new URLSearchParams({
-        "name": "last15"
-    }), {redirect: 'follow'})
-    .then((response) => {
-        if (response.redirected) window.location.href = response.url;
-        return response.json()
-    })
-    .then((json) => {
-        fill_expenses(json)
+    .then((response) => response.text())
+    .then(() => {
+        load_add_expense()
+        Swal.fire({
+            position: 'top-end',
+            icon: 'success',
+            title: 'Despesa alterada com sucesso',
+            showConfirmButton: false,
+            timer: 2000,
+            toast: true
+        })
     })
     .catch((error) => {
         console.warn(error);
     });
-}
-
-document.addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-        save_expense();
-    }
-}); 
-
-function previous_month() {
-    var today = new Date(document.getElementsByClassName("date1")[0].value.split("-"));
-    today.setMonth(today.getMonth() - 1)
-    var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
-    var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    
-    document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
-    document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
-}
-
-function next_month(){
-    var today = new Date(document.getElementsByClassName("date1")[0].value.split("-"));
-    today.setMonth(today.getMonth() + 1)
-    var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
-    var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    
-    document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
-    document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
 }

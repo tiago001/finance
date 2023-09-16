@@ -1,7 +1,7 @@
 #[macro_use] extern crate rocket;
 
 use rocket::fs::{relative, FileServer};
-use rocket::request::FlashMessage;
+// use rocket::request::FlashMessage;
 use rocket::response::Redirect;
 use rocket_db_pools::Database;
 use rocket_db_pools::{sqlx, Connection};
@@ -18,7 +18,7 @@ fn rocket() -> _ {
     .attach(db::Logs::init())
     .mount("/", routes![
             expense_routes::save_expense,
-            expense_routes::search_last_expenses,
+            expense_routes::get_expense,
             expense_routes::search_expenses, 
             expense_routes::search_expenses_category,
             expense_routes::edit_expense,
@@ -31,10 +31,10 @@ fn rocket() -> _ {
             user_routes::register,
             user_routes::save_settings,
             user_routes::get_settings,
-            index,
+            // index,
             settings,
-            searchexpenses,
-            addexpenses,
+            // searchexpenses,
+            // addexpenses,
         ]
     ).register("/",catchers![unauthorized])
     .mount("/", FileServer::from(relative!("static")))
@@ -42,10 +42,10 @@ fn rocket() -> _ {
 }
 
 
-#[get("/")]
-pub async fn index(flash: Option<FlashMessage<'_>>) -> Template {
-    Template::render("index",json!({"message": flash.map(FlashMessage::into_inner)}))
-}
+// #[get("/")]
+// pub async fn index(flash: Option<FlashMessage<'_>>) -> Template {
+//     Template::render("index",json!({"message": flash.map(FlashMessage::into_inner)}))
+// }
 
 #[get("/settings")]
 pub async fn settings(mut db: Connection<db::Logs>, user: AuthenticatedUser) -> Template {
@@ -59,15 +59,15 @@ pub async fn settings(mut db: Connection<db::Logs>, user: AuthenticatedUser) -> 
     Template::render("pages/settings",json!({"settings": stream}))
 }
 
-#[get("/searchexpenses")]
-pub async fn searchexpenses(flash: Option<FlashMessage<'_>>) -> Template {
-    Template::render("pages/search_expenses",json!({"message": flash.map(FlashMessage::into_inner)}))
-}
+// #[get("/searchexpenses")]
+// pub async fn searchexpenses(flash: Option<FlashMessage<'_>>) -> Template {
+//     Template::render("pages/search_expenses",json!({"message": flash.map(FlashMessage::into_inner)}))
+// }
 
-#[get("/addexpenses")]
-pub async fn addexpenses(flash: Option<FlashMessage<'_>>) -> Template {
-    Template::render("pages/add_expense",json!({"message": flash.map(FlashMessage::into_inner)}))
-}
+// #[get("/addexpenses")]
+// pub async fn addexpenses(flash: Option<FlashMessage<'_>>) -> Template {
+//     Template::render("pages/add_expense",json!({"message": flash.map(FlashMessage::into_inner)}))
+// }
 
 #[catch(401)]
 fn unauthorized() -> Redirect {

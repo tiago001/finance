@@ -82,8 +82,7 @@ pub async fn create_account(mut db: Connection<Logs>, user_form: Form<InfoLogin>
     }
 
     let stored_user: Option<Users> = match sqlx::query_as!(Users,
-        "SELECT id, email, password FROM users WHERE email = ?;
-        ",
+        "SELECT id, email, password, name FROM users WHERE email = ?",
         user.email
     )
     .fetch_one(&mut *db)
@@ -104,11 +103,8 @@ pub async fn create_account(mut db: Connection<Logs>, user_form: Form<InfoLogin>
         }
     };
 
-    sqlx::query("INSERT INTO users (email, password, name) VALUES(?, ?, ?);")
-        .bind(user.email)
-        .bind(hash)
-        .bind(user.name)
-        .execute(&mut *db).await.unwrap();
+    sqlx::query!("INSERT INTO users (email, password, name) VALUES(?, ?, ?)",
+        user.email, hash, user.name).execute(&mut *db).await.unwrap();
 
     Flash::success(Redirect::to("/login"), "Account created succesfully!")
 }
@@ -120,7 +116,8 @@ pub async fn verify_account(mut db: Connection<Logs>, cookies: & CookieJar<'_>, 
     println!(" teste {}{}", user.email, user.password);
 
     let stored_user = match sqlx::query_as!(Users,
-            "SELECT id, email, password FROM users WHERE email = ?;",user.email
+            "SELECT id, email, password, name FROM users WHERE email = ?;",
+            user.email
         )
         .fetch_one(&mut *db)
         .await{
@@ -145,11 +142,10 @@ pub async fn verify_account(mut db: Connection<Logs>, cookies: & CookieJar<'_>, 
 
 #[get("/get_user_info")]
 pub async fn get_user_info(mut db: Connection<Logs>, user: AuthenticatedUser) -> String {
-    let mut user = sqlx::query_as!(Users, "SELECT id, email, password FROM users WHERE id = ?", user.user_id)
+    let user = sqlx::query_as!(Users, "SELECT id, email, password, name FROM users WHERE id = ?",
+        user.user_id)
         .fetch_one(&mut *db)
         .await.unwrap();
-
-    user.password = "".to_string();
 
     serde_json::to_string(&user).unwrap()
 }
@@ -175,14 +171,13 @@ pub async fn save_settings(mut db: Connection<db::Logs>,budget: Option<f64>, use
         .await.unwrap();
 
     if stream.is_empty() {
-        sqlx::query("INSERT INTO settings (user_id, budget) VALUES(?, ?);")
-            .bind(user.user_id)
-            .bind(budget.unwrap())
+        sqlx::query!("INSERT INTO settings (user_id, budget) VALUES(?, ?)",
+            user.user_id, budget.unwrap())
             .execute(&mut *db).await.unwrap();
             println!("insert");
     } else {
-        sqlx::query("UPDATE settings SET budget = ? WHERE user_id = ?")
-            .bind(budget.unwrap()).bind(user.user_id).execute(&mut *db).await.unwrap();
+        sqlx::query!("UPDATE settings SET budget = ? WHERE user_id = ?",
+            budget.unwrap(), user.user_id).execute(&mut *db).await.unwrap();
         println!("update");
     }
 

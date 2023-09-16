@@ -5,7 +5,8 @@ use rocket::FromForm;
 pub struct Users {
     pub id: i64,
     pub email: String,
-    pub password: String
+    pub password: String,
+    pub name: String
 }
 
 impl Default for Users {
@@ -13,7 +14,8 @@ impl Default for Users {
         Users {
             id: 0,
             email: "".to_string(),
-            password: "".to_string()
+            password: "".to_string(),
+            name: "".to_string()
         }
     }
 }

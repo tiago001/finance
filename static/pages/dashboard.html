@@ -9,13 +9,6 @@
                 <span class="input-group-text" id="basic-addon1">Fim</span>
                 <input type="date" class="form-control date2" data-provide="datepicker">
             </div>
-            <div class="col-1 d-flex">
-                <button type="button" class="btn btn-primary me-2" onclick="previous_month()"><-</button>
-                <button type="button" class="btn btn-primary" onclick="next_month()">-></button>
-            </div>
-            <div class="col-2">
-                <button type="button" class="btn btn-primary" onclick="search_expenses_category()">Buscar</button>
-            </div>
         </div>
         <div class="col-12 col-sm-6 col-md-6">
             <div class="row category_values">
@@ -26,6 +19,129 @@
         </div>
 
     </div>
-
-    
 </div>
+
+<script>
+    
+    function search_expenses_category(){
+        fetch("search_expenses_category?" + new URLSearchParams({
+            "value1": document.getElementsByClassName("date1")[0].value,
+            "value2": document.getElementsByClassName("date2")[0].value
+        }), {redirect: 'follow'})
+        .then((response) => {
+            if (response.redirected) window.location.href = response.url;
+            return response.json()
+        })
+        .then((json) => {
+    
+            document.getElementsByClassName("category_values")[0].innerHTML = `<div class="col-6 ">Categoria</div>`
+    
+            let label = []
+            let sum = []
+    
+            let startMonth = new Date(document.getElementsByClassName("date1")[0].value.replace(/-/g, '\/')).getMonth()+1
+            let endMonth = new Date(document.getElementsByClassName("date2")[0].value.replace(/-/g, '\/')).getMonth()+1
+            for (let i = startMonth; i <= endMonth; i++) {
+                document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
+                    "beforeend",
+                    `<div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;\">Mês ${i}</div>`
+                )
+            }
+    
+            let sumMonths = [];
+    
+            json.forEach(e => {
+                document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
+                    "beforeend",
+                    `
+                    <div class="col-6" style=\"border-top: 2px solid #e1e1e1;\">
+                    ${e.category} 
+                    </div>
+                    `
+                )
+                    
+                for (let i = startMonth; i <= endMonth; i++) {
+                    let found = false
+                    e.months.forEach(m => {
+                        if(m.month == endMonth && i == endMonth){
+                            console.log(m)
+                            label.push(e.category)
+                            sum.push(m.sum)
+                        }
+    
+                        if(m.month == i) {
+                            if(sumMonths[i] == undefined){
+                                sumMonths[i] = m.sum
+                            } else {
+                                sumMonths[i] = sumMonths[i] + m.sum;
+                            }
+                            found = true;
+                            document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
+                                "beforeend",
+                                `
+                                    <div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;\">
+                                        ${m.sum.toFixed(2)} 
+                                    </div>
+                                `
+                            )
+                        }
+                    })
+                    if(!found){
+                        document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
+                            "beforeend",
+                            `
+                                <div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;\"></div>
+                            `
+                        )
+                    }
+                }
+    
+            })
+    
+            console.log(sumMonths);
+    
+            document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
+                "beforeend",
+                `
+                <div class="col-6" style=\"border-top: 2px solid #e1e1e1;font-weight: bold;font-size: 17px;\">
+                    Total
+                </div>
+                `
+            )
+    
+            for (let i = sumMonths.length-3; i < sumMonths.length; i++) {
+                document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
+                    "beforeend",
+                    `
+                        <div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;font-weight: bold;font-size: 17px;\">
+                            ${sumMonths[i].toFixed(2)} 
+                        </div>
+                    `
+                )
+            }
+            
+            if(graph){
+                graph.destroy()
+            }
+    
+            const ctx = document.getElementById('myChart');
+    
+            graph = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: label,
+                    datasets: [{
+                        label: 'Sum',
+                        data: sum,
+                        borderWidth: 1
+                    }]
+                }
+            });
+    
+        })
+        .catch((error) => {
+            console.warn(error);
+        });
+    }
+
+</script>

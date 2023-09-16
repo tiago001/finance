@@ -33,3 +33,60 @@
 
 </div>
 
+<script>
+
+    function search_last_expenses(){
+        fetch("search_expenses?" + new URLSearchParams({
+            "name": "currentMonth"
+        }), {redirect: 'follow'})
+        .then((response) => {
+            if (response.redirected) window.location.href = response.url;
+            return response.json()
+        })
+        .then((json) => {
+            fill_expenses(json)
+        })
+        .catch((error) => {
+            console.warn(error);
+        });
+    }
+
+    function save_expense(){
+        fetch("save_expense?" + new URLSearchParams({
+            "name": document.getElementsByClassName("nome")[0].value,
+            "value": document.getElementsByClassName("money_value")[0].value,
+            "category": document.getElementsByClassName("category")[0].value,
+            "date": document.getElementsByClassName("date")[0].value}),
+        {
+            method: "POST"
+        })
+        .then((response) => response.text())
+        .then((html) => {
+            Swal.fire({
+                position: 'top-end',
+                icon: 'success',
+                title: 'Despesa salva com sucesso',
+                showConfirmButton: false,
+                timer: 2000,
+                toast: true
+              })
+            load_add_expense()
+            document.getElementsByClassName("expenses").innerHTML = ''
+            search_last_expenses()
+            setTimeout(() => {
+                document.getElementsByClassName("nome")[0].focus();
+            }, 200);
+        })
+        .catch((error) => {
+            console.warn(error);
+        });
+    }
+
+    document.addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            save_expense();
+        }
+    }); 
+
+</script>
+
