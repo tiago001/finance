@@ -18,7 +18,8 @@ pub fn redirect_to_login() -> Redirect {
 }
 
 pub struct AuthenticatedUser {
-    pub user_id: i64
+    pub user_id: i64,
+    pub name: String
 }
 
 #[rocket::async_trait]
@@ -38,7 +39,12 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
                 Err(err) => return Outcome::Failure((Status::Unauthorized, err.into()))
             };
 
-        return Outcome::Success(AuthenticatedUser { user_id: logged_in_user_id });
+        let logged_in_username = match get_user_name_cookie(cookies) {
+            Some(result) => result,
+            None => return Outcome::Failure((Status::Unauthorized, Error::UnauthenticatedError.into()))
+        };
+
+        return Outcome::Success(AuthenticatedUser { user_id: logged_in_user_id, name: logged_in_username.value().to_string() });
     }
 }
 
@@ -54,9 +60,22 @@ fn remove_user_id_cookie(cookies: & CookieJar) {
     cookies.remove_private(Cookie::named("user_id"));
 }
 
+fn get_user_name_cookie<'a>(cookies: &'a CookieJar) -> Option<Cookie<'a>> {
+    cookies.get_private("name")
+}
+
+fn set_user_name_cookie(cookies: & CookieJar, name: String) {
+    cookies.add_private(Cookie::new("name", name.to_string()));
+}
+
+fn remove_user_name_cookie(cookies: & CookieJar) {
+    cookies.remove_private(Cookie::named("name"));
+}
+
 #[post("/logout")]
 pub async fn logout(cookies: & CookieJar<'_>) -> Flash<Redirect> {
     remove_user_id_cookie(cookies);
+    remove_user_name_cookie(cookies);
     Flash::success(Redirect::to("/login"), "Logged out succesfully!")
 }
 
@@ -113,8 +132,6 @@ pub async fn create_account(mut db: Connection<Logs>, user_form: Form<InfoLogin>
 pub async fn verify_account(mut db: Connection<Logs>, cookies: & CookieJar<'_>, user_form: Form<InfoLogin>) -> Flash<Redirect> {
     let user = user_form.into_inner();
 
-    println!(" teste {}{}", user.email, user.password);
-
     let stored_user = match sqlx::query_as!(Users,
             "SELECT id, email, password, name FROM users WHERE email = ?;",
             user.email
@@ -137,6 +154,7 @@ pub async fn verify_account(mut db: Connection<Logs>, cookies: & CookieJar<'_>, 
     }
 
     set_user_id_cookie(cookies, stored_user.id);
+    set_user_name_cookie(cookies, stored_user.name);
     Flash::success(Redirect::to("/"), "Logged in succesfully!")
 }
 
@@ -174,11 +192,9 @@ pub async fn save_settings(mut db: Connection<db::Logs>,budget: Option<f64>, use
         sqlx::query!("INSERT INTO settings (user_id, budget) VALUES(?, ?)",
             user.user_id, budget.unwrap())
             .execute(&mut *db).await.unwrap();
-            println!("insert");
     } else {
         sqlx::query!("UPDATE settings SET budget = ? WHERE user_id = ?",
             budget.unwrap(), user.user_id).execute(&mut *db).await.unwrap();
-        println!("update");
     }
 
     "ok".to_string()
@@ -187,12 +203,15 @@ pub async fn save_settings(mut db: Connection<db::Logs>,budget: Option<f64>, use
 #[get("/get_settings")]
 pub async fn get_settings(mut db: Connection<db::Logs>, user: AuthenticatedUser) -> String {
 
-    let stream = sqlx::query_as!(Settings,
+    let stream: Settings = match sqlx::query_as!(Settings,
             "SELECT * FROM settings WHERE user_id = ?",
             user.user_id
         )
         .fetch_one(&mut *db)
-        .await.unwrap();
+        .await {
+            Ok(result) => result,
+            Err(..) => Settings{ user_id: user.user_id, budget: Some(0.0)}
+        };
 
     serde_json::to_string(&stream).unwrap()
 }

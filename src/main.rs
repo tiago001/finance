@@ -31,7 +31,7 @@ fn rocket() -> _ {
             user_routes::register,
             user_routes::save_settings,
             user_routes::get_settings,
-            // index,
+            index,
             settings,
             // searchexpenses,
             // addexpenses,
@@ -42,21 +42,21 @@ fn rocket() -> _ {
 }
 
 
-// #[get("/")]
-// pub async fn index(flash: Option<FlashMessage<'_>>) -> Template {
-//     Template::render("index",json!({"message": flash.map(FlashMessage::into_inner)}))
-// }
+#[get("/")]
+pub async fn index(user: AuthenticatedUser) -> Template {
+    Template::render("pages/home",json!({"username": user.name}))
+}
 
 #[get("/settings")]
 pub async fn settings(mut db: Connection<db::Logs>, user: AuthenticatedUser) -> Template {
     let stream = match sqlx::query_as!(Settings,
-        "SELECT * FROM settings WHERE user_id = ?",
-        user.user_id
-    ).fetch_one(&mut *db).await {
-        Ok(result) => result,
-        Err(..) => Settings{user_id: 0, budget: None}
-    };
-    Template::render("pages/settings",json!({"settings": stream}))
+            "SELECT * FROM settings WHERE user_id = ?",
+            user.user_id
+        ).fetch_one(&mut *db).await {
+            Ok(result) => result,
+            Err(..) => Settings{user_id: 0, budget: None}
+        };
+    Template::render("pages/settings",json!({"username": user.name,"settings": stream}))
 }
 
 // #[get("/searchexpenses")]

@@ -1,26 +1,26 @@
 let graph
 
-load_home()
+// load_home()
 
 function load_home(){
     $("#content").load("pages/home.html", function() {
-        get_user_info()
+        // get_user_info()
     })
 }
 
-function get_user_info(){
-    fetch("get_user_info", {redirect: 'follow'})
-    .then((response) => {
-        if (response.redirected) window.location.href = response.url;
-        return response.json()
-    })
-    .then((json) => {
-        document.getElementById("username").innerHTML = json.name
-    })
-    .catch((error) => {
-        console.warn(error);
-    });
-}
+// function get_user_info(){
+//     fetch("get_user_info", {redirect: 'follow'})
+//     .then((response) => {
+//         if (response.redirected) window.location.href = response.url;
+//         return response.json()
+//     })
+//     .then((json) => {
+//         document.getElementById("username").innerHTML = json.name
+//     })
+//     .catch((error) => {
+//         console.warn(error);
+//     });
+// }
 
 function load_add_expense(){
     // window.history.pushState("","Add expenses", "/addexpenses");
@@ -209,7 +209,6 @@ function delete_expense(id){
             console.warn(error);
         });
 
-    // $('#exampleModal').modal('show')
 }
 
 function open_edit_expense(id){
@@ -270,3 +269,9 @@ function edit_expense(id){
         console.warn(error);
     });
 }
+
+document.addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+        save_expense();
+    }
+}); 

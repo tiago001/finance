@@ -7,7 +7,7 @@
       <!-- Sidebar scroll-->
       <div>
         <div class="brand-logo d-flex align-items-center justify-content-between">
-          <a href="./index.html" class="text-nowrap logo-img">
+          <a href="./" class="text-nowrap logo-img">
             <img src="assets/images/logos/dark-logo.svg" width="180" alt="" />
           </a>
           <div class="close-btn d-xl-none d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
@@ -22,7 +22,7 @@
               <span class="hide-menu">Home</span>
             </li>
             <li class="sidebar-item">
-              <a class="sidebar-link" aria-expanded="false" onclick="load_home()" href="#" >
+              <a class="sidebar-link" aria-expanded="false" href="/" >
                 <span>
                   <i class="ti ti-home"></i>
                 </span>
@@ -34,7 +34,7 @@
               <span class="hide-menu">CONTROLE DE GASTOS</span>
             </li>
             <li class="sidebar-item">
-              <a class="sidebar-link" onclick="load_dashboard()" href="#dashboard" aria-expanded="false">
+              <a class="sidebar-link" onclick="load_dashboard()" aria-expanded="false">
                 <span>
                   <i class="ti ti-article"></i>
                 </span>
@@ -156,7 +156,7 @@
                   <div class="notification bg-primary rounded-circle"></div>
                 </a>
               </li>
-              <h5 class="text-body p-3" id="username">Teste</h5>
+              <h5 class="text-body p-3" id="username">{{username}}</h5>
               <li class="nav-item dropdown">
                 <a class="nav-link nav-icon-hover" href="javascript:void(0)" id="drop2" data-bs-toggle="dropdown"
                   aria-expanded="false">
