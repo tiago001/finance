@@ -1,5 +1,7 @@
+{% extends "index" %} {% block page %}
+
 <div>
-    <p>Valor gasto por categoria</p>
+    <p class="fs-4">Valor gasto por categoria</p>
 
     <div class="row">
         <div style="display: none;">
@@ -14,10 +16,11 @@
             <div class="row category_values">
             </div>
         </div>
-        <div class="col-8 col-sm-6 col-md-3">
+        <div class="col-1 d-block d-lg-none"></div>
+        <div class="col-10 col-sm-6 col-md-3">
             <canvas id="myChart"></canvas>
         </div>
-
+        <div class="col-1 d-block d-lg-none"></div>
     </div>
 </div>
 
@@ -34,91 +37,66 @@
         })
         .then((json) => {
     
-            document.getElementsByClassName("category_values")[0].innerHTML = `<div class="col-6 ">Categoria</div>`
+            document.getElementsByClassName("category_values")[0].innerHTML = `<div class="col-3 col-sm-6">Categoria</div>`
     
             let label = []
             let sum = []
     
-            let startMonth = new Date(document.getElementsByClassName("date1")[0].value.replace(/-/g, '\/')).getMonth()+1
             let endMonth = new Date(document.getElementsByClassName("date2")[0].value.replace(/-/g, '\/')).getMonth()+1
-            for (let i = startMonth; i <= endMonth; i++) {
+
+            json.months.forEach(m => {
                 document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                     "beforeend",
-                    `<div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;\">Mês ${i}</div>`
+                    `<div class="col-3 col-sm-2 text-center" style=\"border-top: 2px solid #e1e1e1;\">Mês ${m.month}</div>`
                 )
-            }
-    
-            let sumMonths = [];
-    
-            json.forEach(e => {
+            })
+
+            json.categories.forEach(e => {
                 document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                     "beforeend",
                     `
-                    <div class="col-6" style=\"border-top: 2px solid #e1e1e1;\">
+                    <div class="col-3 col-sm-6" style=\"border-top: 2px solid #e1e1e1;\">
                     ${e.category} 
                     </div>
                     `
                 )
-                    
-                for (let i = startMonth; i <= endMonth; i++) {
-                    let found = false
-                    e.months.forEach(m => {
-                        if(m.month == endMonth && i == endMonth){
-                            console.log(m)
-                            label.push(e.category)
-                            sum.push(m.sum)
-                        }
-    
-                        if(m.month == i) {
-                            if(sumMonths[i] == undefined){
-                                sumMonths[i] = m.sum
-                            } else {
-                                sumMonths[i] = sumMonths[i] + m.sum;
-                            }
-                            found = true;
-                            document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
-                                "beforeend",
-                                `
-                                    <div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;\">
-                                        ${m.sum.toFixed(2)} 
-                                    </div>
-                                `
-                            )
-                        }
-                    })
-                    if(!found){
-                        document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
-                            "beforeend",
-                            `
-                                <div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;\"></div>
-                            `
-                        )
+
+                e.months.forEach(m => {
+                    if(m.month == endMonth && m.sum > 0){
+                        label.push(e.category)
+                        sum.push(m.sum)
                     }
-                }
-    
+
+                    document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
+                        "beforeend",
+                        `
+                            <div class="col-3 col-sm-2 text-center" style=\"border-top: 2px solid #e1e1e1;\">
+                                ${m.sum.toFixed(2)} 
+                            </div>
+                        `
+                    )
+                })
             })
-    
-            console.log(sumMonths);
     
             document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                 "beforeend",
                 `
-                <div class="col-6" style=\"border-top: 2px solid #e1e1e1;font-weight: bold;font-size: 17px;\">
+                <div class="col-3 col-sm-6" style=\"border-top: 2px solid #e1e1e1;font-weight: bold;font-size: 17px;\">
                     Total
                 </div>
                 `
             )
-    
-            for (let i = sumMonths.length-3; i < sumMonths.length; i++) {
+
+            json.months.forEach(m => {
                 document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                     "beforeend",
                     `
-                        <div class="col-2 text-center" style=\"border-top: 2px solid #e1e1e1;font-weight: bold;font-size: 17px;\">
-                            ${sumMonths[i].toFixed(2)} 
+                        <div class="col-3 col-sm-2 text-center" style=\"border-top: 2px solid #e1e1e1;font-weight: bold;font-size: 17px;\">
+                            ${m.sum.toFixed(2)} 
                         </div>
                     `
                 )
-            }
+            })
             
             if(graph){
                 graph.destroy()
@@ -144,4 +122,15 @@
         });
     }
 
+    var today = new Date();
+    var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
+    var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth()-2, 1);
+
+    document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
+    document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
+
+    search_expenses_category()
+
 </script>
+
+{% endblock page %}

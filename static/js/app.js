@@ -1,77 +1,5 @@
 let graph
 
-// load_home()
-
-function load_home(){
-    $("#content").load("pages/home.html", function() {
-        // get_user_info()
-    })
-}
-
-// function get_user_info(){
-//     fetch("get_user_info", {redirect: 'follow'})
-//     .then((response) => {
-//         if (response.redirected) window.location.href = response.url;
-//         return response.json()
-//     })
-//     .then((json) => {
-//         document.getElementById("username").innerHTML = json.name
-//     })
-//     .catch((error) => {
-//         console.warn(error);
-//     });
-// }
-
-function load_add_expense(){
-    // window.history.pushState("","Add expenses", "/addexpenses");
-
-    $("#content").load("pages/add_expense.html", function() {
-        let date = new Date();
-
-        document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-        search_last_expenses()
-    })
-}
-
-function load_search_expenses(){
-    // window.history.pushState("","Search expenses", "/searchexpenses");
-
-    $("#content").load("pages/search_expenses.html", function() {
-        var today = new Date();
-        var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
-        var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        
-        document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
-        document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
-        
-        for (let i of document.getElementsByClassName("category")) {i.style.display = "none"}
-        document.getElementsByClassName("search")[0].addEventListener("change", function(){
-            if(document.getElementsByClassName("search")[0].value == "date"){
-                document.getElementsByClassName("category")[0].style.display = "none"
-                for (let i of document.getElementsByClassName("date")) {i.style.display = "flex"}
-            } else if(document.getElementsByClassName("search")[0].value == "category"){
-                document.getElementsByClassName("category")[0].style.display = "block"
-                for (let i of document.getElementsByClassName("date")) {i.style.display = "none"}
-            }
-        });
-
-        search_expenses()
-    })
-}
-
-function load_dashboard(){
-    $("#content").load("pages/dashboard.html", function() {
-        var today = new Date();
-        var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
-        var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth()-2, 1);
-    
-        document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
-        document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
-
-        search_expenses_category()
-    })
-}
-
 function fill_expenses(json){
     document.getElementsByClassName("expenses")[0].innerHTML = ''
     document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend",
@@ -195,7 +123,7 @@ function delete_expense(id){
             return
         })
         .then(() => {
-            load_add_expense()
+            search_expenses()
             Swal.fire({
                 position: 'top-end',
                 icon: 'success',
@@ -212,13 +140,12 @@ function delete_expense(id){
 }
 
 function open_edit_expense(id){
-    console.log("edit_expense")
     var exampleModal = document.getElementById('exampleModal')
     var modalTitle = exampleModal.querySelector('.modal-title')
 
     modalTitle.textContent = 'Editar despesa'
 
-    $(".modal-body").load("pages/edit_expense.html", function() {
+    $(".modal-body").load("editexpense", function() {
         fetch("get_expense?" + new URLSearchParams({
             "id": id
         }), {redirect: 'follow'})
@@ -231,8 +158,6 @@ function open_edit_expense(id){
             document.getElementsByClassName("editmoney_value")[0].value = json.value
             document.getElementsByClassName("editcategory")[0].value = json.category
             document.getElementsByClassName("editdate")[0].value = json.date
-
-            console.log(json)
         })
         .catch((error) => {
             console.warn(error);
@@ -255,7 +180,7 @@ function edit_expense(id){
     })
     .then((response) => response.text())
     .then(() => {
-        load_add_expense()
+        search_expenses()
         Swal.fire({
             position: 'top-end',
             icon: 'success',
@@ -274,4 +199,4 @@ document.addEventListener("keypress", function(event) {
     if (event.key === "Enter") {
         save_expense();
     }
-}); 
+});

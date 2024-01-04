@@ -10,22 +10,25 @@ members = [".", "entity"]
 
 [dependencies]
 rocket = { version ="0.5.0-rc.3", features = ["secrets"] }
-serde = "1.0.160"
-entity = { path = "entity" }
-serde_json = "1.0.96"
+serde = "1.0.193"
+serde_json = "1.0.108"
 sqlx = {version = "0.6.3", features = ["time"]}
-chrono = { version = "0.4.23", features = ["serde"] }
+chrono = { version = "0.4.31", features = ["serde"] }
+entity = { path = "entity" }
 
-time = { version = "0.3.4", features = ["serde","serde-human-readable", "local-offset"] }
+time = { version = "0.3.31", features = ["serde","serde-human-readable", "local-offset"] }
 
-rust-argon2 = "1.0"
-anyhow = "1.0.70"
-thiserror = "1.0.48"
+rust-argon2 = "2.0.0"
+anyhow = "1.0.76"
+thiserror = "1.0.52"
 
 [dependencies.rocket_db_pools]
 version = "=0.1.0-rc.3"
 features = ["sqlx_mysql"]
 
 [dependencies.rocket_dyn_templates]
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.3"
 features = ["tera"]
+
+[build]
+rustflags = ["-Z", "threads=6"]

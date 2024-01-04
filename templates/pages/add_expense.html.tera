@@ -36,12 +36,11 @@
 
 <script>
     let date = new Date();
-
     document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-
-    function search_last_expenses(){
+    
+function search_expenses(){
         fetch("search_expenses?" + new URLSearchParams({
-            "name": "last15"
+            "name": "currentMonth"
         }), {redirect: 'follow'})
         .then((response) => {
             if (response.redirected) window.location.href = response.url;
@@ -55,7 +54,90 @@
         });
     }
 
-    search_last_expenses()
+    function save_expense(){
+        fetch("save_expense?" + new URLSearchParams({
+            "name": document.getElementsByClassName("nome")[0].value,
+            "value": document.getElementsByClassName("money_value")[0].value,
+            "category": document.getElementsByClassName("category")[0].value,
+            "date": document.getElementsByClassName("date")[0].value}),
+        {
+            method: "POST"
+        })
+        .then((response) => response.text())
+        .then((html) => {
+            document.getElementsByClassName("nome")[0].value = ""
+            document.getElementsByClassName("money_value")[0].value = ""
+            document.getElementsByClassName("category")[0].selectedIndex = 0
+            document.getElementsByClassName("date")[0].valueAsDate = new Date()
+
+            Swal.fire({
+                position: 'top-end',
+                icon: 'success',
+                title: 'Despesa salva com sucesso',
+                showConfirmButton: false,
+                timer: 2000,
+                toast: true
+              })
+            document.getElementsByClassName("expenses").innerHTML = ''
+            search_expenses()
+            setTimeout(() => {
+                document.getElementsByClassName("nome")[0].focus();
+            }, 200);
+        })
+        .catch((error) => {
+            console.warn(error);
+        });
+    }
+
+    function edit_expense(id){
+        fetch("edit_expense?" + new URLSearchParams({
+            "id": id,
+            "name": document.getElementsByClassName("editnome")[0].value,
+            "value": document.getElementsByClassName("editmoney_value")[0].value,
+            "category": document.getElementsByClassName("editcategory")[0].value,
+            "date": document.getElementsByClassName("editdate")[0].value}),
+        {
+            method: "POST"
+        })
+        .then((response) => response.text())
+        .then(() => {
+            Swal.fire({
+                position: 'top-end',
+                icon: 'success',
+                title: 'Despesa alterada com sucesso',
+                showConfirmButton: false,
+                timer: 2000,
+                toast: true
+            })
+        })
+        .catch((error) => {
+            console.warn(error);
+        });
+    }
+
+    function delete_expense(id){
+        fetch("delete_expense?" + new URLSearchParams({
+            "id": id}), {method: "POST", redirect: 'follow'
+        }).then((response) => {
+            if (response.redirected) window.location.href = response.url;
+            return
+        })
+        .then(() => {
+            Swal.fire({
+                position: 'top-end',
+                icon: 'success',
+                title: 'Despesa deletada com sucesso',
+                showConfirmButton: false,
+                timer: 2000,
+                toast: true
+            })
+        })
+        .catch((error) => {
+            console.warn(error);
+        });
+    }
+
+    search_expenses()
 </script>
 
 {% endblock page %}

@@ -1,6 +1,7 @@
 #[macro_use] extern crate rocket;
 
 use rocket::fs::{relative, FileServer};
+use rocket::request::FlashMessage;
 // use rocket::request::FlashMessage;
 use rocket::response::Redirect;
 use rocket_db_pools::Database;
@@ -33,8 +34,10 @@ fn rocket() -> _ {
             user_routes::get_settings,
             index,
             settings,
-            // searchexpenses,
-            // addexpenses,
+            searchexpenses,
+            addexpenses,
+            dashboard,
+            editexpense
         ]
     ).register("/",catchers![unauthorized])
     .mount("/", FileServer::from(relative!("static")))
@@ -59,15 +62,25 @@ pub async fn settings(mut db: Connection<db::Logs>, user: AuthenticatedUser) -> 
     Template::render("pages/settings",json!({"username": user.name,"settings": stream}))
 }
 
-// #[get("/searchexpenses")]
-// pub async fn searchexpenses(flash: Option<FlashMessage<'_>>) -> Template {
-//     Template::render("pages/search_expenses",json!({"message": flash.map(FlashMessage::into_inner)}))
-// }
+#[get("/searchexpenses")]
+pub async fn searchexpenses(user: AuthenticatedUser) -> Template {
+    Template::render("pages/search_expenses",json!({"username": user.name}))
+}
 
-// #[get("/addexpenses")]
-// pub async fn addexpenses(flash: Option<FlashMessage<'_>>) -> Template {
-//     Template::render("pages/add_expense",json!({"message": flash.map(FlashMessage::into_inner)}))
-// }
+#[get("/addexpenses")]
+pub async fn addexpenses(user: AuthenticatedUser) -> Template {
+    Template::render("pages/add_expense",json!({"username": user.name}))
+}
+
+#[get("/dashboard")]
+pub async fn dashboard(user: AuthenticatedUser) -> Template {
+    Template::render("pages/dashboard",json!({"username": user.name}))
+}
+
+#[get("/editexpense")]
+pub async fn editexpense(user: AuthenticatedUser) -> Template {
+    Template::render("pages/edit_expense",json!({"username": user.name}))
+}
 
 #[catch(401)]
 fn unauthorized() -> Redirect {

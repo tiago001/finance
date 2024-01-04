@@ -34,7 +34,7 @@
               <span class="hide-menu">CONTROLE DE GASTOS</span>
             </li>
             <li class="sidebar-item">
-              <a class="sidebar-link" onclick="load_dashboard()" aria-expanded="false">
+              <a class="sidebar-link" href="dashboard" aria-expanded="false" rel="no-refresh">
                 <span>
                   <i class="ti ti-article"></i>
                 </span>
@@ -42,7 +42,7 @@
               </a>
             </li>
             <li class="sidebar-item">
-              <a class="sidebar-link" onclick="load_search_expenses()"  aria-expanded="false">
+              <a class="sidebar-link" href="searchexpenses" aria-expanded="false" rel="no-refresh"> <!-- onclick="load_search_expenses()" -->
                 <span>
                   <i class="ti ti-alert-circle"></i>
                 </span>
@@ -50,7 +50,7 @@
               </a>
             </li>
             <li class="sidebar-item">
-              <a class="sidebar-link" onclick="load_add_expense()" aria-expanded="false">
+              <a class="sidebar-link" href="addexpenses" aria-expanded="false" rel="no-refresh">
                 <span>
                   <i class="ti ti-cards"></i>
                 </span>
@@ -176,7 +176,7 @@
                       <i class="ti ti-list-check fs-6"></i>
                       <p class="mb-0 fs-3">My Task</p>
                     </a>
-                    <a href="/settings" class="d-flex align-items-center gap-2 dropdown-item">
+                    <a href="/settings" class="d-flex align-items-center gap-2 dropdown-item" rel="no-refresh">
                       <i class="ti ti-settings fs-6"></i>
                       <p class="mb-0 fs-3">Settings</p>
                     </a>
@@ -212,8 +212,9 @@
           ...
         </div>
         <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Delete</button>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Save changes</button>
         </div>
       </div>
     </div>
