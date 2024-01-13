@@ -5,14 +5,13 @@ use entity::expense::Expense as Expense;
 use rocket_db_pools::{sqlx, Connection};
 use serde::Serialize;
 use time::{PrimitiveDateTime, OffsetDateTime};
-use time::macros::offset;
 
 use crate::user_routes::AuthenticatedUser;
 use crate::db;
 
 #[post("/save_expense?<name>&<value>&<category>&<date>")]
 pub async fn save_expense(mut db: Connection<db::Logs>, name: &str, value: f64, category: &str, date: &str, user: AuthenticatedUser) -> String {
-    let now = OffsetDateTime::now_utc().to_offset(offset!(-3));
+    let now = OffsetDateTime::now_utc(); //.to_offset(offset!(-3))
 
     sqlx::query!("INSERT INTO expenses
         (name, value, category,date, user_id, created_date)

@@ -1,8 +1,4 @@
 {% extends "index" %} {% block page %}
-<div class="input-group mb-3">
-    <span class="input-group-text" id="basic-addon1">Nome</span>
-    <input type="text" class="form-control nome" aria-label="nome" aria-describedby="basic-addon1">
-</div>
 
 <div class="input-group mb-3">
     <span class="input-group-text" id="basic-addon1">Valor</span>
@@ -10,38 +6,33 @@
 </div>
 
 <div class="input-group mb-3">
-    <span class="input-group-text" id="basic-addon1">Categoria</span>
-    <select class="form-select category" aria-label="Default select example">
-        <option value="Indefinido" selected>Selecione a categoria</option>
-        <option value="Education">Education</option>
-        <option value="Food">Food</option>
-        <option value="Fun">Fun</option>
-        <option value="Transport">Transport</option>
-        <option value="Tech">Tech</option>
-        <option value="Mercado">Mercado</option>
-        <option value="Others">Others</option>
-    </select>
-</div>
-
-<div class="input-group mb-3">
     <span class="input-group-text" id="basic-addon1">Data</span>
     <input type="date" class="form-control date" data-provide="datepicker">
 </div>
-  
-<button type="button" class="btn btn-primary w-100" onclick="save_expense()">Salvar Despesa</button>
 
-<div class="row expenses">
+<div class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Observação</span>
+    <input type="text" class="form-control obs" aria-label="obs" aria-describedby="basic-addon1">
+</div>
+  
+<button type="button" class="btn btn-primary w-100" onclick="save_income()">Salvar Receita</button>
+
+<div class="row incomes">
 
 </div>
 
 <script>
     let date = new Date();
     document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+    document.addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            save_income();
+        }
+    });
     
-    function search_expenses(){
-        fetch("search_expenses?" + new URLSearchParams({
-            "name": "currentMonth"
-        }), {redirect: 'follow'})
+    function search_incomes(){
+        fetch("search_income", {redirect: 'follow'})
         .then((response) => {
             if (response.redirected) window.location.href = response.url;
             return response.json()
@@ -54,34 +45,32 @@
         });
     }
 
-    function save_expense(){
-        fetch("save_expense?" + new URLSearchParams({
-            "name": document.getElementsByClassName("nome")[0].value,
+    function save_income(){
+        fetch("save_income?" + new URLSearchParams({
+            "obs": document.getElementsByClassName("obs")[0].value,
             "value": document.getElementsByClassName("money_value")[0].value,
-            "category": document.getElementsByClassName("category")[0].value,
             "date": document.getElementsByClassName("date")[0].value}),
         {
             method: "POST"
         })
         .then((response) => response.text())
         .then((html) => {
-            document.getElementsByClassName("nome")[0].value = ""
+            document.getElementsByClassName("obs")[0].value = ""
             document.getElementsByClassName("money_value")[0].value = ""
-            document.getElementsByClassName("category")[0].selectedIndex = 0
             document.getElementsByClassName("date")[0].valueAsDate = new Date()
 
             Swal.fire({
                 position: 'top-end',
                 icon: 'success',
-                title: 'Despesa salva com sucesso',
+                title: 'Receita salva com sucesso',
                 showConfirmButton: false,
                 timer: 2000,
                 toast: true
               })
-            document.getElementsByClassName("expenses").innerHTML = ''
-            search_expenses()
+            document.getElementsByClassName("incomes").innerHTML = ''
+            search_incomes()
             setTimeout(() => {
-                document.getElementsByClassName("nome")[0].focus();
+                document.getElementsByClassName("money_value")[0].focus();
             }, 200);
         })
         .catch((error) => {
@@ -89,66 +78,15 @@
         });
     }
 
-    function edit_expense(id){
-        fetch("edit_expense?" + new URLSearchParams({
-            "id": id,
-            "name": document.getElementsByClassName("editnome")[0].value,
-            "value": document.getElementsByClassName("editmoney_value")[0].value,
-            "category": document.getElementsByClassName("editcategory")[0].value,
-            "date": document.getElementsByClassName("editdate")[0].value}),
-        {
-            method: "POST"
-        })
-        .then((response) => response.text())
-        .then(() => {
-            Swal.fire({
-                position: 'top-end',
-                icon: 'success',
-                title: 'Despesa alterada com sucesso',
-                showConfirmButton: false,
-                timer: 2000,
-                toast: true
-            })
-        })
-        .catch((error) => {
-            console.warn(error);
-        });
-    }
-
-    function delete_expense(id){
-        fetch("delete_expense?" + new URLSearchParams({
-            "id": id}), {method: "POST", redirect: 'follow'
-        }).then((response) => {
-            if (response.redirected) window.location.href = response.url;
-            return
-        })
-        .then(() => {
-            Swal.fire({
-                position: 'top-end',
-                icon: 'success',
-                title: 'Despesa deletada com sucesso',
-                showConfirmButton: false,
-                timer: 2000,
-                toast: true
-            })
-        })
-        .catch((error) => {
-            console.warn(error);
-        });
-    }
-
     function fill_expenses(json){
-        document.getElementsByClassName("expenses")[0].innerHTML = ''
-        document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend",
+        document.getElementsByClassName("incomes")[0].innerHTML = ''
+        document.getElementsByClassName("incomes")[0].insertAdjacentHTML("beforeend",
             `
-                <div class="col-3">
-                    Nome
-                </div>
-                <div class="col-3 text-center">
+                <div class="col-6 text-center">
                     Valor
                 </div>
                 <div class="col-3 text-center">
-                    Categoria
+                    Obs
                 </div>
                 <div class="col-3 text-center">
                     Data
@@ -160,35 +98,32 @@
             json.forEach(e => {
                 total += e.value
                 // total = parseFloat(total.toFixed(10))
-                document.getElementsByClassName("expenses")[0].insertAdjacentHTML(
+                document.getElementsByClassName("incomes")[0].insertAdjacentHTML(
                     "beforeend",
                     `
-                        <div class="col-3" expense="${e.id}" value=${e.name} ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                            <span class="name" expense="${e.id}" value=${e.name} contenteditable="true">${e.name}</span> 
-                        </div>
-                        <div class="col-3 text-center" expense="${e.id}" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        <div class="col-6 text-center" expense="${e.id}" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
                             <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
                         </div>
                         <div class="col-3 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                            ${e.category} 
+                            ${e.obs} 
                         </div>
                         <div class="col-2 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
                              ${e.date != lastDate ? e.date : ""}
                         </div>
                         <div class="col-1 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                            <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
+                            {# <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
                                 <span><i class="ti ti-x"></i></span>
                             </button>-->
                             <button class="btn btn-sm btn-light py-0" onclick="open_edit_expense(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
                                 <span><i class="ti ti-pencil"></i></span>
-                            </button>
+                            </button> #}
                         </div>
                     `
                 )
     
                 lastDate = e.date
             })
-            document.getElementsByClassName("expenses")[0].insertAdjacentHTML("afterbegin",
+            document.getElementsByClassName("incomes")[0].insertAdjacentHTML("afterbegin",
             `
                 <div class="col-3"></div>
                 <div class="col-3"></div>
@@ -251,7 +186,55 @@
             })
     }
 
-    search_expenses()
+    {# function edit_expense(id){
+        fetch("edit_expense?" + new URLSearchParams({
+            "id": id,
+            "name": document.getElementsByClassName("editnome")[0].value,
+            "value": document.getElementsByClassName("editmoney_value")[0].value,
+            "category": document.getElementsByClassName("editcategory")[0].value,
+            "date": document.getElementsByClassName("editdate")[0].value}),
+        {
+            method: "POST"
+        })
+        .then((response) => response.text())
+        .then(() => {
+            Swal.fire({
+                position: 'top-end',
+                icon: 'success',
+                title: 'Despesa alterada com sucesso',
+                showConfirmButton: false,
+                timer: 2000,
+                toast: true
+            })
+        })
+        .catch((error) => {
+            console.warn(error);
+        });
+    } #}
+
+    {# function delete_expense(id){
+        fetch("delete_expense?" + new URLSearchParams({
+            "id": id}), {method: "POST", redirect: 'follow'
+        }).then((response) => {
+            if (response.redirected) window.location.href = response.url;
+            return
+        })
+        .then(() => {
+            Swal.fire({
+                position: 'top-end',
+                icon: 'success',
+                title: 'Despesa deletada com sucesso',
+                showConfirmButton: false,
+                timer: 2000,
+                toast: true
+            })
+        })
+        .catch((error) => {
+            console.warn(error);
+        });
+    } #}
+
+    search_incomes()
 </script>
 
 {% endblock page %}

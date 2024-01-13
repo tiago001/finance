@@ -57,6 +57,14 @@
                 <span class="hide-menu">Add Despesa</span>
               </a>
             </li>
+            <li class="sidebar-item">
+              <a class="sidebar-link" href="income" aria-expanded="false" rel="no-refresh">
+                <span>
+                  <i class="ti ti-currency-dollar"></i>
+                </span>
+                <span class="hide-menu">Receitas</span>
+              </a>
+            </li>
             <!-- <li class="sidebar-item">
               <a class="sidebar-link" href="./ui-forms.html" aria-expanded="false">
                 <span>
@@ -142,8 +150,8 @@
                 <i class="ti ti-menu-2"></i>
               </a>
             </li>
-            <li class="nav-item d-block d-sm-block d-md-block d-lg-none">
-              <a class="nav-link nav-icon-hover" onclick="load_home()">
+            <li class="nav-item d-block d-sm-block d-md-block d-lg-block d-xl-none">
+              <a class="nav-link nav-icon-hover" href="/">
                 <i class="ti ti-home-2"></i>
               </a>
             </li>

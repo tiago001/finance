@@ -3,21 +3,27 @@
     <div class="col-12 col-sm-6 col-md-3">
         <div class="card add-expense p-4 mb-3">
             <div class="class-body">
-                <button onclick="load_dashboard()" class="btn btn-primary w-100">Dashboard</button>
+                <a href="dashboard">
+                    <button class="btn btn-primary w-100">Dashboard</button>
+                </a>
             </div>
         </div>
     </div>
     <div class="col-12 col-sm-6 col-md-3">
         <div class="card add-expense p-4 mb-3">
             <div class="class-body">
-                <button onclick="load_search_expenses()" class="btn btn-primary w-100">Buscar Despesa</button>
+                <a href="searchexpenses">
+                    <button class="btn btn-primary w-100">Buscar Despesa</button>
+                </a>
             </div>
         </div>
     </div>
     <div class="col-12 col-sm-6 col-md-3">
         <div class="card add-expense p-4 mb-3">
             <div class="class-body">
-                <button onclick="load_add_expense()" class="btn btn-primary w-100">Add Despesa</button>
+                <a href="addexpenses">
+                    <button class="btn btn-primary w-100">Add Despesa</button>
+                </a>
             </div>
         </div>
     </div>

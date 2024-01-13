@@ -10,7 +10,7 @@ use rocket_dyn_templates::Template;
 use entity::settings::Settings;
 use serde_json::json;
 
-use finance::{db, user_routes, expense_routes};
+use finance::{db, user_routes, expense_routes, income_routes};
 use finance::{user_routes::AuthenticatedUser, user_routes::redirect_to_login};
 
 #[launch]
@@ -24,6 +24,8 @@ fn rocket() -> _ {
             expense_routes::search_expenses_category,
             expense_routes::edit_expense,
             expense_routes::delete_expense,
+            income_routes::save_income,
+            income_routes::search_income,
             user_routes::get_user_info,
             user_routes::create_account,
             user_routes::verify_account,
@@ -37,10 +39,12 @@ fn rocket() -> _ {
             searchexpenses,
             addexpenses,
             dashboard,
-            editexpense
+            editexpense,
+            income
         ]
     ).register("/",catchers![unauthorized])
-    .mount("/", FileServer::from(relative!("static")))
+    .mount("/", FileServer::from("static"))
+    // .mount("/", FileServer::from("/finance/static"))
     .attach(Template::fairing())
 }
 
@@ -80,6 +84,11 @@ pub async fn dashboard(user: AuthenticatedUser) -> Template {
 #[get("/editexpense")]
 pub async fn editexpense(user: AuthenticatedUser) -> Template {
     Template::render("pages/edit_expense",json!({"username": user.name}))
+}
+
+#[get("/income")]
+pub async fn income(user: AuthenticatedUser) -> Template {
+    Template::render("pages/income",json!({"username": user.name}))
 }
 
 #[catch(401)]
