@@ -91,6 +91,14 @@ pub async fn search_expenses(mut db: Connection<db::Logs>, name: &str, value1: O
         stream = sqlx::query_as!(Expense, "SELECT * FROM expenses WHERE user_id = ? AND MONTH(`date`) = MONTH(now()) AND YEAR(`date`) = YEAR(now()) ORDER BY date DESC", user.user_id)
         .fetch_all(&mut *db)
         .await.unwrap();
+    } else if name == "lastExpenses" {
+        stream = sqlx::query_as!(Expense, "SELECT * FROM expenses WHERE user_id = ? ORDER BY date desc,created_date desc LIMIT 100", user.user_id)
+        .fetch_all(&mut *db)
+        .await.unwrap();
+    } else if name == "lastAddedExpenses" {
+        stream = sqlx::query_as!(Expense, "SELECT * FROM expenses WHERE user_id = ? ORDER BY created_date desc LIMIT 100", user.user_id)
+        .fetch_all(&mut *db)
+        .await.unwrap();
     }
 
     serde_json::to_string(&stream).unwrap()

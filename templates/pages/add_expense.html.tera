@@ -30,8 +30,21 @@
   
 <button type="button" class="btn btn-primary w-100" onclick="save_expense()">Salvar Despesa</button>
 
-<div class="row expenses">
+<div class="row mt-2">
+    <div class="col-7"></div>
+    <div class="col-2 total">
+        <span>Total 0.00</span>
+    </div>
+    <div class="col-3">
+        <select class="form-select search_type" onchange="search_expenses()">
+            <option value="currentMonth" selected>Despesas do mês atual</option>
+            <option value="lastExpenses">Despesas mais recentes</option>
+            <option value="lastAddedExpenses">Últimas despesas adicionadas</option>
+        </select>
+    </div>
+</div>
 
+<div class="row expenses mt-2">
 </div>
 
 <script>
@@ -40,7 +53,7 @@
     
     function search_expenses(){
         fetch("search_expenses?" + new URLSearchParams({
-            "name": "currentMonth"
+            "name": document.getElementsByClassName("search_type")[0].value
         }), {redirect: 'follow'})
         .then((response) => {
             if (response.redirected) window.location.href = response.url;
@@ -63,26 +76,40 @@
         {
             method: "POST"
         })
-        .then((response) => response.text())
-        .then((html) => {
-            document.getElementsByClassName("nome")[0].value = ""
-            document.getElementsByClassName("money_value")[0].value = ""
-            document.getElementsByClassName("category")[0].selectedIndex = 0
-            document.getElementsByClassName("date")[0].valueAsDate = new Date()
+        .then((response) => {
+            if(response.status != 200){
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'error',
+                    title: 'Erro ao salvar despesa',
+                    showConfirmButton: false,
+                    timer: 2500,
+                    toast: true
+                })
+            } else {
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Despesa salva com sucesso',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    toast: true
+                })
 
-            Swal.fire({
-                position: 'top-end',
-                icon: 'success',
-                title: 'Despesa salva com sucesso',
-                showConfirmButton: false,
-                timer: 2000,
-                toast: true
-              })
-            document.getElementsByClassName("expenses").innerHTML = ''
-            search_expenses()
-            setTimeout(() => {
-                document.getElementsByClassName("nome")[0].focus();
-            }, 200);
+                document.getElementsByClassName("nome")[0].value = ""
+                document.getElementsByClassName("money_value")[0].value = ""
+                document.getElementsByClassName("category")[0].selectedIndex = 0
+                let date = new Date();
+                document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+                document.getElementsByClassName("expenses").innerHTML = ''
+                search_expenses()
+                setTimeout(() => {
+                    document.getElementsByClassName("nome")[0].focus();
+                }, 200);
+
+                return response.text()
+            }
         })
         .catch((error) => {
             console.warn(error);
@@ -139,6 +166,7 @@
 
     function fill_expenses(json){
         document.getElementsByClassName("expenses")[0].innerHTML = ''
+        let searchType = document.getElementsByClassName("search_type")[0].value
         document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend",
             `
                 <div class="col-3">
@@ -154,9 +182,11 @@
                     Data
                 </div>
             `
-            )
+        )
             let total = 0
             let lastDate = ""
+
+
             json.forEach(e => {
                 total += e.value
                 // total = parseFloat(total.toFixed(10))
@@ -188,16 +218,8 @@
     
                 lastDate = e.date
             })
-            document.getElementsByClassName("expenses")[0].insertAdjacentHTML("afterbegin",
-            `
-                <div class="col-3"></div>
-                <div class="col-3"></div>
-                <div class="col-3"></div>
-                <div class="col-3 text-center">
-                    Total ${total.toFixed(2)}
-                </div>
-            `
-            )
+
+            document.getElementsByClassName("total")[0].innerHTML = `Total ${total.toFixed(2)}`
     
             $('.name').on('blur', function(e){
                 if(e.target.textContent.trim() != e.target.getAttribute("value")) {
