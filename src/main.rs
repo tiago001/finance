@@ -43,8 +43,7 @@ fn rocket() -> _ {
             income
         ]
     ).register("/",catchers![unauthorized])
-    .mount("/", FileServer::from("static"))
-    // .mount("/", FileServer::from("/finance/static"))
+    .mount("/", FileServer::from("static")) // Enable for development
     .attach(Template::fairing())
 }
 

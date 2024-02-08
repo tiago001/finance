@@ -101,7 +101,7 @@ pub async fn create_account(mut db: Connection<Logs>, user_form: Form<InfoLogin>
     }
 
     let stored_user: Option<Users> = match sqlx::query_as!(Users,
-        "SELECT id, email, password, name FROM users WHERE email = ?",
+        "SELECT id, email, password, name, salt FROM users WHERE email = ?",
         user.email
     )
     .fetch_one(&mut *db)
@@ -133,7 +133,7 @@ pub async fn verify_account(mut db: Connection<Logs>, cookies: & CookieJar<'_>, 
     let user = user_form.into_inner();
 
     let stored_user = match sqlx::query_as!(Users,
-            "SELECT id, email, password, name FROM users WHERE email = ?;",
+            "SELECT id, email, password, name, salt FROM users WHERE email = ?;",
             user.email
         )
         .fetch_one(&mut *db)
@@ -160,7 +160,7 @@ pub async fn verify_account(mut db: Connection<Logs>, cookies: & CookieJar<'_>, 
 
 #[get("/get_user_info")]
 pub async fn get_user_info(mut db: Connection<Logs>, user: AuthenticatedUser) -> String {
-    let user = sqlx::query_as!(Users, "SELECT id, email, password, name FROM users WHERE id = ?",
+    let user = sqlx::query_as!(Users, "SELECT id, email, password, name, salt FROM users WHERE id = ?",
         user.user_id)
         .fetch_one(&mut *db)
         .await.unwrap();
