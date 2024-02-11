@@ -7,8 +7,8 @@
       <!-- Sidebar scroll-->
       <div>
         <div class="brand-logo d-flex align-items-center justify-content-between">
-          <a href="./" class="text-nowrap logo-img pt-3" style="font-size: 22px;">
-            <img class="pb-2" src="/assets/images/logos/icon.png" style="width: 33px;"/>
+          <a href="./" class="text-nowrap logo-img pt-3 font-22">
+            <img class="pb-2 width-33" src="/assets/images/logos/icon.png"/>
             <span class="ps-1">
               Projeto Finanças
             </span>

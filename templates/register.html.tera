@@ -7,9 +7,11 @@
             <div class="card mb-0">
               <div class="card-body">
                 <a href="javascript:void(0)" class="text-nowrap logo-img text-center d-block py-3 w-100">
-                  <img src="../assets/images/logos/dark-logo.svg" width="180" alt="">
+                  <img class="pb-2" src="/assets/images/logos/icon.png" style="width: 33px;"/>
+                  <span class="ps-1 fs-6">
+                      Projeto Finanças
+                  </span>
                 </a>
-                <p class="text-center">Your Social Campaigns</p>
 
                 <form action="/createaccount" method="post">
                   <div class="mb-3">

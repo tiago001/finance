@@ -27,6 +27,15 @@
             </div>
         </div>
     </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card add-expense p-4 mb-3">
+            <div class="class-body">
+                <a href="income">
+                    <button class="btn btn-primary w-100">Receitas</button>
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock page %}

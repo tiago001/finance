@@ -7,9 +7,11 @@
                     <div class="card mb-0">
                         <div class="card-body">
                             <a href="javascript:void(0)" class="text-nowrap logo-img text-center d-block py-3 w-100">
-                                <img src="../assets/images/logos/dark-logo.svg" width="180" alt="">
+                                <img class="pb-2" src="/assets/images/logos/icon.png" style="width: 33px;"/>
+                                <span class="ps-1 fs-6">
+                                    Projeto Finanças
+                                </span>
                             </a>
-                            <p class="text-center">Your Social Campaigns</p>
                             <form action="/verifyaccount" method="post">
                                 <input type="text" id="id" name="id" value="0" placeholder="0" hidden>
                                 <div class="mb-3">
@@ -23,21 +25,18 @@
                                 {%if message and message.0 == "success" %}
                                 <div class="d-flex align-items-center justify-content-between mb-4">
                                     <span>{{ message.1 }}</span>
-                                    <a class="text-primary fw-bold" href="./teste.html">Forgot Password ?</a>
                                 </div>
                                 {% elif  message and message.0 == "error"%}
                                 <div class="d-flex align-items-center justify-content-between mb-4">
                                     <span class="text-danger">{{ message.1 }}</span>
-                                    <a class="text-primary fw-bold" href="./teste.html">Forgot Password ?</a>
                                 </div>
                                 {% else %}
                                 <div class="d-flex align-items-center justify-content-between mb-4 float-end">
-                                    <a class="text-primary fw-bold" href="./teste.html">Forgot Password ?</a>
                                 </div>
                                 {% endif %}
                                 <button type="submit" class="btn btn-primary w-100 py-8 fs-4 mb-4 rounded-2">Sign In</button>
                                 <div class="d-flex align-items-center justify-content-center">
-                                    <p class="fs-4 mb-0 fw-bold">New to Modernize?</p>
+                                    <p class="fs-4 mb-0 fw-bold">Doesn't have an account?</p>
                                     <a class="text-primary fw-bold ms-2" href="/register">Create an account</a>
                                 </div>
                             </form>

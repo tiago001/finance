@@ -17,9 +17,36 @@
   
 <button type="button" class="btn btn-primary w-100" onclick="save_income()">Salvar Receita</button>
 
-<div class="row incomes">
+<div class="pt-4 incomes-year text-end">
 
 </div>
+
+<div class="row pt-4 incomes">
+
+</div>
+
+<style>
+    .show-value:hover {
+        background: #ecf0fa;
+    }
+
+    .show-value:hover .value {
+        display: none;
+    }
+
+    .show-value:hover .full-value {
+        display: block;
+    }
+
+    .value {
+        display: block;
+    }
+
+    .full-value {
+        display: none;
+    }
+
+</style>
 
 <script>
     let date = new Date();
@@ -38,11 +65,91 @@
             return response.json()
         })
         .then((json) => {
-            fill_expenses(json)
+            fill_incomes(json)
+            organize_incomes(json)
         })
         .catch((error) => {
             console.warn(error);
         });
+    }
+
+    let months = {
+        1 : "Janeiro",
+        2 : "Fevereiro",
+        3 : "Março",
+        4 : "Abril",
+        5 : "Maio",
+        6 : "Junho",
+        7 : "Julho",
+        8 : "Agosto",
+        9 : "Setembro",
+        10 : "Outubro",
+        11 : "Novembro",
+        12 : "Dezembro"
+    }
+
+    function organize_incomes(json){
+        let data = []
+        json.forEach(e => {
+            year = "y"+new Date(e.date).getFullYear().toString()
+            if(data[year] == null){
+                data[year] = []
+            }
+
+            month = (new Date(e.date+"T00:00").getMonth()+1)
+
+            if(data[year][month] == null){
+                data[year][month] = []
+            }
+            
+            data[year][month].push(e)
+        })
+
+        document.getElementsByClassName("incomes-year")[0].insertAdjacentHTML("beforeend",
+                `<div class="row">
+                    <div class="col-1"></div>
+                    <div class="col-10 row months">
+                    </div><div class="col-1">Total</div>
+                </div>`
+            );
+
+        for (var key in data) {
+            total = 0;
+            document.getElementsByClassName("incomes-year")[0].insertAdjacentHTML("beforeend",
+                `<div class="row show-value">
+                    <div class="col-1 text-center " style="border-bottom: 2px solid #e1e1e1;">${key.substring(3,key.length)}</div>
+                    <div class="row col-10 ${key}" style="border-bottom: 2px solid #e1e1e1;"></div>
+                    <div class="col-1 income-${key}" style="border-bottom: 2px solid #e1e1e1;"></div>
+                </div>`
+            );
+
+            for (let i = 1; i <= 12; i++) {
+                sum = 0
+                if(data[key][i] != null){
+                    sum = data[key][i].reduce(function (acc, obj) { return acc + obj.value; }, 0)
+                }
+
+                document.getElementsByClassName(key)[0].insertAdjacentHTML("beforeend",
+                    `<div class="col-1 value">${sum == 0 ? "-" : sum > 1000 ? toFixed(sum/1000,2)+"K" : sum}</div>
+                    <div class="col-1 full-value">${sum == 0 ? "-" : toFixed(sum,2)}</div>`
+                );
+                total = total + sum
+            }
+
+            if(total == 0){
+                document.getElementsByClassName("income-"+key)[0].innerHTML = "-"
+            } else {
+                document.getElementsByClassName("income-"+key)[0].innerHTML = 
+                    `<span class="value">${total > 1000 ? toFixed(total/1000,2)+"K" : total}</span>
+                    <span class="full-value">${total - parseInt(total) > 0 ? toFixed(total,2) : total}</span>`
+            }
+        }
+
+        for (let i = 1; i <= 12; i++) {
+            document.getElementsByClassName("months")[0].insertAdjacentHTML("beforeend",
+                `<div class="col-1">${months[i].substring(0,3)}</div>`
+            );
+        }
     }
 
     function save_income(){
@@ -53,32 +160,45 @@
         {
             method: "POST"
         })
-        .then((response) => response.text())
-        .then((html) => {
-            document.getElementsByClassName("obs")[0].value = ""
-            document.getElementsByClassName("money_value")[0].value = ""
-            document.getElementsByClassName("date")[0].valueAsDate = new Date()
+        .then((response) => {
+            console.log(response.status)
+            if(response.status != 200){
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'error',
+                    title: 'Erro ao salvar receita',
+                    showConfirmButton: false,
+                    timer: 2500,
+                    toast: true
+                })
+            } else {
+                document.getElementsByClassName("obs")[0].value = ""
+                document.getElementsByClassName("money_value")[0].value = ""
+                document.getElementsByClassName("date")[0].valueAsDate = new Date()
+    
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Receita salva com sucesso',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    toast: true
+                  })
+                document.getElementsByClassName("incomes").innerHTML = ''
+                search_incomes()
+                setTimeout(() => {
+                    document.getElementsByClassName("money_value")[0].focus();
+                }, 200);
 
-            Swal.fire({
-                position: 'top-end',
-                icon: 'success',
-                title: 'Receita salva com sucesso',
-                showConfirmButton: false,
-                timer: 2000,
-                toast: true
-              })
-            document.getElementsByClassName("incomes").innerHTML = ''
-            search_incomes()
-            setTimeout(() => {
-                document.getElementsByClassName("money_value")[0].focus();
-            }, 200);
+                return response.text()
+            }
         })
         .catch((error) => {
             console.warn(error);
         });
     }
 
-    function fill_expenses(json){
+    function fill_incomes(json){
         document.getElementsByClassName("incomes")[0].innerHTML = ''
         document.getElementsByClassName("incomes")[0].insertAdjacentHTML("beforeend",
             `
@@ -88,9 +208,10 @@
                 <div class="col-3 text-center">
                     Obs
                 </div>
-                <div class="col-3 text-center">
+                <div class="col-2 text-center">
                     Data
                 </div>
+                <div class="col-1"></div>
             `
             )
             let total = 0
@@ -108,7 +229,7 @@
                             ${e.obs} 
                         </div>
                         <div class="col-2 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                             ${e.date != lastDate ? e.date : ""}
+                             ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
                         </div>
                         <div class="col-1 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
                             {# <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
@@ -128,9 +249,10 @@
                 <div class="col-3"></div>
                 <div class="col-3"></div>
                 <div class="col-3"></div>
-                <div class="col-3 text-center">
+                <div class="col-2 text-center">
                     Total ${total.toFixed(2)}
                 </div>
+                <div class="col-1"></div>
             `
             )
     
@@ -235,6 +357,11 @@
     } #}
 
     search_incomes()
+
+    function toFixed(num, fixed) {
+        var re = new RegExp('^-?\\d+(?:\.\\d{0,' + (fixed || -1) + '})?');
+        return num.toString().match(re)[0];
+    }
 </script>
 
 {% endblock page %}
