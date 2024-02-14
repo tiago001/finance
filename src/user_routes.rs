@@ -6,6 +6,9 @@ use rocket_db_pools::{sqlx, Connection};
 use rocket_dyn_templates::Template;
 use rocket::request::FlashMessage;
 use serde_json::json;
+use time::{PrimitiveDateTime, OffsetDateTime};
+use ring::rand::SecureRandom;
+use ring::rand;
 
 use rocket::http::Status;
 
@@ -83,8 +86,6 @@ fn login_error() -> Flash<Redirect>  {
     Flash::error(Redirect::to("/login"), "Incorrect email or password")
 }
 
-pub const USER_PASSWORD_SALT: &[u8] = b"some_random_salt";
-
 #[derive(FromForm)]
 pub struct InfoLogin {
     pub email: String,
@@ -114,8 +115,12 @@ pub async fn create_account(mut db: Connection<Logs>, user_form: Form<InfoLogin>
         return Flash::error(Redirect::to("/register"), "User already registered");
     }
 
+    let mut salt = [0u8; 16];
+    let rng = rand::SystemRandom::new();
+    rng.fill(&mut salt).unwrap();
+
     let hash_config = Config::default();
-    let hash = match argon2::hash_encoded(user.password.as_bytes(), USER_PASSWORD_SALT, &hash_config) {
+    let hash = match argon2::hash_encoded(user.password.as_bytes(), &salt, &hash_config) {
         Ok(result) => result,
         Err(_) => {
             return Flash::error(Redirect::to("/register"), "Issue creating account");
@@ -152,6 +157,12 @@ pub async fn verify_account(mut db: Connection<Logs>, cookies: & CookieJar<'_>, 
     if !is_password_correct {
         return login_error();
     }
+
+    let now = OffsetDateTime::now_utc();
+
+    sqlx::query!("INSERT INTO login_history (user_id, `date`) VALUES(?, ?);",
+        stored_user.id, PrimitiveDateTime::new(now.date(), now.time()))
+        .execute(&mut *db).await.unwrap();
 
     set_user_id_cookie(cookies, stored_user.id);
     set_user_name_cookie(cookies, stored_user.name);

@@ -19,6 +19,7 @@ entity = { path = "entity" }
 time = { version = "0.3.31", features = ["serde","serde-human-readable", "local-offset"] }
 
 rust-argon2 = "2.0.0"
+ring = "0.17.7"
 anyhow = "1.0.76"
 thiserror = "1.0.52"
 
