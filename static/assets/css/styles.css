@@ -15603,7 +15603,7 @@ textarea.form-control-lg {
 @media (max-width: 767.98px) {
   .navbar-nav .dropdown-menu {
     position: absolute;
-    width: 100%;
+    width: 85%;
   }
   .navbar-nav .nav-item.dropdown {
     position: static;
@@ -15715,6 +15715,24 @@ textarea.form-control-lg {
   }
   #main-wrapper[data-layout=vertical][data-sidebartype=mini-sidebar].show-sidebar .left-sidebar, #main-wrapper[data-layout=vertical][data-sidebartype=full].show-sidebar .left-sidebar {
     left: 0;
+  }
+}
+.chart {
+  margin: auto;
+  max-width: 700px;
+  max-height: 390px;
+}
+
+@media (max-width: 991.98px) {
+  .chart {
+    max-width: 700px;
+    max-height: 300px;
+  }
+}
+@media (max-width: 767.98px) {
+  .chart {
+    max-width: 700px;
+    max-height: 250px;
   }
 }
 * {

@@ -14,7 +14,7 @@ pub async fn save_income(mut db: Connection<db::Logs>, obs: Option<&str>, value:
         (obs, value, `date`, user_id, created_date)
         VALUES(?, ?, ?, ?, ?)",
         obs, value, date, user.user_id, PrimitiveDateTime::new(now.date(), now.time()))
-        .execute(&mut *db).await.unwrap();
+        .execute(db.as_mut()).await.unwrap();
 
     "ok".to_string()
 }
@@ -26,8 +26,49 @@ pub async fn search_income(mut db: Connection<db::Logs>, user: AuthenticatedUser
             "SELECT * FROM incomes WHERE user_id = ? ORDER BY date desc",
             user.user_id
         )
-        .fetch_all(&mut *db)
+        .fetch_all(db.as_mut())
         .await.unwrap();
 
     serde_json::to_string(&stream).unwrap()
+}
+
+#[post("/edit_income?<id>&<obs>&<value>&<date>")]
+pub async fn edit_income(mut db: Connection<db::Logs>,id: i64, obs: Option<&str>, value: Option<f64>, date: Option<&str>, user: AuthenticatedUser) -> String {
+
+    if obs.is_some() && value.is_some() && date.is_some() {
+        sqlx::query!("UPDATE incomes SET obs = ?, value = ?,  `date` = ? WHERE id = ? and user_id = ?",
+            obs, value, date, id, user.user_id).execute(db.as_mut()).await.unwrap();
+    } else if obs.is_some() {
+        sqlx::query!("UPDATE incomes SET obs = ? WHERE id = ? and user_id = ?",
+            obs, id, user.user_id).execute(db.as_mut()).await.unwrap();
+    } else if value.is_some() {
+        sqlx::query!("UPDATE incomes SET value = ? WHERE id = ? and user_id = ?",
+            value, id, user.user_id).execute(db.as_mut()).await.unwrap();
+    } else if date.is_some() {
+        sqlx::query!("UPDATE incomes SET date = ? WHERE id = ? and user_id = ?",
+            date, id, user.user_id).execute(db.as_mut()).await.unwrap();
+    }
+
+    "ok".to_string()
+}
+
+#[get("/get_income?<id>")]
+pub async fn get_income(mut db: Connection<db::Logs>, id: i64, user: AuthenticatedUser) -> String {
+    let stream = sqlx::query_as!(Income,
+        "SELECT * FROM incomes WHERE user_id = ? AND id = ?",
+        user.user_id, id
+    )
+    .fetch_one(db.as_mut())
+    .await.unwrap();
+
+    serde_json::to_string(&stream).unwrap()
+}
+
+#[post("/delete_income?<id>")]
+pub async fn delete_income(mut db: Connection<db::Logs>,id: i64, user: AuthenticatedUser) -> String {
+
+    sqlx::query!("DELETE from incomes WHERE id = ? and user_id = ?",
+        id, user.user_id).execute(db.as_mut()).await.unwrap();
+
+    "ok".to_string()
 }

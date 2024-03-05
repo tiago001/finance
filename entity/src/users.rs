@@ -7,7 +7,6 @@ pub struct Users {
     pub email: String,
     pub password: String,
     pub name: String,
-    pub salt: Option<String>
 }
 
 impl Default for Users {
@@ -16,8 +15,7 @@ impl Default for Users {
             id: 0,
             email: "".to_string(),
             password: "".to_string(),
-            name: "".to_string(),
-            salt: None
+            name: "".to_string()
         }
     }
 }

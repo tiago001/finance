@@ -1,7 +1,6 @@
 #[macro_use] extern crate rocket;
 
-use rocket::fs::{relative, FileServer};
-use rocket::request::FlashMessage;
+use rocket::fs::FileServer;
 // use rocket::request::FlashMessage;
 use rocket::response::Redirect;
 use rocket_db_pools::Database;
@@ -26,6 +25,9 @@ fn rocket() -> _ {
             expense_routes::delete_expense,
             income_routes::save_income,
             income_routes::search_income,
+            income_routes::delete_income,
+            income_routes::edit_income,
+            income_routes::get_income,
             user_routes::get_user_info,
             user_routes::create_account,
             user_routes::verify_account,
@@ -40,6 +42,7 @@ fn rocket() -> _ {
             addexpenses,
             dashboard,
             editexpense,
+            editincome,
             income
         ]
     ).register("/",catchers![unauthorized])
@@ -58,7 +61,7 @@ pub async fn settings(mut db: Connection<db::Logs>, user: AuthenticatedUser) -> 
     let stream = match sqlx::query_as!(Settings,
             "SELECT * FROM settings WHERE user_id = ?",
             user.user_id
-        ).fetch_one(&mut *db).await {
+        ).fetch_one(db.as_mut()).await {
             Ok(result) => result,
             Err(..) => Settings{user_id: 0, budget: None}
         };
@@ -83,6 +86,11 @@ pub async fn dashboard(user: AuthenticatedUser) -> Template {
 #[get("/editexpense")]
 pub async fn editexpense(user: AuthenticatedUser) -> Template {
     Template::render("pages/edit_expense",json!({"username": user.name}))
+}
+
+#[get("/editincome")]
+pub async fn editincome(user: AuthenticatedUser) -> Template {
+    Template::render("pages/edit_income",json!({"username": user.name}))
 }
 
 #[get("/income")]

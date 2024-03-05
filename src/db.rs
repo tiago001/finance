@@ -1,5 +1,5 @@
 
-use rocket_db_pools::{sqlx, Database};
+use rocket_db_pools::Database;
 
 #[derive(Database)]
 #[database("mysql_logs")]

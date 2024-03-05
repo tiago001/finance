@@ -17,7 +17,7 @@ pub async fn save_expense(mut db: Connection<db::Logs>, name: &str, value: f64, 
         (name, value, category,date, user_id, created_date)
         VALUES(?, ?, ?, ?, ?, ?)",
         name, value, category, date, user.user_id, PrimitiveDateTime::new(now.date(), now.time()))
-        .execute(&mut *db).await.unwrap();
+        .execute(db.as_mut()).await.unwrap();
 
     "ok".to_string()
 }
@@ -27,19 +27,19 @@ pub async fn edit_expense(mut db: Connection<db::Logs>,id: i64, name: Option<&st
 
     if name.is_some() && value.is_some() && category.is_some() && date.is_some() {
         sqlx::query!("UPDATE expenses SET name = ?, value = ?, category = ?, `date` = ? WHERE id = ? and user_id = ?",
-            name, value, category, date, id, user.user_id).execute(&mut *db).await.unwrap();
+            name, value, category, date, id, user.user_id).execute(db.as_mut()).await.unwrap();
     } else if name.is_some() {
         sqlx::query!("UPDATE expenses SET name = ? WHERE id = ? and user_id = ?",
-            name, id, user.user_id).execute(&mut *db).await.unwrap();
+            name, id, user.user_id).execute(db.as_mut()).await.unwrap();
     } else if value.is_some() {
         sqlx::query!("UPDATE expenses SET value = ? WHERE id = ? and user_id = ?",
-            value, id, user.user_id).execute(&mut *db).await.unwrap();
+            value, id, user.user_id).execute(db.as_mut()).await.unwrap();
     } else if category.is_some() {
         sqlx::query!("UPDATE expenses SET category = ? WHERE id = ? and user_id = ?",
-            category, id, user.user_id).execute(&mut *db).await.unwrap();
+            category, id, user.user_id).execute(db.as_mut()).await.unwrap();
     } else if date.is_some() {
         sqlx::query!("UPDATE expenses SET date = ? WHERE id = ? and user_id = ?",
-            date, id, user.user_id).execute(&mut *db).await.unwrap();
+            date, id, user.user_id).execute(db.as_mut()).await.unwrap();
     }
 
     "ok".to_string()
@@ -51,7 +51,7 @@ pub async fn get_expense(mut db: Connection<db::Logs>, id: i64, user: Authentica
         "SELECT * FROM expenses WHERE user_id = ? AND id = ?",
         user.user_id, id
     )
-    .fetch_one(&mut *db)
+    .fetch_one(db.as_mut())
     .await.unwrap();
 
     serde_json::to_string(&stream).unwrap()
@@ -67,7 +67,7 @@ pub async fn search_expenses(mut db: Connection<db::Logs>, name: &str, value1: O
                 "SELECT * FROM expenses WHERE user_id = ? ORDER BY date DESC, id DESC",
                 user.user_id
             )
-            .fetch_all(&mut *db)
+            .fetch_all(db.as_mut())
             .await.unwrap();
         } else {
             stream = sqlx::query_as!(Expense,
@@ -75,7 +75,7 @@ pub async fn search_expenses(mut db: Connection<db::Logs>, name: &str, value1: O
                 value1,
                 user.user_id
             )
-            .fetch_all(&mut *db)
+            .fetch_all(db.as_mut())
             .await.unwrap();
         }
     } else if name == "date" {
@@ -85,19 +85,19 @@ pub async fn search_expenses(mut db: Connection<db::Logs>, name: &str, value1: O
             value2,
             user.user_id
         )
-        .fetch_all(&mut *db)
+        .fetch_all(db.as_mut())
         .await.unwrap();
     } else if name == "currentMonth" {
         stream = sqlx::query_as!(Expense, "SELECT * FROM expenses WHERE user_id = ? AND MONTH(`date`) = MONTH(now()) AND YEAR(`date`) = YEAR(now()) ORDER BY date DESC", user.user_id)
-        .fetch_all(&mut *db)
+        .fetch_all(db.as_mut())
         .await.unwrap();
     } else if name == "lastExpenses" {
         stream = sqlx::query_as!(Expense, "SELECT * FROM expenses WHERE user_id = ? ORDER BY date desc,created_date desc LIMIT 100", user.user_id)
-        .fetch_all(&mut *db)
+        .fetch_all(db.as_mut())
         .await.unwrap();
     } else if name == "lastAddedExpenses" {
         stream = sqlx::query_as!(Expense, "SELECT * FROM expenses WHERE user_id = ? ORDER BY created_date desc LIMIT 100", user.user_id)
-        .fetch_all(&mut *db)
+        .fetch_all(db.as_mut())
         .await.unwrap();
     }
 
@@ -121,7 +121,7 @@ pub async fn search_expenses_category(mut db: Connection<db::Logs>, user: Authen
     let stream = sqlx::query_as!(Record, "SELECT sum(value) as sum, category, month(`date`) as month
         FROM expenses WHERE `date` between ? and ? and user_id = ? group by category,month(`date`) order by 3,2",
         value1, value2, user.user_id)
-        .fetch_all(&mut *db)
+        .fetch_all(db.as_mut())
         .await.unwrap();
 
     let mut expenses: Vec<ExpensesCategory> = vec![];
@@ -168,7 +168,7 @@ pub async fn search_expenses_category(mut db: Connection<db::Logs>, user: Authen
 pub async fn delete_expense(mut db: Connection<db::Logs>,id: i64, user: AuthenticatedUser) -> String {
 
     sqlx::query!("DELETE from expenses WHERE id = ? and user_id = ?",
-        id, user.user_id).execute(&mut *db).await.unwrap();
+        id, user.user_id).execute(db.as_mut()).await.unwrap();
 
     "ok".to_string()
 }

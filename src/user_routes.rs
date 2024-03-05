@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use argon2::Config;
 use entity::{users::Users, settings::Settings};
 use rocket::{response::{Flash, Redirect}, http::{CookieJar, Cookie}, request::{FromRequest, Outcome}, Request};
@@ -11,6 +13,8 @@ use ring::rand::SecureRandom;
 use ring::rand;
 
 use rocket::http::Status;
+
+use time::Duration;
 
 use crate::error::Error;
 
@@ -33,18 +37,17 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
         let cookies = req.cookies();
         let user_id_cookie = match get_user_id_cookie(cookies) {
             Some(result) => result,
-            None => return Outcome::Failure((Status::Unauthorized, Error::UnauthenticatedError.into()))
+            None => return Outcome::Error((Status::Unauthorized, Error::UnauthenticatedError.into()))
         };
 
-        let logged_in_user_id = match user_id_cookie.value()
-            .parse::<i64>() {
-                Ok(result) => result,
-                Err(err) => return Outcome::Failure((Status::Unauthorized, err.into()))
-            };
-
+        let logged_in_user_id = match user_id_cookie.value().parse::<i64>() {
+            Ok(result) => result,
+            Err(err) => return Outcome::Error((Status::Unauthorized, err.into()))
+        };
+        
         let logged_in_username = match get_user_name_cookie(cookies) {
             Some(result) => result,
-            None => return Outcome::Failure((Status::Unauthorized, Error::UnauthenticatedError.into()))
+            None => return Outcome::Error((Status::Unauthorized, Error::UnauthenticatedError.into()))
         };
 
         return Outcome::Success(AuthenticatedUser { user_id: logged_in_user_id, name: logged_in_username.value().to_string() });
@@ -56,11 +59,13 @@ fn get_user_id_cookie<'a>(cookies: &'a CookieJar) -> Option<Cookie<'a>> {
 }
 
 fn set_user_id_cookie(cookies: & CookieJar, user_id: i64) {
-    cookies.add_private(Cookie::new("user_id", user_id.to_string()));
+    let now = OffsetDateTime::now_utc().add(Duration::hours(4));
+    // cookies.add_private(Cookie::build(("user_id", user_id.to_string())).expires(now).secure(true).build());
+    cookies.add_private(Cookie::build(("user_id", user_id.to_string())).expires(now).build()); // For testing
 }
 
 fn remove_user_id_cookie(cookies: & CookieJar) {
-    cookies.remove_private(Cookie::named("user_id"));
+    cookies.remove_private(Cookie::from("user_id"));
 }
 
 fn get_user_name_cookie<'a>(cookies: &'a CookieJar) -> Option<Cookie<'a>> {
@@ -68,11 +73,13 @@ fn get_user_name_cookie<'a>(cookies: &'a CookieJar) -> Option<Cookie<'a>> {
 }
 
 fn set_user_name_cookie(cookies: & CookieJar, name: String) {
-    cookies.add_private(Cookie::new("name", name.to_string()));
+    let now = OffsetDateTime::now_utc().add(Duration::hours(4));
+    // cookies.add_private(Cookie::build(("name", name.to_string())).expires(now).secure(true).build());
+    cookies.add_private(Cookie::build(("name", name.to_string())).expires(now).build()); // For testing
 }
 
 fn remove_user_name_cookie(cookies: & CookieJar) {
-    cookies.remove_private(Cookie::named("name"));
+    cookies.remove_private(Cookie::from("name"));
 }
 
 #[post("/logout")]
@@ -102,10 +109,10 @@ pub async fn create_account(mut db: Connection<Logs>, user_form: Form<InfoLogin>
     }
 
     let stored_user: Option<Users> = match sqlx::query_as!(Users,
-        "SELECT id, email, password, name, salt FROM users WHERE email = ?",
+        "SELECT id, email, password, name FROM users WHERE email = ?",
         user.email
     )
-    .fetch_one(&mut *db)
+    .fetch_one(db.as_mut())
     .await{
         Ok(model) => Some(model),
         Err(_) => None
@@ -128,7 +135,7 @@ pub async fn create_account(mut db: Connection<Logs>, user_form: Form<InfoLogin>
     };
 
     sqlx::query!("INSERT INTO users (email, password, name) VALUES(?, ?, ?)",
-        user.email, hash, user.name).execute(&mut *db).await.unwrap();
+        user.email, hash, user.name).execute(db.as_mut()).await.unwrap();
 
     Flash::success(Redirect::to("/login"), "Account created succesfully!")
 }
@@ -138,10 +145,10 @@ pub async fn verify_account(mut db: Connection<Logs>, cookies: & CookieJar<'_>, 
     let user = user_form.into_inner();
 
     let stored_user = match sqlx::query_as!(Users,
-            "SELECT id, email, password, name, salt FROM users WHERE email = ?;",
+            "SELECT id, email, password, name FROM users WHERE email = ?;",
             user.email
         )
-        .fetch_one(&mut *db)
+        .fetch_one(db.as_mut())
         .await{
             Ok(model) => model,
             Err(_) => return login_error()
@@ -162,7 +169,7 @@ pub async fn verify_account(mut db: Connection<Logs>, cookies: & CookieJar<'_>, 
 
     sqlx::query!("INSERT INTO login_history (user_id, `date`) VALUES(?, ?);",
         stored_user.id, PrimitiveDateTime::new(now.date(), now.time()))
-        .execute(&mut *db).await.unwrap();
+        .execute(db.as_mut()).await.unwrap();
 
     set_user_id_cookie(cookies, stored_user.id);
     set_user_name_cookie(cookies, stored_user.name);
@@ -171,9 +178,9 @@ pub async fn verify_account(mut db: Connection<Logs>, cookies: & CookieJar<'_>, 
 
 #[get("/get_user_info")]
 pub async fn get_user_info(mut db: Connection<Logs>, user: AuthenticatedUser) -> String {
-    let user = sqlx::query_as!(Users, "SELECT id, email, password, name, salt FROM users WHERE id = ?",
+    let user = sqlx::query_as!(Users, "SELECT id, email, password, name FROM users WHERE id = ?",
         user.user_id)
-        .fetch_one(&mut *db)
+        .fetch_one(db.as_mut())
         .await.unwrap();
 
     serde_json::to_string(&user).unwrap()
@@ -196,16 +203,16 @@ pub async fn save_settings(mut db: Connection<db::Logs>,budget: Option<f64>, use
             "SELECT * FROM settings WHERE user_id = ?",
             user.user_id
         )
-        .fetch_all(&mut *db)
+        .fetch_all(db.as_mut())
         .await.unwrap();
 
     if stream.is_empty() {
         sqlx::query!("INSERT INTO settings (user_id, budget) VALUES(?, ?)",
             user.user_id, budget.unwrap())
-            .execute(&mut *db).await.unwrap();
+            .execute(db.as_mut()).await.unwrap();
     } else {
         sqlx::query!("UPDATE settings SET budget = ? WHERE user_id = ?",
-            budget.unwrap(), user.user_id).execute(&mut *db).await.unwrap();
+            budget.unwrap(), user.user_id).execute(db.as_mut()).await.unwrap();
     }
 
     "ok".to_string()
@@ -218,7 +225,7 @@ pub async fn get_settings(mut db: Connection<db::Logs>, user: AuthenticatedUser)
             "SELECT * FROM settings WHERE user_id = ?",
             user.user_id
         )
-        .fetch_one(&mut *db)
+        .fetch_one(db.as_mut())
         .await {
             Ok(result) => result,
             Err(..) => Settings{ user_id: user.user_id, budget: Some(0.0)}

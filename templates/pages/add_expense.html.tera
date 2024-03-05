@@ -31,11 +31,11 @@
 <button type="button" class="btn btn-primary w-100" onclick="save_expense()">Salvar Despesa</button>
 
 <div class="row mt-2">
-    <div class="col-7"></div>
-    <div class="col-2 m-auto">
+    <div class="d-none d-sm-block col-md-4 col-lg-7"></div>
+    <div class="col-4 col-md-3 col-lg-2 m-auto">
         <span class="total">Total 0.00</span>
     </div>
-    <div class="col-3">
+    <div class="col-8 col-md-5 col-lg-3">
         <select class="form-select search_type" onchange="search_expenses()">
             <option value="currentMonth" selected>Despesas do mês atual</option>
             <option value="lastExpenses">Despesas mais recentes</option>
@@ -169,109 +169,130 @@
         let searchType = document.getElementsByClassName("search_type")[0].value
         document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend",
             `
-                <div class="col-3">
+                <div class="col-3 d-none d-sm-block">
                     Nome
                 </div>
-                <div class="col-3 text-center">
+                <div class="col-3 d-none d-sm-block text-center">
                     Valor
                 </div>
-                <div class="col-3 text-center">
+                <div class="col-3 d-none d-sm-block text-center">
                     Categoria
                 </div>
-                <div class="col-2 text-center">
+                <div class="col-2 d-none d-sm-block text-center">
                     Data
                 </div>
-                <div class="col-1"></div>
+                <div class="col-1 d-none d-sm-block"></div>
             `
         )
-            let total = 0
-            let lastDate = ""
 
+        let total = 0
+        let lastDate = ""
 
-            json.forEach(e => {
-                total += e.value
-                // total = parseFloat(total.toFixed(10))
+        json.forEach(e => {
+            total += e.value
+
+            if(e.date != lastDate){
                 document.getElementsByClassName("expenses")[0].insertAdjacentHTML(
                     "beforeend",
+                    `<div class="col-11 mt-2 text-center d-block d-sm-none">
+                            <i class="ti ti-calendar"></i> ${new Date(e.date+"T00:00").toLocaleString().substr(0,10)}
+                        </div>`)
+                document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend",
                     `
-                        <div class="col-3" expense="${e.id}" value=${e.name} ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                            <span class="name" expense="${e.id}" value=${e.name} contenteditable="true">${e.name}</span> 
+                        <div class="col-4 col-sm-3 d-block d-sm-none">
+                            Nome
                         </div>
-                        <div class="col-3 text-center" expense="${e.id}" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                            <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
+                        <div class="col-3 col-sm-3 d-block d-sm-none text-center">
+                            Valor
                         </div>
-                        <div class="col-3 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                            ${e.category} 
+                        <div class="col-4 col-sm-3 d-block d-sm-none text-center">
+                            Categoria
                         </div>
-                        <div class="col-2 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                             ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
-                        </div>
-                        <div class="col-1 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                            <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
-                                <span><i class="ti ti-x"></i></span>
-                            </button>-->
-                            <button class="btn btn-sm btn-light py-0" onclick="open_edit_expense(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                                <span><i class="ti ti-pencil"></i></span>
-                            </button>
-                        </div>
-                    `
-                )
-    
-                lastDate = e.date
-            })
+                        <div class="col-1 d-block d-sm-none"></div>
+                    `)
+            }
 
-            document.getElementsByClassName("total")[0].innerHTML = `Total ${total.toFixed(2)}`
-    
-            $('.name').on('blur', function(e){
-                if(e.target.textContent.trim() != e.target.getAttribute("value")) {
-                    e.target.setAttribute("value", e.target.textContent.trim()) 
-                    fetch("edit_expense?" + new URLSearchParams({
-                        "name": e.target.textContent.trim(),
-                        "id": e.target.getAttribute("expense")}),
-                    {
-                        method: "POST"
-                    })
-                    .then((response) => response.text())
-                    .then((html) => {
-                        Swal.fire({
-                            position: 'top-end',
-                            icon: 'success',
-                            title: 'Despesa salva com sucesso',
-                            showConfirmButton: false,
-                            timer: 2000,
-                            toast: true
-                          })
-                    })
-                    .catch((error) => {
-                        console.warn(error);
-                    });
-                }
-            })
-            $('.valor').on('blur', function(e){
-                if(e.target.textContent.trim() != e.target.getAttribute("value")) {
-                    e.target.setAttribute("value", e.target.textContent.trim()) 
-                    fetch("edit_expense?" + new URLSearchParams({
-                        "value": e.target.textContent.trim(),
-                        "id": e.target.getAttribute("expense")}),
-                    {
-                        method: "POST"
-                    })
-                    .then((response) => response.text())
-                    .then((html) => {
-                        Swal.fire({
-                            position: 'top-end',
-                            icon: 'success',
-                            title: 'Despesa salva com sucesso',
-                            showConfirmButton: false,
-                            timer: 2000,
-                            toast: true
-                          })
-                    })
-                    .catch((error) => {
-                        console.warn(error);
-                    });
-                }
-            })
+            document.getElementsByClassName("expenses")[0].insertAdjacentHTML(
+                "beforeend",
+                `
+                    <div class="col-4 col-sm-3 text-truncate" expense="${e.id}" value=${e.name} ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        <span class="name" expense="${e.id}" value=${e.name} contenteditable="true">${e.name}</span> 
+                    </div>
+                    <div class="col-3 col-sm-3 text-center" expense="${e.id}" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
+                    </div>
+                    <div class="col-4 col-sm-3 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        ${e.category} 
+                    </div>
+                    <div class="col-12 col-sm-2 text-center d-none d-sm-block" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                            ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
+                    </div>
+                    <div class="col-1 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
+                            <span><i class="ti ti-x"></i></span>
+                        </button>-->
+                        <button class="btn btn-sm btn-light py-0" onclick="open_edit_expense(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                            <span><i class="ti ti-pencil"></i></span>
+                        </button>
+                    </div>
+                `
+            )
+
+            lastDate = e.date
+        })
+
+        document.getElementsByClassName("total")[0].innerHTML = `Total ${total.toFixed(2)}`
+
+        $('.name').on('blur', function(e){
+            if(e.target.textContent.trim() != e.target.getAttribute("value")) {
+                e.target.setAttribute("value", e.target.textContent.trim()) 
+                fetch("edit_expense?" + new URLSearchParams({
+                    "name": e.target.textContent.trim(),
+                    "id": e.target.getAttribute("expense")}),
+                {
+                    method: "POST"
+                })
+                .then((response) => response.text())
+                .then((html) => {
+                    Swal.fire({
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Despesa salva com sucesso',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        toast: true
+                        })
+                })
+                .catch((error) => {
+                    console.warn(error);
+                });
+            }
+        })
+        $('.valor').on('blur', function(e){
+            if(e.target.textContent.trim() != e.target.getAttribute("value")) {
+                e.target.setAttribute("value", e.target.textContent.trim()) 
+                fetch("edit_expense?" + new URLSearchParams({
+                    "value": e.target.textContent.trim(),
+                    "id": e.target.getAttribute("expense")}),
+                {
+                    method: "POST"
+                })
+                .then((response) => response.text())
+                .then((html) => {
+                    Swal.fire({
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Despesa salva com sucesso',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        toast: true
+                        })
+                })
+                .catch((error) => {
+                    console.warn(error);
+                });
+            }
+        })
     }
 
     search_expenses()

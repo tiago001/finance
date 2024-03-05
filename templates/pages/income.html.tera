@@ -17,7 +17,7 @@
   
 <button type="button" class="btn btn-primary w-100" onclick="save_income()">Salvar Receita</button>
 
-<div class="pt-4 incomes-year text-end">
+<div class="pt-4 incomes-year text-sm-end text-center">
 
 </div>
 
@@ -105,11 +105,12 @@
             data[year][month].push(e)
         })
 
+        document.getElementsByClassName("incomes-year")[0].innerHTML = ""
         document.getElementsByClassName("incomes-year")[0].insertAdjacentHTML("beforeend",
                 `<div class="row">
-                    <div class="col-1"></div>
-                    <div class="col-10 row months">
-                    </div><div class="col-1">Total</div>
+                    <div class="col-1 d-none d-sm-flex"></div>
+                    <div class="col-10 d-none d-sm-flex row months px-0">
+                    </div><div class="col-1 d-none d-sm-block">Total</div>
                 </div>`
             );
 
@@ -117,9 +118,10 @@
             total = 0;
             document.getElementsByClassName("incomes-year")[0].insertAdjacentHTML("beforeend",
                 `<div class="row show-value">
-                    <div class="col-1 text-center " style="border-bottom: 2px solid #e1e1e1;">${key.substring(3,key.length)}</div>
-                    <div class="row col-10 ${key}" style="border-bottom: 2px solid #e1e1e1;"></div>
-                    <div class="col-1 income-${key}" style="border-bottom: 2px solid #e1e1e1;"></div>
+                    <div class="col-6 col-sm-1 text-center" style="border-bottom: 2px solid #e1e1e1;">${key.substring(3,key.length)}</div>
+                    <div class="col-6 col-sm-1 income-${key} d-block d-sm-none" style="border-bottom: 2px solid #e1e1e1;"></div>
+                    <div class="row col-12 col-sm-10 ${key} px-0" style="border-bottom: 2px solid #e1e1e1;"></div>
+                    <div class="col-2 col-sm-1 income-${key} d-none d-sm-block" style="border-bottom: 2px solid #e1e1e1;"></div>
                 </div>`
             );
 
@@ -130,18 +132,24 @@
                 }
 
                 document.getElementsByClassName(key)[0].insertAdjacentHTML("beforeend",
-                    `<div class="col-1 value">${sum == 0 ? "-" : sum > 1000 ? toFixed(sum/1000,2)+"K" : sum}</div>
-                    <div class="col-1 full-value">${sum == 0 ? "-" : toFixed(sum,2)}</div>`
+                    `
+                    <div class="col-6 d-block d-sm-none">${months[i]}</div>
+                    <div class="col-6 col-sm-1 value">${sum == 0 ? "-" : sum > 1000 ? toFixed(sum/1000,2)+"K" : sum}</div>
+                    <div class="col-6 col-sm-1 full-value">${sum == 0 ? "-" : sum.toFixed(2)}</div>`
                 );
                 total = total + sum
             }
 
             if(total == 0){
-                document.getElementsByClassName("income-"+key)[0].innerHTML = "-"
+                for (var i = 0; i < document.getElementsByClassName("income-"+key).length; i++) {
+                    document.getElementsByClassName("income-"+key)[i].innerHTML = "-"
+                }
             } else {
-                document.getElementsByClassName("income-"+key)[0].innerHTML = 
+                for (var i = 0; i < document.getElementsByClassName("income-"+key).length; i++) {
+                    document.getElementsByClassName("income-"+key)[i].innerHTML = 
                     `<span class="value">${total > 1000 ? toFixed(total/1000,2)+"K" : total}</span>
-                    <span class="full-value">${total - parseInt(total) > 0 ? toFixed(total,2) : total}</span>`
+                    <span class="full-value">${total - parseInt(total) > 0 ? total.toFixed(2) : total}</span>`
+                }
             }
         }
 
@@ -202,42 +210,41 @@
         document.getElementsByClassName("incomes")[0].innerHTML = ''
         document.getElementsByClassName("incomes")[0].insertAdjacentHTML("beforeend",
             `
-                <div class="col-6 text-center">
+                <div class="col-6 col-sm-5 text-center">
                     Valor
                 </div>
-                <div class="col-3 text-center">
+                <div class="col-sm-4 d-none d-sm-block text-center">
                     Obs
                 </div>
-                <div class="col-2 text-center">
+                <div class="col-4 col-sm-2 text-center">
                     Data
                 </div>
-                <div class="col-1"></div>
+                <div class="col-2 col-sm-1"></div>
             `
             )
             let total = 0
             let lastDate = ""
             json.forEach(e => {
                 total += e.value
-                // total = parseFloat(total.toFixed(10))
                 document.getElementsByClassName("incomes")[0].insertAdjacentHTML(
                     "beforeend",
                     `
-                        <div class="col-6 text-center" expense="${e.id}" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        <div class="col-6 col-sm-5 text-center" expense="${e.id}" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
                             <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
                         </div>
-                        <div class="col-3 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                            ${e.obs} 
+                        <div class="col-sm-4 d-none d-sm-block text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                            ${e.obs.length == 0 ? "-" : e.obs} 
                         </div>
-                        <div class="col-2 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        <div class="col-4 col-sm-2 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
                              ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
                         </div>
-                        <div class="col-1 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                            {# <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
+                        <div class="col-2 col-sm-1 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                            <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
                                 <span><i class="ti ti-x"></i></span>
                             </button>-->
-                            <button class="btn btn-sm btn-light py-0" onclick="open_edit_expense(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                            <button class="btn btn-sm btn-light py-0" onclick="open_edit_income(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
                                 <span><i class="ti ti-pencil"></i></span>
-                            </button> #}
+                            </button>
                         </div>
                     `
                 )
@@ -308,18 +315,18 @@
             })
     }
 
-    {# function edit_expense(id){
-        fetch("edit_expense?" + new URLSearchParams({
+    function edit_income(id){
+        fetch("edit_income?" + new URLSearchParams({
             "id": id,
-            "name": document.getElementsByClassName("editnome")[0].value,
+            "obs": document.getElementsByClassName("editobs")[0].value,
             "value": document.getElementsByClassName("editmoney_value")[0].value,
-            "category": document.getElementsByClassName("editcategory")[0].value,
             "date": document.getElementsByClassName("editdate")[0].value}),
         {
             method: "POST"
         })
         .then((response) => response.text())
         .then(() => {
+            search_incomes()
             Swal.fire({
                 position: 'top-end',
                 icon: 'success',
@@ -332,16 +339,17 @@
         .catch((error) => {
             console.warn(error);
         });
-    } #}
+    }
 
-    {# function delete_expense(id){
-        fetch("delete_expense?" + new URLSearchParams({
+    function delete_income(id){
+        fetch("delete_income?" + new URLSearchParams({
             "id": id}), {method: "POST", redirect: 'follow'
         }).then((response) => {
             if (response.redirected) window.location.href = response.url;
             return
         })
         .then(() => {
+            search_incomes()
             Swal.fire({
                 position: 'top-end',
                 icon: 'success',
@@ -354,7 +362,35 @@
         .catch((error) => {
             console.warn(error);
         });
-    } #}
+    }
+
+    function open_edit_income(id){
+        var exampleModal = document.getElementById('exampleModal')
+        var modalTitle = exampleModal.querySelector('.modal-title')
+    
+        modalTitle.textContent = 'Editar despesa'
+    
+        $(".modal-body").load("editincome", function() {
+            fetch("get_income?" + new URLSearchParams({
+                "id": id
+            }), {redirect: 'follow'})
+            .then((response) => {
+                if (response.redirected) window.location.href = response.url;
+                return response.json()
+            })
+            .then((json) => {
+                document.getElementsByClassName("editobs")[0].value = json.obs
+                document.getElementsByClassName("editmoney_value")[0].value = json.value
+                document.getElementsByClassName("editdate")[0].value = json.date
+            })
+            .catch((error) => {
+                console.warn(error);
+            });
+        })
+        
+        $(".modal .btn-primary")[0].setAttribute('onclick',`edit_income(${id})`)
+        $(".modal .btn-danger")[0].setAttribute('onclick',`delete_income(${id})`)
+    }
 
     search_incomes()
 

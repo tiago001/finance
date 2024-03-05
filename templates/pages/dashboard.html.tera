@@ -1,8 +1,7 @@
 {% extends "index" %} {% block page %}
 
 <div>
-    <p class="fs-4">Valor gasto por categoria</p>
-
+    
     <div class="row">
         <div style="display: none;">
             <div class="col-6 date d-flex">
@@ -12,20 +11,24 @@
                 <input type="date" class="form-control date2" data-provide="datepicker">
             </div>
         </div>
+        <div class="col-12">
+            <p class="fs-4 text-center text-md-start ps-md-3">Valor gasto por categoria</p>
+        </div>
         <div class="col-12 col-sm-6 col-md-6">
             <div class="row category_values">
             </div>
         </div>
-        <div class="col-1 d-block d-lg-none"></div>
-        <div class="col-10 col-sm-6 col-md-3">
+        <div class="col-1 d-block "></div>
+        <div class="col-10 col-sm-6 col-md-4 col-lg-3">
             <canvas id="myChart"></canvas>
         </div>
-        <div class="col-1 d-block d-lg-none"></div>
+        <div class="col-1 d-block "></div>
+        
     </div>
 </div>
 
 <script>
-    
+   
     function search_expenses_category(){
         fetch("search_expenses_category?" + new URLSearchParams({
             "value1": document.getElementsByClassName("date1")[0].value,
@@ -37,7 +40,7 @@
         })
         .then((json) => {
     
-            document.getElementsByClassName("category_values")[0].innerHTML = `<div class="col-3 col-sm-6">Categoria</div>`
+            document.getElementsByClassName("category_values")[0].innerHTML = `<div class="col-3 col-sm-6 fs-4">Categoria</div>`
     
             let label = []
             let sum = []
@@ -47,7 +50,7 @@
             json.months.forEach(m => {
                 document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                     "beforeend",
-                    `<div class="col-3 col-sm-2 text-center" style=\"border-top: 2px solid #e1e1e1;\">Mês ${m.month}</div>`
+                    `<div class="col-3 col-sm-2 text-center fs-4">Mês ${m.month}</div>`
                 )
             })
 
@@ -103,8 +106,11 @@
             }
     
             const ctx = document.getElementById('myChart');
-    
+
             graph = new Chart(ctx, {
+                options: {
+                    maintainAspectRatio: false
+                },
                 type: 'doughnut',
                 data: {
                     labels: label,

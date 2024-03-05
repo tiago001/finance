@@ -1,0 +1,15 @@
+
+<div class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Valor</span>
+    <input type="number" class="form-control editmoney_value currency" aria-label="valor" aria-describedby="basic-addon1">
+</div>
+
+<div class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Data</span>
+    <input type="date" class="form-control editdate" data-provide="datepicker">
+</div>
+
+<div class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Obs</span>
+    <input type="text" class="form-control editobs" aria-label="obs" aria-describedby="basic-addon1">
+</div>
