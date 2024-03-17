@@ -8,7 +8,6 @@ File: js
 // Auto select left navbar
 // ==============================================================
 $(function () {
-    "use strict";
     var url = window.location + "";
     var path = url.replace(
       window.location.protocol + "//" + window.location.host + "/",
@@ -20,9 +19,7 @@ $(function () {
     element.parentsUntil(".sidebar-nav").each(function (index) {
       if ($(this).is("li") && $(this).children("a").length !== 0) {
         $(this).children("a").addClass("active");
-        $(this).parent("ul#sidebarnav").length === 0
-          ? $(this).addClass("active")
-          : $(this).addClass("selected");
+        if($(this).parent("ul#sidebarnav").length === 0) $(this).addClass("active")
       } else if (!$(this).is("ul") && $(this).children("a").length === 0) {
         $(this).addClass("selected");
       } else if ($(this).is("ul")) {
@@ -40,11 +37,20 @@ $(function () {
         // open our new menu and add the open class
         $(this).next("ul").addClass("in");
         $(this).addClass("active");
-      } else if ($(this).hasClass("active")) {
-        $(this).removeClass("active");
-        $(this).parents("ul:first").removeClass("active");
-        $(this).next("ul").removeClass("in");
+        $("#main-wrapper").toggleClass("mini-sidebar");
+        $("#main-wrapper").toggleClass("show-sidebar");
       }
+    });
+    $(window).on("popstate", function (e) {
+      var url = window.location + "";
+      $("#sidebarnav a").each(function () {
+        if($(this).hasClass("active")){
+          $(this).removeClass("active");
+        }
+        if(this.href == url){
+          $(this).addClass("active");
+        }
+      })
     });
     $("#sidebarnav >li >a.has-arrow").on("click", function (e) {
       e.preventDefault();

@@ -1,0 +1,5 @@
+{% extends "index" %} 
+
+{% block page %}
+    {% include "pages/settings" %}
+{% endblock page %}

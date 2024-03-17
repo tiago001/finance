@@ -88,3 +88,51 @@ document.addEventListener("keypress", function(event) {
         save_expense();
     }
 });
+
+function loadPage(href, pushState){
+    // const requestOptions = {
+    //     method: "GET",
+    //     redirect: "follow"
+    // };
+
+    let url = href.replace(window.location.protocol + "//" + window.location.host, "");
+
+    if(pushState){
+        window.history.pushState(null, "Projeto Finanças", url)
+    }
+    $("#content").load(href)
+
+    // fetch(href, requestOptions)
+    //     .then((response) => response.text())
+    //     .then((result) => {
+    //         document.getElementById("content").innerHTML = result
+    //         console.log(result)
+    //     })
+    //     .catch((error) => console.error(error));
+}
+
+document.onclick = function (e) {
+    e = e ||  window.event;
+    var element = e.target || e.srcElement;
+
+    var tagName = element.tagName
+
+    if(tagName == 'BUTTON' || tagName == 'P' || tagName == 'I' || tagName == 'SPAN'){ 
+        element = element.parentElement 
+    }
+    // if(element.tagName == 'P'){ element = element.parentElement }
+    // if(element.tagName == 'I'){ element = element.parentElement }
+    // if(element.tagName == 'SPAN'){ element = element.parentElement }
+
+    if (element.tagName == 'A') {
+        let url = element.href;
+        if(url != window.location){
+            loadPage(element.href, true);
+        }
+        return false; // prevent default action and stop event propagation
+    }
+};
+
+window.addEventListener("popstate", function(e) {
+    loadPage(location.href, false)
+});

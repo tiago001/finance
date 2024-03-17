@@ -1,0 +1,5 @@
+{% extends "index" %} 
+
+{% block page %}
+    {% include "pages/add_expense" %}
+{% endblock page %}

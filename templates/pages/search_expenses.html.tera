@@ -1,4 +1,3 @@
-{% extends "index" %} {% block page %}
 <div class="input-group mb-3 row">
     <div class="col-12 col-sm-3 col-md-2 col-lg-3 p-2 d-none d-lg-block">
         <select class="form-select search" aria-label="Default select example">
@@ -70,7 +69,7 @@
     var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
     var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     
-    let graphType = "total"
+    graphType = "total"
     
     document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
     document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
@@ -86,7 +85,7 @@
         }
     });
 
-    let expenses = null
+    expenses = null
 
     function search_expenses(){
         let value1
@@ -629,5 +628,3 @@
 
     search_expenses()
 </script>
-
-{% endblock page %}

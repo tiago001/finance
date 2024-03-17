@@ -12,6 +12,50 @@ use serde_json::json;
 use finance::{db, user_routes, expense_routes, income_routes};
 use finance::{user_routes::AuthenticatedUser, user_routes::redirect_to_login};
 
+use rocket::request::FromRequest;
+use rocket::Request;
+use rocket::request;
+use rocket::request::Outcome;
+use rocket::http::Status;
+
+#[derive(Debug)]
+struct FetchMode(String);
+
+#[derive(Debug)]
+enum FetchModeError {
+    Missing,
+    Invalid,
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for FetchMode {
+    type Error = FetchModeError;
+
+    async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
+        println!("{:?}", req.headers());
+
+        let keys: Vec<_> = req.headers().get("sec-fetch-mode").collect();
+        match keys.len() {
+            0 => {
+                let keys: Vec<_> = req.headers().get("x-requested-with").collect();
+                match keys.len() {
+                    0 => Outcome::Success(FetchMode("navigate".to_string())),
+                    1 => {
+                        if keys[0] == "XMLHttpRequest"{
+                            Outcome::Success(FetchMode("cors".to_string()))
+                        } else {
+                            Outcome::Success(FetchMode("navigate".to_string()))
+                        }
+                    }
+                    _ => Outcome::Error((Status::BadRequest, FetchModeError::Invalid)),
+                }
+            },
+            1 => Outcome::Success(FetchMode(keys[0].to_string())),
+            _ => Outcome::Error((Status::BadRequest, FetchModeError::Invalid)),
+        }
+    }
+}
+
 #[launch]
 fn rocket() -> _ {
     rocket::build()
@@ -52,12 +96,16 @@ fn rocket() -> _ {
 
 
 #[get("/")]
-pub async fn index(user: AuthenticatedUser) -> Template {
-    Template::render("pages/home",json!({"username": user.name}))
+async fn index(mode: FetchMode, user: AuthenticatedUser) -> Template {
+    if mode.0 == "navigate" {
+        Template::render("pages/extended/home", json!({"username": user.name}))
+    } else {
+        Template::render("pages/home", json!({"username": user.name}))
+    }
 }
 
 #[get("/settings")]
-pub async fn settings(mut db: Connection<db::Logs>, user: AuthenticatedUser) -> Template {
+async fn settings(mode: FetchMode, mut db: Connection<db::Logs>, user: AuthenticatedUser) -> Template {
     let stream = match sqlx::query_as!(Settings,
             "SELECT * FROM settings WHERE user_id = ?",
             user.user_id
@@ -65,37 +113,57 @@ pub async fn settings(mut db: Connection<db::Logs>, user: AuthenticatedUser) -> 
             Ok(result) => result,
             Err(..) => Settings{user_id: 0, budget: None}
         };
-    Template::render("pages/settings",json!({"username": user.name,"settings": stream}))
+    if mode.0 == "navigate" {
+        Template::render("pages/extended/settings", json!({"username": user.name,"settings": stream}))
+    } else {
+        Template::render("pages/settings", json!({"username": user.name,"settings": stream}))
+    }
 }
 
 #[get("/searchexpenses")]
-pub async fn searchexpenses(user: AuthenticatedUser) -> Template {
-    Template::render("pages/search_expenses",json!({"username": user.name}))
+async fn searchexpenses(mode: FetchMode, user: AuthenticatedUser) -> Template {
+    if mode.0 == "navigate" {
+        Template::render("pages/extended/search_expenses", json!({"username": user.name}))
+    } else {
+        Template::render("pages/search_expenses", json!({"username": user.name}))
+    }
 }
 
 #[get("/addexpenses")]
-pub async fn addexpenses(user: AuthenticatedUser) -> Template {
-    Template::render("pages/add_expense",json!({"username": user.name}))
+async fn addexpenses(mode: FetchMode, user: AuthenticatedUser) -> Template {
+    if mode.0 == "navigate" {
+        Template::render("pages/extended/add_expense", json!({"username": user.name}))
+    } else {
+        Template::render("pages/add_expense", json!({"username": user.name}))
+    }
 }
 
 #[get("/dashboard")]
-pub async fn dashboard(user: AuthenticatedUser) -> Template {
-    Template::render("pages/dashboard",json!({"username": user.name}))
+async fn dashboard(mode: FetchMode, user: AuthenticatedUser) -> Template {
+    if mode.0 == "navigate" {
+        Template::render("pages/extended/dashboard", json!({"username": user.name}))
+    } else {
+        Template::render("pages/dashboard", json!({"username": user.name}))
+    }
 }
 
 #[get("/editexpense")]
-pub async fn editexpense(user: AuthenticatedUser) -> Template {
+async fn editexpense(user: AuthenticatedUser) -> Template {
     Template::render("pages/edit_expense",json!({"username": user.name}))
 }
 
 #[get("/editincome")]
-pub async fn editincome(user: AuthenticatedUser) -> Template {
+async fn editincome(user: AuthenticatedUser) -> Template {
     Template::render("pages/edit_income",json!({"username": user.name}))
 }
 
 #[get("/income")]
-pub async fn income(user: AuthenticatedUser) -> Template {
-    Template::render("pages/income",json!({"username": user.name}))
+async fn income(mode: FetchMode, user: AuthenticatedUser) -> Template {
+    if mode.0 == "navigate" {
+        Template::render("pages/extended/income", json!({"username": user.name}))
+    } else {
+        Template::render("pages/income", json!({"username": user.name}))
+    }
 }
 
 #[catch(401)]
