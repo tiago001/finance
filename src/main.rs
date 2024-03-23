@@ -23,7 +23,6 @@ struct FetchMode(String);
 
 #[derive(Debug)]
 enum FetchModeError {
-    Missing,
     Invalid,
 }
 
@@ -32,24 +31,11 @@ impl<'r> FromRequest<'r> for FetchMode {
     type Error = FetchModeError;
 
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        println!("{:?}", req.headers());
+        // println!("{:?}", req.headers());
 
-        let keys: Vec<_> = req.headers().get("sec-fetch-mode").collect();
+        let keys: Vec<_> = req.headers().get("load-mode").collect();
         match keys.len() {
-            0 => {
-                let keys: Vec<_> = req.headers().get("x-requested-with").collect();
-                match keys.len() {
-                    0 => Outcome::Success(FetchMode("navigate".to_string())),
-                    1 => {
-                        if keys[0] == "XMLHttpRequest"{
-                            Outcome::Success(FetchMode("cors".to_string()))
-                        } else {
-                            Outcome::Success(FetchMode("navigate".to_string()))
-                        }
-                    }
-                    _ => Outcome::Error((Status::BadRequest, FetchModeError::Invalid)),
-                }
-            },
+            0 => Outcome::Success(FetchMode("navigate".to_string())),
             1 => Outcome::Success(FetchMode(keys[0].to_string())),
             _ => Outcome::Error((Status::BadRequest, FetchModeError::Invalid)),
         }
@@ -77,7 +63,9 @@ fn rocket() -> _ {
             user_routes::verify_account,
             user_routes::logout,
             user_routes::login,
+            user_routes::login_logged_user,
             user_routes::register,
+            user_routes::register_logged_user,
             user_routes::save_settings,
             user_routes::get_settings,
             index,

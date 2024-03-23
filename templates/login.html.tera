@@ -1,51 +1,70 @@
-{% extends "base" %} {% block content %}
-<div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed">
-    <div class="position-relative overflow-hidden radial-gradient min-vh-100 d-flex align-items-center justify-content-center">
-        <div class="d-flex align-items-center justify-content-center w-100">
-            <div class="row justify-content-center w-100">
-                <div class="col-md-8 col-lg-6 col-xxl-3">
-                    <div class="card mb-0">
-                        <div class="card-body">
-                            <a href="javascript:void(0)" class="text-nowrap logo-img text-center d-block py-3 w-100">
-                                <img class="pb-2" src="/assets/images/logos/icon.png" style="width: 33px;"/>
-                                <span class="ps-1 fs-6">
-                                    Projeto Finanças
-                                </span>
-                            </a>
-                            <form action="/verifyaccount" method="post">
-                                <input type="text" id="id" name="id" value="0" placeholder="0" hidden>
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="email" name="email"  aria-describedby="emailHelp">
+<!doctype html>
+<html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {# <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' https:;
+    style-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;
+    font-src 'self' https://fonts.gstatic.com;object-src;
+    base-uri 'none';
+    require-trusted-types-for 'script';" /> #}
+    <title>Projeto Finanças</title>
+    <link rel="shortcut icon" type="image/png" href="../assets/images/logos/favicon.ico" />
+    {# <link rel="stylesheet" href="../assets/css/styles.min.css" /> #}
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+    <link rel="stylesheet" href="/css/style.css">
+    </head>
+    <body>
+        <div class="page-wrapper" id="main-wrapper" data-layout="vertical" data-navbarbg="skin6" data-sidebartype="full" data-sidebar-position="fixed" data-header-position="fixed">
+            <div class="position-relative overflow-hidden radial-gradient min-vh-100 d-flex align-items-center justify-content-center">
+                <div class="d-flex align-items-center justify-content-center w-100">
+                    <div class="row justify-content-center w-100">
+                        <div class="col-md-8 col-lg-6 col-xxl-3">
+                            <div class="card mb-0">
+                                <div class="card-body">
+                                    <a href="javascript:void(0)" class="text-nowrap logo-img text-center d-block py-3 w-100">
+                                        <img class="pb-2" src="/assets/images/logos/icon.png" style="width: 33px;"/>
+                                        <span class="ps-1 fs-6">
+                                            Projeto Finanças
+                                        </span>
+                                    </a>
+                                    <form action="/verifyaccount" method="post">
+                                        <input type="text" id="id" name="id" value="0" placeholder="0" hidden>
+                                        <div class="mb-3">
+                                            <label for="email" class="form-label">Email</label>
+                                            <input type="email" class="form-control" id="email" name="email"  aria-describedby="emailHelp">
+                                        </div>
+                                        <div class="mb-4">
+                                            <label for="password" class="form-label">Password</label>
+                                            <input type="password" class="form-control" id="password" name="password">
+                                        </div>
+                                        {%if message and message.0 == "success" %}
+                                        <div class="d-flex align-items-center justify-content-between mb-4">
+                                            <span>{{ message.1 }}</span>
+                                        </div>
+                                        {% elif  message and message.0 == "error"%}
+                                        <div class="d-flex align-items-center justify-content-between mb-4">
+                                            <span class="text-danger">{{ message.1 }}</span>
+                                        </div>
+                                        {% else %}
+                                        <div class="d-flex align-items-center justify-content-between mb-4 float-end">
+                                        </div>
+                                        {% endif %}
+                                        <button type="submit" class="btn btn-primary w-100 py-8 fs-4 mb-4 rounded-2">Sign In</button>
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <p class="fs-4 mb-0 fw-bold">Doesn't have an account?</p>
+                                            <a class="text-primary fw-bold ms-2" href="/register">Create an account</a>
+                                        </div>
+                                    </form>
                                 </div>
-                                <div class="mb-4">
-                                    <label for="password" class="form-label">Password</label>
-                                    <input type="password" class="form-control" id="password" name="password">
-                                </div>
-                                {%if message and message.0 == "success" %}
-                                <div class="d-flex align-items-center justify-content-between mb-4">
-                                    <span>{{ message.1 }}</span>
-                                </div>
-                                {% elif  message and message.0 == "error"%}
-                                <div class="d-flex align-items-center justify-content-between mb-4">
-                                    <span class="text-danger">{{ message.1 }}</span>
-                                </div>
-                                {% else %}
-                                <div class="d-flex align-items-center justify-content-between mb-4 float-end">
-                                </div>
-                                {% endif %}
-                                <button type="submit" class="btn btn-primary w-100 py-8 fs-4 mb-4 rounded-2">Sign In</button>
-                                <div class="d-flex align-items-center justify-content-center">
-                                    <p class="fs-4 mb-0 fw-bold">Doesn't have an account?</p>
-                                    <a class="text-primary fw-bold ms-2" href="/register">Create an account</a>
-                                </div>
-                            </form>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
-{% endblock content %}
+    </body>
+    
+</html>

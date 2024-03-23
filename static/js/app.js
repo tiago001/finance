@@ -1,7 +1,5 @@
 let graph
 
-
-
 function delete_expense(id){
     
     fetch("delete_expense?" + new URLSearchParams({
@@ -89,26 +87,24 @@ document.addEventListener("keypress", function(event) {
     }
 });
 
-function loadPage(href, pushState){
-    // const requestOptions = {
-    //     method: "GET",
-    //     redirect: "follow"
-    // };
+$.ajaxSetup({
+    beforeSend: function(xhr) {
+        xhr.setRequestHeader('load-mode', 'not-extended');
+    }
+});
 
+function loadPage(href, pushState){
     let url = href.replace(window.location.protocol + "//" + window.location.host, "");
 
     if(pushState){
         window.history.pushState(null, "Projeto Finanças", url)
     }
-    $("#content").load(href)
-
-    // fetch(href, requestOptions)
-    //     .then((response) => response.text())
-    //     .then((result) => {
-    //         document.getElementById("content").innerHTML = result
-    //         console.log(result)
-    //     })
-    //     .catch((error) => console.error(error));
+    
+    $("#content").load(href, function(e) {
+        if(e.includes("/verifyaccount")){ // Verify if user was logged out
+          window.location.replace(window.location.protocol + "//" + window.location.host+"/login")
+        }
+    })
 }
 
 document.onclick = function (e) {
@@ -120,9 +116,6 @@ document.onclick = function (e) {
     if(tagName == 'BUTTON' || tagName == 'P' || tagName == 'I' || tagName == 'SPAN'){ 
         element = element.parentElement 
     }
-    // if(element.tagName == 'P'){ element = element.parentElement }
-    // if(element.tagName == 'I'){ element = element.parentElement }
-    // if(element.tagName == 'SPAN'){ element = element.parentElement }
 
     if (element.tagName == 'A') {
         let url = element.href;

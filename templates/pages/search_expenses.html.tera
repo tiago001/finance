@@ -1,14 +1,14 @@
 <div class="input-group mb-3 row">
-    <div class="col-12 col-sm-3 col-md-2 col-lg-3 p-2 d-none d-lg-block">
+    <div class="col-12 col-sm-3 col-md-2 col-lg-3 p-2 d-none">
         <select class="form-select search" aria-label="Default select example">
-            <option value="date" selected>Data</option>
-            {# <option value="category">Categoria</option> #}
+            {# <option value="date" selected>Data</option> #}
+            <option value="category" selected>Categoria</option>
         </select>
     </div>
 
-    <div class="col-12 col-sm-6 category p-2">
+    <div class="col-12 col-sm-3 col-md-2 col-lg-3 category p-2">
         <select class="form-select category_select" aria-label="Default select example">
-            <option value="Indefinido" selected>Selecione a categoria</option>
+            <option value="Indefinido" selected>Todas categorias</option>
             <option value="Fun">Fun</option>
             <option value="Transport">Transport</option>
             <option value="Food">Food</option>
@@ -74,7 +74,7 @@
     document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
     document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
     
-    for (let i of document.getElementsByClassName("category")) {i.style.display = "none"}
+    {# for (let i of document.getElementsByClassName("category")) {i.style.display = "none"}
     document.getElementsByClassName("search")[0].addEventListener("change", function(){
         if(document.getElementsByClassName("search")[0].value == "date"){
             document.getElementsByClassName("category")[0].style.display = "none"
@@ -83,22 +83,16 @@
             document.getElementsByClassName("category")[0].style.display = "block"
             for (let i of document.getElementsByClassName("date")) {i.style.display = "none"}
         }
-    });
+    }); #}
 
     expenses = null
 
     function search_expenses(){
-        let value1
-        if (document.getElementsByClassName("search")[0].value == "category"){
-            value1 = document.getElementsByClassName("category_select")[0].value
-        } else {
-            value1 = document.getElementsByClassName("date1")[0].value
-        }
-    
         fetch("search_expenses?" + new URLSearchParams({
             "name": document.getElementsByClassName("search")[0].value,
-            "value1": value1,
-            "value2": document.getElementsByClassName("date2")[0].value
+            "value1": document.getElementsByClassName("date1")[0].value,
+            "value2": document.getElementsByClassName("date2")[0].value,
+            "category": document.getElementsByClassName("category_select")[0].value
         }), {redirect: 'follow'})
         .then((response) => {
             if (response.redirected) window.location.href = response.url;

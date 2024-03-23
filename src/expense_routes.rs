@@ -57,36 +57,40 @@ pub async fn get_expense(mut db: Connection<db::Logs>, id: i64, user: Authentica
     serde_json::to_string(&stream).unwrap()
 }
 
-#[get("/search_expenses?<name>&<value1>&<value2>")]
-pub async fn search_expenses(mut db: Connection<db::Logs>, name: &str, value1: Option<&str>, value2: Option<&str>, user: AuthenticatedUser) -> String {
+#[get("/search_expenses?<name>&<value1>&<value2>&<category>")]
+pub async fn search_expenses(mut db: Connection<db::Logs>, name: &str, category: Option<&str>, value1: Option<&str>, value2: Option<&str>, user: AuthenticatedUser) -> String {
 
     let mut stream: Vec<Expense> = vec![];
     if name == "category" {
-        if value1 == Some("Indefinido") {
+        if category == Some("Indefinido") {
             stream = sqlx::query_as!(Expense,
-                "SELECT * FROM expenses WHERE user_id = ? ORDER BY date DESC, id DESC",
+                "SELECT * FROM expenses WHERE `date` between ? and ? and user_id = ? ORDER BY date DESC, id DESC",
+                value1,
+                value2,
                 user.user_id
             )
             .fetch_all(db.as_mut())
             .await.unwrap();
         } else {
             stream = sqlx::query_as!(Expense,
-                "SELECT * FROM expenses WHERE category = ? and user_id = ? ORDER BY date DESC, id DESC",
+                "SELECT * FROM expenses WHERE `date` between ? and ? and category = ? and user_id = ? ORDER BY date DESC, id DESC",
                 value1,
+                value2,
+                category,
                 user.user_id
             )
             .fetch_all(db.as_mut())
             .await.unwrap();
         }
-    } else if name == "date" {
-        stream = sqlx::query_as!(Expense,
-            "SELECT * FROM expenses where `date` between ? and ? and user_id = ? ORDER BY date DESC, id DESC",
-            value1,
-            value2,
-            user.user_id
-        )
-        .fetch_all(db.as_mut())
-        .await.unwrap();
+    // } else if name == "date" {
+    //     stream = sqlx::query_as!(Expense,
+    //         "SELECT * FROM expenses where `date` between ? and ? and user_id = ? ORDER BY date DESC, id DESC",
+    //         value1,
+    //         value2,
+    //         user.user_id
+    //     )
+    //     .fetch_all(db.as_mut())
+    //     .await.unwrap();
     } else if name == "currentMonth" {
         stream = sqlx::query_as!(Expense, "SELECT * FROM expenses WHERE user_id = ? AND MONTH(`date`) = MONTH(now()) AND YEAR(`date`) = YEAR(now()) ORDER BY date DESC", user.user_id)
         .fetch_all(db.as_mut())

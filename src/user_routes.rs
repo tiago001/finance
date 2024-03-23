@@ -54,6 +54,21 @@ impl<'r> FromRequest<'r> for AuthenticatedUser {
     }
 }
 
+pub struct UnauthenticatedUser {}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for UnauthenticatedUser {
+    type Error = anyhow::Error;
+
+    async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        let cookies = req.cookies();
+        match get_user_id_cookie(cookies) {
+            Some(..) => return Outcome::Forward(Status::PermanentRedirect),
+            None => return Outcome::Success(UnauthenticatedUser{})
+        };
+    }
+}
+
 fn get_user_id_cookie<'a>(cookies: &'a CookieJar) -> Option<Cookie<'a>> {
     cookies.get_private("user_id")
 }
@@ -187,13 +202,23 @@ pub async fn get_user_info(mut db: Connection<Logs>, user: AuthenticatedUser) ->
 }
 
 #[get("/login")]
-pub async fn login(flash: Option<FlashMessage<'_>>) -> Template {
+pub async fn login(flash: Option<FlashMessage<'_>>, _user: UnauthenticatedUser) -> Template {
     Template::render("login",json!({"message": flash.map(FlashMessage::into_inner)}))
 }
 
+#[get("/login", rank = 2)]
+pub async fn login_logged_user(_user: AuthenticatedUser) -> Redirect {
+    Redirect::to("/")
+}
+
 #[get("/register")]
-pub async fn register(flash: Option<FlashMessage<'_>>) -> Template {
+pub async fn register(flash: Option<FlashMessage<'_>>, _user: UnauthenticatedUser) -> Template {
     Template::render("register",json!({"message": flash.map(FlashMessage::into_inner)}))
+}
+
+#[get("/register", rank = 2)]
+pub async fn register_logged_user(_user: AuthenticatedUser) -> Redirect {
+    Redirect::to("/")
 }
 
 #[post("/save_settings?<budget>")]
