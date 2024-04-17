@@ -7,10 +7,10 @@ use serde::Serialize;
 use time::{PrimitiveDateTime, OffsetDateTime};
 
 use crate::user_routes::AuthenticatedUser;
-use crate::db;
+use crate::db::Logs;
 
 #[post("/save_expense?<name>&<value>&<category>&<date>")]
-pub async fn save_expense(mut db: Connection<db::Logs>, name: &str, value: f64, category: &str, date: &str, user: AuthenticatedUser) -> String {
+pub async fn save_expense(mut db: Connection<Logs>, name: &str, value: f64, category: &str, date: &str, user: AuthenticatedUser) -> String {
     let now = OffsetDateTime::now_utc(); //.to_offset(offset!(-3))
 
     sqlx::query!("INSERT INTO expenses
@@ -23,7 +23,7 @@ pub async fn save_expense(mut db: Connection<db::Logs>, name: &str, value: f64, 
 }
 
 #[post("/edit_expense?<id>&<name>&<value>&<category>&<date>")]
-pub async fn edit_expense(mut db: Connection<db::Logs>,id: i64, name: Option<&str>, value: Option<f64>, category: Option<&str>, date: Option<&str>, user: AuthenticatedUser) -> String {
+pub async fn edit_expense(mut db: Connection<Logs>,id: i64, name: Option<&str>, value: Option<f64>, category: Option<&str>, date: Option<&str>, user: AuthenticatedUser) -> String {
 
     if name.is_some() && value.is_some() && category.is_some() && date.is_some() {
         sqlx::query!("UPDATE expenses SET name = ?, value = ?, category = ?, `date` = ? WHERE id = ? and user_id = ?",
@@ -46,7 +46,7 @@ pub async fn edit_expense(mut db: Connection<db::Logs>,id: i64, name: Option<&st
 }
 
 #[get("/get_expense?<id>")]
-pub async fn get_expense(mut db: Connection<db::Logs>, id: i64, user: AuthenticatedUser) -> String {
+pub async fn get_expense(mut db: Connection<Logs>, id: i64, user: AuthenticatedUser) -> String {
     let stream = sqlx::query_as!(Expense,
         "SELECT * FROM expenses WHERE user_id = ? AND id = ?",
         user.user_id, id
@@ -58,7 +58,7 @@ pub async fn get_expense(mut db: Connection<db::Logs>, id: i64, user: Authentica
 }
 
 #[get("/search_expenses?<name>&<value1>&<value2>&<category>")]
-pub async fn search_expenses(mut db: Connection<db::Logs>, name: &str, category: Option<&str>, value1: Option<&str>, value2: Option<&str>, user: AuthenticatedUser) -> String {
+pub async fn search_expenses(mut db: Connection<Logs>, name: &str, category: Option<&str>, value1: Option<&str>, value2: Option<&str>, user: AuthenticatedUser) -> String {
 
     let mut stream: Vec<Expense> = vec![];
     if name == "category" {
@@ -109,7 +109,7 @@ pub async fn search_expenses(mut db: Connection<db::Logs>, name: &str, category:
 }
 
 #[get("/search_expenses_category?<value1>&<value2>")]
-pub async fn search_expenses_category(mut db: Connection<db::Logs>, user: AuthenticatedUser, value1: &str, value2: &str) -> String {
+pub async fn search_expenses_category(mut db: Connection<Logs>, user: AuthenticatedUser, value1: &str, value2: &str) -> String {
     #[derive(Serialize, Debug, Clone)]
     struct Record {category: String, sum: Option<f64>, month: Option<i64>}
 
@@ -169,7 +169,7 @@ pub async fn search_expenses_category(mut db: Connection<db::Logs>, user: Authen
 }
 
 #[post("/delete_expense?<id>")]
-pub async fn delete_expense(mut db: Connection<db::Logs>,id: i64, user: AuthenticatedUser) -> String {
+pub async fn delete_expense(mut db: Connection<Logs>,id: i64, user: AuthenticatedUser) -> String {
 
     sqlx::query!("DELETE from expenses WHERE id = ? and user_id = ?",
         id, user.user_id).execute(db.as_mut()).await.unwrap();

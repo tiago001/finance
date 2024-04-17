@@ -4,10 +4,10 @@ use rocket_db_pools::{sqlx, Connection};
 use time::{PrimitiveDateTime, OffsetDateTime};
 
 use crate::user_routes::AuthenticatedUser;
-use crate::db;
+use crate::db::Logs;
 
 #[post("/save_income?<obs>&<value>&<date>")]
-pub async fn save_income(mut db: Connection<db::Logs>, obs: Option<&str>, value: f64, date: &str, user: AuthenticatedUser) -> String {
+pub async fn save_income(mut db: Connection<Logs>, obs: Option<&str>, value: f64, date: &str, user: AuthenticatedUser) -> String {
     let now = OffsetDateTime::now_utc(); //.to_offset(offset!(-3))
 
     sqlx::query!("INSERT INTO incomes
@@ -20,7 +20,7 @@ pub async fn save_income(mut db: Connection<db::Logs>, obs: Option<&str>, value:
 }
 
 #[get("/search_income")]
-pub async fn search_income(mut db: Connection<db::Logs>, user: AuthenticatedUser) -> String {
+pub async fn search_income(mut db: Connection<Logs>, user: AuthenticatedUser) -> String {
 
     let stream: Vec<Income> = sqlx::query_as!(Income,
             "SELECT * FROM incomes WHERE user_id = ? ORDER BY date desc",
@@ -33,7 +33,7 @@ pub async fn search_income(mut db: Connection<db::Logs>, user: AuthenticatedUser
 }
 
 #[post("/edit_income?<id>&<obs>&<value>&<date>")]
-pub async fn edit_income(mut db: Connection<db::Logs>,id: i64, obs: Option<&str>, value: Option<f64>, date: Option<&str>, user: AuthenticatedUser) -> String {
+pub async fn edit_income(mut db: Connection<Logs>,id: i64, obs: Option<&str>, value: Option<f64>, date: Option<&str>, user: AuthenticatedUser) -> String {
 
     if obs.is_some() && value.is_some() && date.is_some() {
         sqlx::query!("UPDATE incomes SET obs = ?, value = ?,  `date` = ? WHERE id = ? and user_id = ?",
@@ -53,7 +53,7 @@ pub async fn edit_income(mut db: Connection<db::Logs>,id: i64, obs: Option<&str>
 }
 
 #[get("/get_income?<id>")]
-pub async fn get_income(mut db: Connection<db::Logs>, id: i64, user: AuthenticatedUser) -> String {
+pub async fn get_income(mut db: Connection<Logs>, id: i64, user: AuthenticatedUser) -> String {
     let stream = sqlx::query_as!(Income,
         "SELECT * FROM incomes WHERE user_id = ? AND id = ?",
         user.user_id, id
@@ -65,7 +65,7 @@ pub async fn get_income(mut db: Connection<db::Logs>, id: i64, user: Authenticat
 }
 
 #[post("/delete_income?<id>")]
-pub async fn delete_income(mut db: Connection<db::Logs>,id: i64, user: AuthenticatedUser) -> String {
+pub async fn delete_income(mut db: Connection<Logs>,id: i64, user: AuthenticatedUser) -> String {
 
     sqlx::query!("DELETE from incomes WHERE id = ? and user_id = ?",
         id, user.user_id).execute(db.as_mut()).await.unwrap();

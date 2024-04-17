@@ -1,11 +1,68 @@
-<div class="input-group mb-3">
-    {%if settings and settings.budget%}
-    {% endif %}
-    <span class="input-group-text" id="basic-addon1">Monthly budget</span>
-    <input type="number" class="form-control budget" aria-label="budget" aria-describedby="basic-addon1" value="{{ settings.budget }}">
+<div class="card w-100">
+    <div class="card-body">
+        <div class="d-sm-flex d-block align-items-center justify-content-between">
+            <div class="input-group mb-3">
+                {%if settings and settings.budget%}
+                {% endif %}
+                <span class="input-group-text" id="basic-addon1">Monthly budget</span>
+                <input type="number" class="form-control budget" aria-label="budget" aria-describedby="basic-addon1" value="{{ settings.budget }}">
+            </div>
+        </div>
+        <button type="button" class="btn btn-primary w-100" onclick="save_settings()">Save settings</button>
+    </div>
+</div>
+
+
+<div class="card w-100">
+    <div class="card-body">
+        <div class="d-sm-flex d-block align-items-center justify-content-between mb-9">
+          <div class="mb-3 mb-sm-0">
+            <h5 class="card-title fw-semibold">Categorias despesa</h5>
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="open_create_category('expenses')" data-bs-toggle="modal" data-bs-target="#exampleModal">Adicionar</button>
+            </div>
+        </div>
+        <div class="row">
+            {% for category in categories %}
+            {% if category.category_type == "expenses" %}
+            <div class="col-12 col-md-6 col-lg-3">
+                {{category.category}}
+                <button class="btn btn-sm btn-light py-0 float-end" onclick="open_edit_category({{category.id}}, '{{category.category}}', 'expenses')" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                    <span><i class="ti ti-pencil"></i></span>
+                </button>
+            </div>
+            {% endif%}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="card w-100">
+    <div class="card-body">
+        <div class="d-sm-flex d-block align-items-center justify-content-between mb-9">
+          <div class="mb-3 mb-sm-0">
+            <h5 class="card-title fw-semibold">Categorias receita</h5>
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="open_create_category('incomes')" data-bs-toggle="modal" data-bs-target="#exampleModal">Adicionar</button>
+            </div>
+        </div>
+        <div class="row">
+            {% for category in categories %}
+            {% if category.category_type == "incomes" %}
+            <div class="col-12 col-md-6 col-lg-3">
+                {{category.category}}
+                <button class="btn btn-sm btn-light py-0 float-end" onclick="open_edit_category({{category.id}}, '{{category.category}}', 'incomes')" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                    <span><i class="ti ti-pencil"></i></span>
+                </button>
+            </div>
+            {% endif%}
+            {% endfor %}
+        </div>
+    </div>
 </div>
   
-<button type="button" class="btn btn-primary w-100" onclick="save_settings()">Save settings</button>
 
 <script>
     function save_settings(){
@@ -29,4 +86,110 @@
                 console.warn(error);
             });
     }
+
+    function open_create_category(tipo){
+        var exampleModal = document.getElementById('exampleModal')
+        var modalTitle = exampleModal.querySelector('.modal-title')
+    
+        modalTitle.textContent = 'Criar categoria '+tipo
+
+        $(".modal .btn-danger").hide()
+        $(".modal .btn-primary").text("Save")
+
+        document.getElementsByClassName("modal-body")[0].innerHTML = `
+        <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon1">Nome</span>
+            <input type="text" class="form-control categoryname" aria-label="nome" aria-describedby="basic-addon1">
+        </div>
+        `;
+        
+        $(".modal .btn-primary")[0].setAttribute('onclick',`save_category(null, '${tipo}')`)
+    }
+    function open_edit_category(id, category, tipo){
+        var exampleModal = document.getElementById('exampleModal')
+        var modalTitle = exampleModal.querySelector('.modal-title')
+    
+        modalTitle.textContent = 'Editar categoria'
+
+        $(".modal .btn-danger").show()
+        $(".modal .btn-primary").text("Save")
+
+        document.getElementsByClassName("modal-body")[0].innerHTML = `
+        <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon1">Nome</span>
+            <input type="text" class="form-control categoryname" aria-label="nome" aria-describedby="basic-addon1" value="${category}">
+        </div>
+        `;
+        
+        $(".modal .btn-primary")[0].setAttribute('onclick',`save_category(${id}, '${tipo}')`)
+        $(".modal .btn-danger")[0].setAttribute('onclick',`delete_category(${id})`)
+    }
+
+    function save_category(id, type){
+        fetch("save_category?" + new URLSearchParams({
+            "id": id,
+            "name": document.getElementsByClassName("categoryname")[0].value,
+            "category_type": type}),
+        {
+            method: "POST"
+        })
+        .then((response) => {
+            if(response.status != 200){
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'error',
+                    title: 'Erro ao salvar categoria',
+                    showConfirmButton: false,
+                    timer: 2500,
+                    toast: true
+                })
+            } else {
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Categoria salva com sucesso',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    toast: true
+                })
+                loadPage("http://localhost:8000/settings", false)
+            }
+        })
+        .catch((error) => {
+            console.warn(error);
+        });
+    }
+
+    function delete_category(id){
+        Swal.fire({
+            title: "Tem certeza que deseja deletar a categoria?",
+            text: "Receitas e despesas com essa categoria vão ficar com a categoria não definida",
+            showCancelButton: true,
+            confirmButtonText: "Deletar",
+  			icon: "warning"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch("delete_category?" + new URLSearchParams({
+                    "id": id}), {method: "POST", redirect: 'follow'
+                }).then((response) => {
+                    if (response.redirected) window.location.href = response.url;
+                    return
+                })
+                .then(() => {
+                    loadPage("http://localhost:8000/settings", false)
+                    Swal.fire({
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Categoria deletada com sucesso',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        toast: true
+                    })
+                })
+                .catch((error) => {
+                    console.warn(error);
+                });
+            }
+        });
+}
 </script>

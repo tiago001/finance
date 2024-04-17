@@ -6,10 +6,10 @@ use rocket::response::Redirect;
 use rocket_db_pools::Database;
 use rocket_db_pools::{sqlx, Connection};
 use rocket_dyn_templates::Template;
-use entity::settings::Settings;
+use entity::{settings::Settings, categories::Categories};
 use serde_json::json;
 
-use finance::{db, user_routes, expense_routes, income_routes};
+use finance::{db::Logs, user_routes, expense_routes, income_routes, settings_routes};
 use finance::{user_routes::AuthenticatedUser, user_routes::redirect_to_login};
 
 use rocket::request::FromRequest;
@@ -45,7 +45,7 @@ impl<'r> FromRequest<'r> for FetchMode {
 #[launch]
 fn rocket() -> _ {
     rocket::build()
-    .attach(db::Logs::init())
+    .attach(Logs::init())
     .mount("/", routes![
             expense_routes::save_expense,
             expense_routes::get_expense,
@@ -66,8 +66,10 @@ fn rocket() -> _ {
             user_routes::login_logged_user,
             user_routes::register,
             user_routes::register_logged_user,
-            user_routes::save_settings,
-            user_routes::get_settings,
+            settings_routes::save_settings,
+            settings_routes::get_settings,
+            settings_routes::save_category,
+            settings_routes::delete_category,
             index,
             settings,
             searchexpenses,
@@ -93,7 +95,7 @@ async fn index(mode: FetchMode, user: AuthenticatedUser) -> Template {
 }
 
 #[get("/settings")]
-async fn settings(mode: FetchMode, mut db: Connection<db::Logs>, user: AuthenticatedUser) -> Template {
+async fn settings(mode: FetchMode, mut db: Connection<Logs>, user: AuthenticatedUser) -> Template {
     let stream = match sqlx::query_as!(Settings,
             "SELECT * FROM settings WHERE user_id = ?",
             user.user_id
@@ -101,28 +103,51 @@ async fn settings(mode: FetchMode, mut db: Connection<db::Logs>, user: Authentic
             Ok(result) => result,
             Err(..) => Settings{user_id: 0, budget: None}
         };
+
+    let categories: Vec<Categories> = match sqlx::query_as! {Categories,
+        "SELECT * FROM categories WHERE user_id = ?",
+        user.user_id}
+        .fetch_all(db.as_mut())
+        .await{
+            Ok(result) => result,
+            Err(..) => Vec::new()
+        };
     if mode.0 == "navigate" {
-        Template::render("pages/extended/settings", json!({"username": user.name,"settings": stream}))
+        Template::render("pages/extended/settings", json!({"username": user.name,"settings": stream, "categories": categories}))
     } else {
-        Template::render("pages/settings", json!({"username": user.name,"settings": stream}))
+        Template::render("pages/settings", json!({"username": user.name,"settings": stream, "categories": categories}))
     }
 }
 
 #[get("/searchexpenses")]
-async fn searchexpenses(mode: FetchMode, user: AuthenticatedUser) -> Template {
+async fn searchexpenses(mut db: Connection<Logs>, mode: FetchMode, user: AuthenticatedUser) -> Template {
+    let categories = sqlx::query_as!(Categories,
+            "SELECT * FROM categories WHERE user_id = ? and category_type = 'expenses'",
+            user.user_id
+        )
+        .fetch_all(db.as_mut())
+        .await.unwrap();
+
     if mode.0 == "navigate" {
-        Template::render("pages/extended/search_expenses", json!({"username": user.name}))
+        Template::render("pages/extended/search_expenses", json!({"username": user.name, "categories": categories}))
     } else {
-        Template::render("pages/search_expenses", json!({"username": user.name}))
+        Template::render("pages/search_expenses", json!({"username": user.name, "categories": categories}))
     }
 }
 
 #[get("/addexpenses")]
-async fn addexpenses(mode: FetchMode, user: AuthenticatedUser) -> Template {
+async fn addexpenses(mut db: Connection<Logs>, mode: FetchMode, user: AuthenticatedUser) -> Template {
+    let categories = sqlx::query_as!(Categories,
+            "SELECT * FROM categories WHERE user_id = ? and category_type = 'expenses'",
+            user.user_id
+        )
+        .fetch_all(db.as_mut())
+        .await.unwrap();
+
     if mode.0 == "navigate" {
-        Template::render("pages/extended/add_expense", json!({"username": user.name}))
+        Template::render("pages/extended/add_expense", json!({"username": user.name, "categories": categories}))
     } else {
-        Template::render("pages/add_expense", json!({"username": user.name}))
+        Template::render("pages/add_expense", json!({"username": user.name, "categories": categories}))
     }
 }
 

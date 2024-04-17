@@ -9,12 +9,9 @@
     <div class="col-12 col-sm-3 col-md-2 col-lg-3 category p-2">
         <select class="form-select category_select" aria-label="Default select example">
             <option value="Indefinido" selected>Todas categorias</option>
-            <option value="Fun">Fun</option>
-            <option value="Transport">Transport</option>
-            <option value="Food">Food</option>
-            <option value="Tech">Tech</option>
-            <option value="Education">Education</option>
-            <option value="Others">Others</option>
+            {% for category in categories %}
+                <option value="{{category.category}}">{{category.category}}</option>
+            {% endfor %}
         </select>
     </div>
 

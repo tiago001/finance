@@ -1,7 +1,7 @@
 use std::ops::Add;
 
 use argon2::Config;
-use entity::{users::Users, settings::Settings};
+use entity::users::Users;
 use rocket::{response::{Flash, Redirect}, http::{CookieJar, Cookie}, request::{FromRequest, Outcome}, Request};
 use rocket::form::Form;
 use rocket_db_pools::{sqlx, Connection};
@@ -18,7 +18,7 @@ use time::Duration;
 
 use crate::error::Error;
 
-use crate::db::{self, Logs};
+use crate::db::Logs;
 
 pub fn redirect_to_login() -> Redirect {
     Redirect::to("/login")
@@ -219,42 +219,4 @@ pub async fn register(flash: Option<FlashMessage<'_>>, _user: UnauthenticatedUse
 #[get("/register", rank = 2)]
 pub async fn register_logged_user(_user: AuthenticatedUser) -> Redirect {
     Redirect::to("/")
-}
-
-#[post("/save_settings?<budget>")]
-pub async fn save_settings(mut db: Connection<db::Logs>,budget: Option<f64>, user: AuthenticatedUser) -> String {
-
-    let stream = sqlx::query_as!(Settings,
-            "SELECT * FROM settings WHERE user_id = ?",
-            user.user_id
-        )
-        .fetch_all(db.as_mut())
-        .await.unwrap();
-
-    if stream.is_empty() {
-        sqlx::query!("INSERT INTO settings (user_id, budget) VALUES(?, ?)",
-            user.user_id, budget.unwrap())
-            .execute(db.as_mut()).await.unwrap();
-    } else {
-        sqlx::query!("UPDATE settings SET budget = ? WHERE user_id = ?",
-            budget.unwrap(), user.user_id).execute(db.as_mut()).await.unwrap();
-    }
-
-    "ok".to_string()
-}
-
-#[get("/get_settings")]
-pub async fn get_settings(mut db: Connection<db::Logs>, user: AuthenticatedUser) -> String {
-
-    let stream: Settings = match sqlx::query_as!(Settings,
-            "SELECT * FROM settings WHERE user_id = ?",
-            user.user_id
-        )
-        .fetch_one(db.as_mut())
-        .await {
-            Ok(result) => result,
-            Err(..) => Settings{ user_id: user.user_id, budget: Some(0.0)}
-        };
-
-    serde_json::to_string(&stream).unwrap()
 }
