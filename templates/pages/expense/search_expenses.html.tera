@@ -48,7 +48,7 @@
     
 </div>
 
-<div class="">
+<div class="row">
     <div class="col-12 col-sm-12 col-md-12">
         <div class="chart mb-4">
             <button class="btn btn-sm btn-primary float-end" onclick="change_graph()">Trocar gráfico</button>
@@ -212,7 +212,7 @@
                 interaction: {
                     intersect: false,
                     mode: 'index'
-                  },
+                },
                 maintainAspectRatio: false,
                 scales: {
                     y: {
@@ -250,10 +250,16 @@
         let settings = await get_settings();
         budgetValue = settings.budget;
 
-        //categories = ["Education", "Food", "Fun", "Indefinido","Mercado", "Others", "Tech","Transport"]
-        //[#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
+        categories = []
 
-        categories = [
+        jsonCategories = json.map(category => category.category)
+            .filter((category, _, categories) => categories.indexOf(category) === categories.lastIndexOf(category))
+
+        jsonCategories.forEach(e => {
+            categories.push({name: e, data: []});
+        })
+
+        defaultCategories = [
             {name:"Education", data: [], color: "#e60049"},
             {name:"Food", data: [], color: "#0bb4ff"},
             {name:"Fun", data: [], color: "#50e991"},
@@ -263,6 +269,12 @@
             {name:"Tech", data: [], color: "#dc0ab4"},
             {name:"Transport", data: [], color: "#b3d4ff"},
         ]
+
+        defaultCategories.forEach(e => {
+            if(!jsonCategories.includes(e.name)){
+                categories.push(e)
+            }
+        });
 
         categories.forEach(c => {
             daysInMonth.forEach((v, pos) => {
@@ -290,7 +302,7 @@
             data.push({
                 label: c.name,
                 data: c.data,
-                borderColor: '#36a2eb',
+                borderColor: c.color != null ? '#36a2eb' : null,
                 backgroundColor: c.color
             })
         })
@@ -353,12 +365,17 @@
             }
         })
 
+        const autocolors = window['chartjs-plugin-autocolors'];
+
         graph = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: dataset
             },
+            plugins: [
+                autocolors
+            ],
             options: {
                 interaction: {
                     intersect: false,
@@ -431,7 +448,7 @@
             "id": id,
             "name": document.getElementsByClassName("editnome")[0].value,
             "value": document.getElementsByClassName("editmoney_value")[0].value,
-            "category": document.getElementsByClassName("editcategory")[0].value,
+            "category_id": document.getElementsByClassName("editcategory")[0].value,
             "date": document.getElementsByClassName("editdate")[0].value}),
         {
             method: "POST"

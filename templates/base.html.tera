@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../assets/css/styles.css" />
     <link rel="stylesheet" href="/css/style.css">
     </head>
-    <body>
+    <body data-bs-theme="light">
         {% block content %}{% endblock content %}
     </body>
     <script src="../assets/libs/jquery/dist/jquery.min.js"></script>
@@ -26,6 +26,8 @@
     
     <!-- CHART -->
     <script src="assets/libs/chartjs/chart.js"></script>
+    <!-- CHART COLORS-->
+    <script src="assets/libs/chartjs/chartjs-plugin-autocolors.js"></script>
     <!-- SWEETALERT -->
     <script src="assets/libs/sweetalert/sweetalert2.js"></script>
 

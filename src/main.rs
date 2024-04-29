@@ -53,6 +53,7 @@ fn rocket() -> _ {
             expense_routes::search_expenses_category,
             expense_routes::edit_expense,
             expense_routes::delete_expense,
+            expense_routes::get_balance,
             income_routes::save_income,
             income_routes::search_income,
             income_routes::delete_income,
@@ -77,7 +78,8 @@ fn rocket() -> _ {
             dashboard,
             editexpense,
             editincome,
-            income
+            income,
+            investment
         ]
     ).register("/",catchers![unauthorized])
     .mount("/", FileServer::from("static")) // Enable for development
@@ -131,7 +133,7 @@ async fn searchexpenses(mut db: Connection<Logs>, mode: FetchMode, user: Authent
     if mode.0 == "navigate" {
         Template::render("pages/extended/search_expenses", json!({"username": user.name, "categories": categories}))
     } else {
-        Template::render("pages/search_expenses", json!({"username": user.name, "categories": categories}))
+        Template::render("pages/expense/search_expenses", json!({"username": user.name, "categories": categories}))
     }
 }
 
@@ -147,7 +149,7 @@ async fn addexpenses(mut db: Connection<Logs>, mode: FetchMode, user: Authentica
     if mode.0 == "navigate" {
         Template::render("pages/extended/add_expense", json!({"username": user.name, "categories": categories}))
     } else {
-        Template::render("pages/add_expense", json!({"username": user.name, "categories": categories}))
+        Template::render("pages/expense/add_expense", json!({"username": user.name, "categories": categories}))
     }
 }
 
@@ -161,13 +163,20 @@ async fn dashboard(mode: FetchMode, user: AuthenticatedUser) -> Template {
 }
 
 #[get("/editexpense")]
-async fn editexpense(user: AuthenticatedUser) -> Template {
-    Template::render("pages/edit_expense",json!({"username": user.name}))
+async fn editexpense(mut db: Connection<Logs>, user: AuthenticatedUser) -> Template {
+    let categories = sqlx::query_as!(Categories,
+            "SELECT * FROM categories WHERE user_id = ? and category_type = 'expenses'",
+            user.user_id
+        )
+        .fetch_all(db.as_mut())
+        .await.unwrap();
+
+    Template::render("pages/expense/edit_expense",json!({"username": user.name, "categories": categories}))
 }
 
 #[get("/editincome")]
 async fn editincome(user: AuthenticatedUser) -> Template {
-    Template::render("pages/edit_income",json!({"username": user.name}))
+    Template::render("pages/income/edit_income",json!({"username": user.name}))
 }
 
 #[get("/income")]
@@ -175,7 +184,16 @@ async fn income(mode: FetchMode, user: AuthenticatedUser) -> Template {
     if mode.0 == "navigate" {
         Template::render("pages/extended/income", json!({"username": user.name}))
     } else {
-        Template::render("pages/income", json!({"username": user.name}))
+        Template::render("pages/income/income", json!({"username": user.name}))
+    }
+}
+
+#[get("/investment")]
+async fn investment(mode: FetchMode, user: AuthenticatedUser) -> Template {
+    if mode.0 == "navigate" {
+        Template::render("pages/extended/investment", json!({"username": user.name}))
+    } else {
+        Template::render("pages/investment/investment", json!({"username": user.name}))
     }
 }
 

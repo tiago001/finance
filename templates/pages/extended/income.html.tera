@@ -1,5 +1,5 @@
 {% extends "index" %} 
 
 {% block page %}
-    {% include "pages/income" %}
+    {% include "pages/income/income" %}
 {% endblock page %}

@@ -68,6 +68,19 @@
                 <span class="hide-menu">Receitas</span>
               </a>
             </li>
+            <li class="nav-small-cap">
+              <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
+              <span class="hide-menu">INVESTIMENTOS</span>
+            </li>
+            <li class="sidebar-item">
+              <a class="sidebar-link" href="investment" aria-expanded="false" rel="no-refresh">
+                <span>
+                  <i class="ti ti-trending-up"></i>
+                </span>
+                <span class="hide-menu">Investimentos</span>
+                <span class="badge bg-secondary fw-semibold">New</span>
+              </a>
+            </li>
             <!-- <li class="sidebar-item">
               <a class="sidebar-link" href="./ui-forms.html" aria-expanded="false">
                 <span>

@@ -20,13 +20,23 @@
         <div class="col-10 col-sm-6 col-md-4 col-lg-3">
             <canvas id="myChart"></canvas>
         </div>
-        <div class="col-1 d-block "></div>
+        <div class="col-1 d-block"></div>
+        <div class="col-4 col-sm-6 col-md-10"></div>
+        <div class="col-8 col-sm-6 col-md-2 d-flex">
+            <div class="input-group input-group-sm">
+                <input type="text" id="balance-months" class="form-control" value="6">
+                <span class="input-group-text">meses</span>
+            </div>
+            <button class="btn btn-sm btn-primary mx-1 px-3" onclick="get_balance()"><span class="ti ti-search"></span> </button>
+        </div>
+        <div class="col-12" style="min-height: 300px;">
+            <canvas id="balanceChart"></canvas>
+        </div>
         
     </div>
 </div>
 
 <script>
-   
     function search_expenses_category(){
         fetch("search_expenses_category?" + new URLSearchParams({
             "value1": document.getElementsByClassName("date1")[0].value,
@@ -134,5 +144,66 @@
     document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
 
     search_expenses_category()
+
+    function get_balance(){
+
+        fetch("get_balance?" +new URLSearchParams({
+            "months": document.getElementById("balance-months").value
+        }), {redirect: 'follow'})
+         .then((response) => {
+            if (response.redirected) window.location.href = response.url;
+            return response.json()
+        })
+        .then((json) => {
+            console.log(json)
+
+            let dataset = []
+            
+            dataset.push({
+                type: 'line',
+                label: 'Balance',
+                data: json.balance.map(item => item.value),
+                borderColor: '#3bb000',
+                backgroundColor: "#3bb000"
+            })
+            dataset.push({
+                type: 'bar',
+                label: 'Expenses',
+                data: json.expenses.map(item => item.value), // -Math.abs(item.value)
+                borderColor: '#ed686c',
+                backgroundColor: "#ed686c"
+            })
+            dataset.push({
+                type: 'bar',
+                label: 'Incomes',
+                data: json.incomes.map(item => item.value),
+                borderColor: '#36a2eb',
+                backgroundColor: "#36a2eb"
+            })
+            
+            if(graphBalance){
+                graphBalance.destroy()
+            }
+            let ctx = document.getElementById('balanceChart');
+    
+            graphBalance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: json.labels,
+                    datasets: dataset
+                },
+                options: {
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                      },
+                    maintainAspectRatio: false
+                }
+            });
+        });
+
+    }
+
+    get_balance()
 
 </script>

@@ -261,7 +261,7 @@
             `
             )
     
-            $('.name').on('blur', function(e){
+            /*$('.name').on('blur', function(e){
                 if(e.target.textContent.trim() != e.target.getAttribute("value")) {
                     e.target.setAttribute("value", e.target.textContent.trim()) 
                     fetch("edit_expense?" + new URLSearchParams({
@@ -310,7 +310,7 @@
                         console.warn(error);
                     });
                 }
-            })
+            })*/
     }
 
     function edit_income(id){

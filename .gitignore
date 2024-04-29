@@ -1,3 +1,4 @@
 /target
 *.lock
 Rocket.toml
+/.sqlx

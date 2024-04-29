@@ -1,7 +1,7 @@
 use std::ops::{Sub, Add};
 
 use chrono::{DateTime, Utc, Datelike};
-use entity::expense::Expense as Expense;
+use entity::expense_view::ExpenseView as ExpenseView;
 use rocket_db_pools::{sqlx, Connection};
 use serde::Serialize;
 use time::{PrimitiveDateTime, OffsetDateTime};
@@ -9,34 +9,34 @@ use time::{PrimitiveDateTime, OffsetDateTime};
 use crate::user_routes::AuthenticatedUser;
 use crate::db::Logs;
 
-#[post("/save_expense?<name>&<value>&<category>&<date>")]
-pub async fn save_expense(mut db: Connection<Logs>, name: &str, value: f64, category: &str, date: &str, user: AuthenticatedUser) -> String {
+#[post("/save_expense?<name>&<value>&<category_id>&<date>")]
+pub async fn save_expense(mut db: Connection<Logs>, name: &str, value: f64, category_id: &str, date: &str, user: AuthenticatedUser) -> String {
     let now = OffsetDateTime::now_utc(); //.to_offset(offset!(-3))
 
     sqlx::query!("INSERT INTO expenses
-        (name, value, category,date, user_id, created_date)
+        (name, value, category_id, date, user_id, created_date)
         VALUES(?, ?, ?, ?, ?, ?)",
-        name, value, category, date, user.user_id, PrimitiveDateTime::new(now.date(), now.time()))
+        name, value, category_id, date, user.user_id, PrimitiveDateTime::new(now.date(), now.time()))
         .execute(db.as_mut()).await.unwrap();
 
     "ok".to_string()
 }
 
-#[post("/edit_expense?<id>&<name>&<value>&<category>&<date>")]
-pub async fn edit_expense(mut db: Connection<Logs>,id: i64, name: Option<&str>, value: Option<f64>, category: Option<&str>, date: Option<&str>, user: AuthenticatedUser) -> String {
+#[post("/edit_expense?<id>&<name>&<value>&<category_id>&<date>")]
+pub async fn edit_expense(mut db: Connection<Logs>,id: i64, name: Option<&str>, value: Option<f64>, category_id: Option<i64>, date: Option<&str>, user: AuthenticatedUser) -> String {
 
-    if name.is_some() && value.is_some() && category.is_some() && date.is_some() {
-        sqlx::query!("UPDATE expenses SET name = ?, value = ?, category = ?, `date` = ? WHERE id = ? and user_id = ?",
-            name, value, category, date, id, user.user_id).execute(db.as_mut()).await.unwrap();
+    if name.is_some() && value.is_some() && category_id.is_some() && date.is_some() {
+        sqlx::query!("UPDATE expenses SET name = ?, value = ?, category_id = ?, `date` = ? WHERE id = ? and user_id = ?",
+            name, value, category_id, date, id, user.user_id).execute(db.as_mut()).await.unwrap();
     } else if name.is_some() {
         sqlx::query!("UPDATE expenses SET name = ? WHERE id = ? and user_id = ?",
             name, id, user.user_id).execute(db.as_mut()).await.unwrap();
     } else if value.is_some() {
         sqlx::query!("UPDATE expenses SET value = ? WHERE id = ? and user_id = ?",
             value, id, user.user_id).execute(db.as_mut()).await.unwrap();
-    } else if category.is_some() {
-        sqlx::query!("UPDATE expenses SET category = ? WHERE id = ? and user_id = ?",
-            category, id, user.user_id).execute(db.as_mut()).await.unwrap();
+    } else if category_id.is_some() {
+        sqlx::query!("UPDATE expenses SET category_id = ? WHERE id = ? and user_id = ?",
+            category_id, id, user.user_id).execute(db.as_mut()).await.unwrap();
     } else if date.is_some() {
         sqlx::query!("UPDATE expenses SET date = ? WHERE id = ? and user_id = ?",
             date, id, user.user_id).execute(db.as_mut()).await.unwrap();
@@ -47,8 +47,8 @@ pub async fn edit_expense(mut db: Connection<Logs>,id: i64, name: Option<&str>, 
 
 #[get("/get_expense?<id>")]
 pub async fn get_expense(mut db: Connection<Logs>, id: i64, user: AuthenticatedUser) -> String {
-    let stream = sqlx::query_as!(Expense,
-        "SELECT * FROM expenses WHERE user_id = ? AND id = ?",
+    let stream = sqlx::query_as!(ExpenseView,
+        "SELECT * FROM expenses_view WHERE user_id = ? AND id = ?",
         user.user_id, id
     )
     .fetch_one(db.as_mut())
@@ -60,11 +60,11 @@ pub async fn get_expense(mut db: Connection<Logs>, id: i64, user: AuthenticatedU
 #[get("/search_expenses?<name>&<value1>&<value2>&<category>")]
 pub async fn search_expenses(mut db: Connection<Logs>, name: &str, category: Option<&str>, value1: Option<&str>, value2: Option<&str>, user: AuthenticatedUser) -> String {
 
-    let mut stream: Vec<Expense> = vec![];
+    let mut stream: Vec<ExpenseView> = vec![];
     if name == "category" {
         if category == Some("Indefinido") {
-            stream = sqlx::query_as!(Expense,
-                "SELECT * FROM expenses WHERE `date` between ? and ? and user_id = ? ORDER BY date DESC, id DESC",
+            stream = sqlx::query_as!(ExpenseView,
+                "SELECT * FROM expenses_view WHERE `date` between ? and ? and user_id = ? ORDER BY date DESC, id DESC",
                 value1,
                 value2,
                 user.user_id
@@ -72,8 +72,8 @@ pub async fn search_expenses(mut db: Connection<Logs>, name: &str, category: Opt
             .fetch_all(db.as_mut())
             .await.unwrap();
         } else {
-            stream = sqlx::query_as!(Expense,
-                "SELECT * FROM expenses WHERE `date` between ? and ? and category = ? and user_id = ? ORDER BY date DESC, id DESC",
+            stream = sqlx::query_as!(ExpenseView,
+                "SELECT * FROM expenses_view WHERE `date` between ? and ? and category = ? and user_id = ? ORDER BY date DESC, id DESC",
                 value1,
                 value2,
                 category,
@@ -92,15 +92,15 @@ pub async fn search_expenses(mut db: Connection<Logs>, name: &str, category: Opt
     //     .fetch_all(db.as_mut())
     //     .await.unwrap();
     } else if name == "currentMonth" {
-        stream = sqlx::query_as!(Expense, "SELECT * FROM expenses WHERE user_id = ? AND MONTH(`date`) = MONTH(now()) AND YEAR(`date`) = YEAR(now()) ORDER BY date DESC", user.user_id)
+        stream = sqlx::query_as!(ExpenseView, "SELECT * FROM expenses_view WHERE user_id = ? AND MONTH(`date`) = MONTH(now()) AND YEAR(`date`) = YEAR(now()) ORDER BY date DESC", user.user_id)
         .fetch_all(db.as_mut())
         .await.unwrap();
     } else if name == "lastExpenses" {
-        stream = sqlx::query_as!(Expense, "SELECT * FROM expenses WHERE user_id = ? ORDER BY date desc,created_date desc LIMIT 100", user.user_id)
+        stream = sqlx::query_as!(ExpenseView, "SELECT * FROM expenses_view WHERE user_id = ? ORDER BY date desc,created_date desc LIMIT 100", user.user_id)
         .fetch_all(db.as_mut())
         .await.unwrap();
     } else if name == "lastAddedExpenses" {
-        stream = sqlx::query_as!(Expense, "SELECT * FROM expenses WHERE user_id = ? ORDER BY created_date desc LIMIT 100", user.user_id)
+        stream = sqlx::query_as!(ExpenseView, "SELECT * FROM expenses_view WHERE user_id = ? ORDER BY created_date desc LIMIT 100", user.user_id)
         .fetch_all(db.as_mut())
         .await.unwrap();
     }
@@ -111,10 +111,10 @@ pub async fn search_expenses(mut db: Connection<Logs>, name: &str, category: Opt
 #[get("/search_expenses_category?<value1>&<value2>")]
 pub async fn search_expenses_category(mut db: Connection<Logs>, user: AuthenticatedUser, value1: &str, value2: &str) -> String {
     #[derive(Serialize, Debug, Clone)]
-    struct Record {category: String, sum: Option<f64>, month: Option<i64>}
+    struct Record {category: Option<String>, sum: Option<f64>, month: Option<i64>}
 
     #[derive(Serialize, Debug, Clone)]
-    struct ExpensesCategory {category: String, months: Vec<MonthExpenses>}
+    struct ExpensesCategory {category: Option<String>, months: Vec<MonthExpenses>}
     #[derive(Serialize, Debug, Clone)]
     struct MonthExpenses{sum: Option<f64>, month: Option<i64>}
     #[derive(Serialize, Debug, Clone)]
@@ -123,7 +123,7 @@ pub async fn search_expenses_category(mut db: Connection<Logs>, user: Authentica
     struct Months{month: i64, sum: f64}
 
     let stream = sqlx::query_as!(Record, "SELECT sum(value) as sum, category, month(`date`) as month
-        FROM expenses WHERE `date` between ? and ? and user_id = ? group by category,month(`date`) order by 3,2",
+        FROM expenses_view WHERE `date` between ? and ? and user_id = ? group by category,month(`date`) order by 3,2",
         value1, value2, user.user_id)
         .fetch_all(db.as_mut())
         .await.unwrap();
@@ -175,4 +175,80 @@ pub async fn delete_expense(mut db: Connection<Logs>,id: i64, user: Authenticate
         id, user.user_id).execute(db.as_mut()).await.unwrap();
 
     "ok".to_string()
+}
+
+#[get("/get_balance?<months>")]
+pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: AuthenticatedUser) -> String {
+    #[derive(Serialize, Debug, Clone)]
+    struct Balance {value: Option<f64>, month: Option<i64>, year: Option<i64>, balance_type: String}
+
+    let stream = sqlx::query_as!(Balance,
+        "SELECT sum(value) as value, month(`date`) as month, year(`date`) as year, 'incomes' as balance_type
+        FROM incomes 
+        where user_id = ?
+        group by 2,3
+        UNION all
+        SELECT sum(value) as value, month(`date`) as month, year(`date`) as year, 'expenses' as balance_type
+        FROM expenses 
+        where user_id = ?
+        group by 2,3
+        order by 3 desc, 2 desc;",
+        user.user_id, user.user_id
+    )
+    .fetch_all(db.as_mut())
+    .await.unwrap();
+
+    let mut utc: DateTime<Utc> = Utc::now().sub(chrono::Months::new(months-1));
+
+    let mut expenses: Vec<Balance> = Vec::new();
+    let mut incomes: Vec<Balance> = Vec::new();
+    let mut balance: Vec<Balance> = Vec::new();
+    let mut labels: Vec<String> = Vec::new();
+
+    for _ in 0..months {
+        let expense = stream.iter().find(|s| 
+            s.month.unwrap() == utc.month() as i64 && 
+            s.year.unwrap() == utc.year() as i64 &&
+            s.balance_type == "expenses"
+        );
+        if expense.is_some() {
+            expenses.push(expense.unwrap().clone());
+        } else {
+            expenses.push(Balance { value: Some(0.0), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "expenses".to_string() })
+        }
+
+        let income = stream.iter().find(|s| 
+            s.month.unwrap() == utc.month() as i64 && 
+            s.year.unwrap() == utc.year() as i64 &&
+            s.balance_type == "incomes"
+        );
+        if income.is_some() {
+            incomes.push(income.unwrap().clone());
+        } else {
+            incomes.push(Balance { value: Some(0.0), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "incomes".to_string() })
+        }
+
+        if expense.is_some() && income.is_some() {
+            balance.push(Balance { value: Some(income.unwrap().value.unwrap() - expense.unwrap().value.unwrap()), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() })
+        } else if expense.is_some() {
+            balance.push(Balance { value: Some(-(expense.unwrap().value.unwrap())), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() })
+        } else if income.is_some() {
+            balance.push(Balance { value: Some(income.unwrap().value.unwrap()), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() })
+        } else {
+            balance.push(Balance { value: Some(0.0), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() })
+        }
+
+        labels.push(format!("{}-{}", utc.month(), utc.year()));
+
+        utc = utc.add(chrono::Months::new(1));
+    }
+
+    #[derive(Serialize, Debug, Clone)]
+    struct Return{expenses: Vec<Balance>, incomes: Vec<Balance>, balance: Vec<Balance>, labels: Vec<String>}
+
+    let retorno = Return{ expenses, incomes, balance, labels};
+
+    serde_json::to_string(&retorno).unwrap()
+
+    // "ok".to_string()
 }

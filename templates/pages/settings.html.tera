@@ -26,7 +26,7 @@
         <div class="row">
             {% for category in categories %}
             {% if category.category_type == "expenses" %}
-            <div class="col-12 col-md-6 col-lg-3">
+            <div class="col-12 col-md-6 col-lg-3 py-1">
                 {{category.category}}
                 <button class="btn btn-sm btn-light py-0 float-end" onclick="open_edit_category({{category.id}}, '{{category.category}}', 'expenses')" data-bs-toggle="modal" data-bs-target="#exampleModal">
                     <span><i class="ti ti-pencil"></i></span>
@@ -51,7 +51,7 @@
         <div class="row">
             {% for category in categories %}
             {% if category.category_type == "incomes" %}
-            <div class="col-12 col-md-6 col-lg-3">
+            <div class="col-12 col-md-6 col-lg-3 py-1">
                 {{category.category}}
                 <button class="btn btn-sm btn-light py-0 float-end" onclick="open_edit_category({{category.id}}, '{{category.category}}', 'incomes')" data-bs-toggle="modal" data-bs-target="#exampleModal">
                     <span><i class="ti ti-pencil"></i></span>
@@ -152,7 +152,7 @@
                     timer: 2000,
                     toast: true
                 })
-                loadPage("http://localhost:8000/settings", false)
+                loadPage(window.location.protocol + "//" + window.location.host+"/settings", false)
             }
         })
         .catch((error) => {
@@ -176,7 +176,7 @@
                     return
                 })
                 .then(() => {
-                    loadPage("http://localhost:8000/settings", false)
+                    loadPage(window.location.protocol + "//" + window.location.host+"/settings", false)
                     Swal.fire({
                         position: 'top-end',
                         icon: 'success',

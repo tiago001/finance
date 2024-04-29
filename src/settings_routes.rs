@@ -44,7 +44,13 @@ pub async fn save_category(mut db: Connection<Logs>, id: Option<i64>, name: Stri
 
 #[post("/delete_category?<id>")]
 pub async fn delete_category(mut db: Connection<Logs>, id: Option<i64>, user: AuthenticatedUser) -> Status {
-    sqlx::query!("DELETE FROM categories WHERE id = ? and user_id = ?;",
+    sqlx::query!("UPDATE expenses
+        SET category_id = null
+        WHERE user_id = ? and category_id = ?",
+        user.user_id, id)
+        .execute(db.as_mut()).await.unwrap();
+
+    sqlx::query!("DELETE FROM categories WHERE id = ? and user_id = ?",
         id, user.user_id)
         .execute(db.as_mut()).await.unwrap();
 

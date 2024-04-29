@@ -1,4 +1,5 @@
 let graph
+let graphBalance
 
 function delete_expense(id){
     
@@ -42,7 +43,7 @@ function open_edit_expense(id){
         .then((json) => {
             document.getElementsByClassName("editnome")[0].value = json.name
             document.getElementsByClassName("editmoney_value")[0].value = json.value
-            document.getElementsByClassName("editcategory")[0].value = json.category
+            document.getElementsByClassName("editcategory")[0].value = json.category_id
             document.getElementsByClassName("editdate")[0].value = json.date
         })
         .catch((error) => {
@@ -54,32 +55,32 @@ function open_edit_expense(id){
     $(".modal .btn-danger")[0].setAttribute('onclick',`delete_expense(${id})`)
 }
 
-function edit_expense(id){
-    fetch("edit_expense?" + new URLSearchParams({
-        "id": id,
-        "name": document.getElementsByClassName("editnome")[0].value,
-        "value": document.getElementsByClassName("editmoney_value")[0].value,
-        "category": document.getElementsByClassName("editcategory")[0].value,
-        "date": document.getElementsByClassName("editdate")[0].value}),
-    {
-        method: "POST"
-    })
-    .then((response) => response.text())
-    .then(() => {
-        search_expenses()
-        Swal.fire({
-            position: 'top-end',
-            icon: 'success',
-            title: 'Despesa alterada com sucesso',
-            showConfirmButton: false,
-            timer: 2000,
-            toast: true
-        })
-    })
-    .catch((error) => {
-        console.warn(error);
-    });
-}
+// function edit_expense(id){
+//     fetch("edit_expense?" + new URLSearchParams({
+//         "id": id,
+//         "name": document.getElementsByClassName("editnome")[0].value,
+//         "value": document.getElementsByClassName("editmoney_value")[0].value,
+//         "category_id": document.getElementsByClassName("editcategory")[0].value,
+//         "date": document.getElementsByClassName("editdate")[0].value}),
+//     {
+//         method: "POST"
+//     })
+//     .then((response) => response.text())
+//     .then(() => {
+//         search_expenses()
+//         Swal.fire({
+//             position: 'top-end',
+//             icon: 'success',
+//             title: 'Despesa alterada com sucesso',
+//             showConfirmButton: false,
+//             timer: 2000,
+//             toast: true
+//         })
+//     })
+//     .catch((error) => {
+//         console.warn(error);
+//     });
+// }
 
 document.addEventListener("keypress", function(event) {
     if (event.key === "Enter") {
@@ -105,6 +106,8 @@ function loadPage(href, pushState){
           window.location.replace(window.location.protocol + "//" + window.location.host+"/login")
         }
     })
+
+    attSideBarMenu()
 }
 
 document.onclick = function (e) {
@@ -129,3 +132,16 @@ document.onclick = function (e) {
 window.addEventListener("popstate", function(e) {
     loadPage(location.href, false)
 });
+
+function attSideBarMenu(){
+    var url = window.location + "";
+
+    $("#sidebarnav a").each(function () {
+    if($(this).hasClass("active")){
+        $(this).removeClass("active");
+    }
+    if(this.href == url){
+        $(this).addClass("active");
+    }
+    })
+}

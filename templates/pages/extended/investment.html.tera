@@ -1,5 +1,5 @@
 {% extends "index" %} 
 
 {% block page %}
-    {% include "pages/expense/add_expense" %}
+    {% include "pages/investment/investment" %}
 {% endblock page %}
