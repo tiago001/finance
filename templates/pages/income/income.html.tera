@@ -385,9 +385,12 @@
                 console.warn(error);
             });
         })
+
+        $(".modal-footer .btn-danger").show()
+        $(".modal-footer .btn-primary").show()
         
-        $(".modal .btn-primary")[0].setAttribute('onclick',`edit_income(${id})`)
-        $(".modal .btn-danger")[0].setAttribute('onclick',`delete_income(${id})`)
+        $(".modal-footer .btn-primary")[0].setAttribute('onclick',`edit_income(${id})`)
+        $(".modal-footer .btn-danger")[0].setAttribute('onclick',`delete_income(${id})`)
     }
 
     search_incomes()

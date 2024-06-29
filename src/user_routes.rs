@@ -1,6 +1,5 @@
 use std::ops::Add;
 
-use argon2::Config;
 use entity::users::Users;
 use rocket::{response::{Flash, Redirect}, http::{CookieJar, Cookie}, request::{FromRequest, Outcome}, Request};
 use rocket::form::Form;
@@ -11,6 +10,8 @@ use serde_json::json;
 use time::{PrimitiveDateTime, OffsetDateTime};
 use ring::rand::SecureRandom;
 use ring::rand;
+
+use argon2::{ Config, Variant, Version};
 
 use rocket::http::Status;
 
@@ -75,8 +76,8 @@ fn get_user_id_cookie<'a>(cookies: &'a CookieJar) -> Option<Cookie<'a>> {
 
 fn set_user_id_cookie(cookies: & CookieJar, user_id: i64) {
     let now = OffsetDateTime::now_utc().add(Duration::hours(4));
-    // cookies.add_private(Cookie::build(("user_id", user_id.to_string())).expires(now).secure(true).build());
-    cookies.add_private(Cookie::build(("user_id", user_id.to_string())).expires(now).build()); // For testing
+    cookies.add_private(Cookie::build(("user_id", user_id.to_string())).expires(now).secure(true).build());
+    // cookies.add_private(Cookie::build(("user_id", user_id.to_string())).expires(now).build()); // For testing
 }
 
 fn remove_user_id_cookie(cookies: & CookieJar) {
@@ -89,8 +90,8 @@ fn get_user_name_cookie<'a>(cookies: &'a CookieJar) -> Option<Cookie<'a>> {
 
 fn set_user_name_cookie(cookies: & CookieJar, name: String) {
     let now = OffsetDateTime::now_utc().add(Duration::hours(4));
-    // cookies.add_private(Cookie::build(("name", name.to_string())).expires(now).secure(true).build());
-    cookies.add_private(Cookie::build(("name", name.to_string())).expires(now).build()); // For testing
+    cookies.add_private(Cookie::build(("name", name.to_string())).expires(now).secure(true).build());
+    // cookies.add_private(Cookie::build(("name", name.to_string())).expires(now).build()); // For testing
 }
 
 fn remove_user_name_cookie(cookies: & CookieJar) {
@@ -119,7 +120,7 @@ pub struct InfoLogin {
 pub async fn create_account(mut db: Connection<Logs>, user_form: Form<InfoLogin>) -> Flash<Redirect> {
     let user = user_form.into_inner();
 
-    if user.email.is_empty() || user.password.is_empty() {
+    if user.email.is_empty() || user.password.is_empty() || user.name.is_none() {
         return Flash::error(Redirect::to("/register"), "Please enter a valid email and password");
     }
 
@@ -141,9 +142,20 @@ pub async fn create_account(mut db: Connection<Logs>, user_form: Form<InfoLogin>
     let rng = rand::SystemRandom::new();
     rng.fill(&mut salt).unwrap();
 
-    let hash_config = Config::default();
+    let hash_config = Config {
+        ad: &[],
+        hash_length: 32,
+        lanes: 1,
+        mem_cost: 65536,
+        secret: &[],
+        time_cost: 1,
+        variant: Variant::Argon2id,
+        version: Version::Version13,
+    };
     let hash = match argon2::hash_encoded(user.password.as_bytes(), &salt, &hash_config) {
-        Ok(result) => result,
+        Ok(result) => {
+            result
+        },
         Err(_) => {
             return Flash::error(Redirect::to("/register"), "Issue creating account");
         }
@@ -172,7 +184,7 @@ pub async fn verify_account(mut db: Connection<Logs>, cookies: & CookieJar<'_>, 
     let is_password_correct = match argon2::verify_encoded(&stored_user.password, user.password.as_bytes()) {
         Ok(result) => result,
         Err(_) => {
-            return Flash::error(Redirect::to("/login"), "Encountered an issue processing your account")
+            return Flash::error(Redirect::to("/login"), "Incorrect email or password")
         }
     };
 

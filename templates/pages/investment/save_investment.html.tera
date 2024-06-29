@@ -1,0 +1,47 @@
+<div class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Stock</span>
+    <input type="text" class="form-control stock_ticker" aria-label="stock" aria-describedby="basic-addon1" value="{{investment.stock}}" disabled>
+</div>
+
+<div class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Nome</span>
+    <input type="text" class="form-control stock_name" aria-label="nome" aria-describedby="basic-addon1" value="{{investment.name}}" disabled>
+</div>
+
+<div class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Quantidade</span>
+    <input type="text" class="form-control stock_quantity" aria-label="quantidade" aria-describedby="basic-addon1">
+</div>
+
+<script>
+    function save_investment(){
+        fetch("save_investment?" + new URLSearchParams({
+            "stock": document.getElementsByClassName("stock_ticker")[0].value,
+            "quantity": document.getElementsByClassName("stock_quantity")[0].value}),
+        {
+            method: "POST"
+        })
+        .then((response) => {
+            if(response.status != 200){
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'error',
+                    title: 'Erro ao salvar despesa',
+                    showConfirmButton: false,
+                    timer: 2500,
+                    toast: true
+                })
+            } else {
+                loadPage(window.location.protocol + "//" + window.location.host+"/investment", false)
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Despesa salva com sucesso',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    toast: true
+                })
+            }
+        });
+    }
+</script>

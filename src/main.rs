@@ -1,22 +1,25 @@
 #[macro_use] extern crate rocket;
 
+use rocket::http::Status;
 use rocket::fs::FileServer;
-// use rocket::request::FlashMessage;
 use rocket::response::Redirect;
-use rocket_db_pools::Database;
-use rocket_db_pools::{sqlx, Connection};
+use rocket::request::FromRequest;
+use rocket::{tokio, Request};
+use rocket::request::{self, Outcome};
+use rocket_db_pools::{Database, Connection, sqlx};
 use rocket_dyn_templates::Template;
-use entity::{settings::Settings, categories::Categories};
+
 use serde_json::json;
 
-use finance::{db::Logs, user_routes, expense_routes, income_routes, settings_routes};
+use finance::{db::Logs, user_routes, expense_routes, income_routes, settings_routes, investment_routes};
 use finance::{user_routes::AuthenticatedUser, user_routes::redirect_to_login};
+use finance::stock_update;
 
-use rocket::request::FromRequest;
-use rocket::Request;
-use rocket::request;
-use rocket::request::Outcome;
-use rocket::http::Status;
+use entity::{settings::Settings, categories::Categories, investments::Investment};
+
+use tokio_cron_scheduler::{Job, JobScheduler, JobSchedulerError};
+
+use dotenv::dotenv;
 
 #[derive(Debug)]
 struct FetchMode(String);
@@ -31,7 +34,6 @@ impl<'r> FromRequest<'r> for FetchMode {
     type Error = FetchModeError;
 
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        // println!("{:?}", req.headers());
 
         let keys: Vec<_> = req.headers().get("load-mode").collect();
         match keys.len() {
@@ -43,7 +45,16 @@ impl<'r> FromRequest<'r> for FetchMode {
 }
 
 #[launch]
-fn rocket() -> _ {
+async fn rocket() -> _ {
+    dotenv().ok();
+
+    tokio::spawn(async {
+        match run_scheduled_task().await {
+            Ok(..) => println!("task scheduled successfully"),
+            Err(e) => println!("error initiating task {}", e)
+        };
+    });
+    
     rocket::build()
     .attach(Logs::init())
     .mount("/", routes![
@@ -79,11 +90,35 @@ fn rocket() -> _ {
             editexpense,
             editincome,
             income,
-            investment
+            investment,
+            investment_routes::add_investment,
+            investment_routes::search_investment,
+            investment_routes::save_investment
         ]
     ).register("/",catchers![unauthorized])
     .mount("/", FileServer::from("static")) // Enable for development
     .attach(Template::fairing())
+
+    
+}
+
+async fn run_scheduled_task() -> Result<(), JobSchedulerError>{
+    let sched = JobScheduler::new().await?;
+
+    sched.add(
+        Job::new_async("0 1 * * * *", |_uuid, _l| {
+            Box::pin(async move {
+                match stock_update::update().await {
+                    Ok(..) => println!("task completed successfully"),
+                    Err(e) => println!("error running task {}", e)
+                };
+            })
+        })?
+    ).await?;
+
+    sched.start().await?;
+
+    Ok(())
 }
 
 
@@ -188,12 +223,20 @@ async fn income(mode: FetchMode, user: AuthenticatedUser) -> Template {
     }
 }
 
-#[get("/investment")]
-async fn investment(mode: FetchMode, user: AuthenticatedUser) -> Template {
+#[get("/investment")]              
+async fn investment(mut db: Connection<Logs>, mode: FetchMode, user: AuthenticatedUser) -> Template {
+    let investments: Vec<Investment> = sqlx::query_as!(Investment,
+                "SELECT id, stock, name, quantity, user_id
+                FROM investments where user_id = ?",
+                user.user_id
+            )
+            .fetch_all(db.as_mut())
+            .await.unwrap();
+
     if mode.0 == "navigate" {
-        Template::render("pages/extended/investment", json!({"username": user.name}))
+        Template::render("pages/extended/investment", json!({"username": user.name, "investments": investments}))
     } else {
-        Template::render("pages/investment/investment", json!({"username": user.name}))
+        Template::render("pages/investment/investment", json!({"username": user.name, "investments": investments}))
     }
 }
 

@@ -211,8 +211,9 @@ pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: Authentica
             s.year.unwrap() == utc.year() as i64 &&
             s.balance_type == "expenses"
         );
-        if expense.is_some() {
-            expenses.push(expense.unwrap().clone());
+        
+        if let Some(e) = expense {
+            expenses.push(e.clone());
         } else {
             expenses.push(Balance { value: Some(0.0), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "expenses".to_string() })
         }
@@ -222,18 +223,18 @@ pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: Authentica
             s.year.unwrap() == utc.year() as i64 &&
             s.balance_type == "incomes"
         );
-        if income.is_some() {
-            incomes.push(income.unwrap().clone());
+        if let Some(i) = income {
+            incomes.push(i.clone());
         } else {
             incomes.push(Balance { value: Some(0.0), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "incomes".to_string() })
         }
 
-        if expense.is_some() && income.is_some() {
-            balance.push(Balance { value: Some(income.unwrap().value.unwrap() - expense.unwrap().value.unwrap()), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() })
-        } else if expense.is_some() {
-            balance.push(Balance { value: Some(-(expense.unwrap().value.unwrap())), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() })
-        } else if income.is_some() {
-            balance.push(Balance { value: Some(income.unwrap().value.unwrap()), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() })
+        if let (Some(e), Some(i)) = (expense, income) {
+            balance.push(Balance { value: Some(i.value.unwrap() - e.value.unwrap()), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() })
+        } else if let Some(e) = expense {
+            balance.push(Balance { value: Some(-(e.value.unwrap())), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() })
+        } else if let Some(i) = income {
+            balance.push(Balance { value: Some(i.value.unwrap()), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() })
         } else {
             balance.push(Balance { value: Some(0.0), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() })
         }

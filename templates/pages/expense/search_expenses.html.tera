@@ -252,8 +252,8 @@
 
         categories = []
 
-        jsonCategories = json.map(category => category.category)
-            .filter((category, _, categories) => categories.indexOf(category) === categories.lastIndexOf(category))
+        jsonCategories = json.map(item => item.category)
+            .filter((value, index, self) => self.indexOf(value) === index)
 
         jsonCategories.forEach(e => {
             categories.push({name: e, data: []});
@@ -379,8 +379,8 @@
             options: {
                 interaction: {
                     intersect: false,
-                    mode: 'nearest'
-                  },
+                    mode: 'index'
+                },
                 maintainAspectRatio: false,
                 scales: {
                     y: {
@@ -394,6 +394,15 @@
                         // type: 'logarithmic',
                         position: 'right', // `axis` is determined by the position as `'y'`
                     }
+                },
+                plugins: {
+                    tooltip: {
+                        filter: (tooltipItem) => tooltipItem.raw > 0,
+                        /*itemSort: function(a, b) {
+                            console.log(b.dataset.label)
+                            return b.raw - a.raw || b.dataset.label == "Budget";
+                        }*/
+                    }, 
                 }
             }
         });

@@ -1,0 +1,12 @@
+<div class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Nome</span>
+    <input type="text" class="form-control stock_name" aria-label="nome" aria-describedby="basic-addon1">
+</div>
+
+<div class="row stocks-list">
+    
+</div>
+
+<script>
+    document.addEventListener("keyup", searchInvestment);
+</script>

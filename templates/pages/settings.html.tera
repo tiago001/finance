@@ -93,8 +93,8 @@
     
         modalTitle.textContent = 'Criar categoria '+tipo
 
-        $(".modal .btn-danger").hide()
-        $(".modal .btn-primary").text("Save")
+        $(".modal-footer .btn-danger").hide()
+        $(".modal-footer .btn-primary").text("Save")
 
         document.getElementsByClassName("modal-body")[0].innerHTML = `
         <div class="input-group mb-3">
@@ -103,7 +103,7 @@
         </div>
         `;
         
-        $(".modal .btn-primary")[0].setAttribute('onclick',`save_category(null, '${tipo}')`)
+        $(".modal-footer .btn-primary")[0].setAttribute('onclick',`save_category(null, '${tipo}')`)
     }
     function open_edit_category(id, category, tipo){
         var exampleModal = document.getElementById('exampleModal')
@@ -111,8 +111,9 @@
     
         modalTitle.textContent = 'Editar categoria'
 
-        $(".modal .btn-danger").show()
-        $(".modal .btn-primary").text("Save")
+        $(".modal-footer .btn-danger").show()
+        $(".modal-footer .btn-primary").show()
+        $(".modal-footer .btn-primary").text("Save")
 
         document.getElementsByClassName("modal-body")[0].innerHTML = `
         <div class="input-group mb-3">
@@ -121,8 +122,8 @@
         </div>
         `;
         
-        $(".modal .btn-primary")[0].setAttribute('onclick',`save_category(${id}, '${tipo}')`)
-        $(".modal .btn-danger")[0].setAttribute('onclick',`delete_category(${id})`)
+        $(".modal-footer .btn-primary")[0].setAttribute('onclick',`save_category(${id}, '${tipo}')`)
+        $(".modal-footer .btn-danger")[0].setAttribute('onclick',`delete_category(${id})`)
     }
 
     function save_category(id, type){

@@ -1,0 +1,81 @@
+{% if stocks | length > 0%}
+    <div class="col-2">
+        
+    </div>
+    <div class="col-3 text-center">
+        Ticker
+    </div>
+    <div class="col-4 text-center">
+        Nome
+    </div>
+    <div class="col-3 text-center">
+        Valor
+    </div>
+    {# <div class="col-1"></div> #}
+{% endif%}
+
+{% for stock in stocks %}
+    <div class="row p-0 rounded-1 stock">
+        <div class="col-2 p-0 text-center img-stock">
+            <img class="m-1 p-0 w-50 image img-thumbnail" src="{{stock.logo}}">
+            {# <div class="middle">
+                <div class="text"><i class="ti ti-plus"></i></div>
+            </div> #}
+        </div>
+        <div class="col-3 text-center align-content-center">
+            {{stock.stock}}
+        </div>
+        <div class="col-4 text-center align-content-center">
+            {{stock.name}}
+        </div>
+        <div class="col-3 text-center align-content-center price-stock">
+            {{stock.close}}
+        </div>
+        <div class="col-3 text-center align-content-center add-stock">
+            <button class="btn btn-sm btn-primary w-75" onclick="select_stock('{{stock.stock}}')">
+                <i class="ti ti-plus"></i>
+                <span class="px-1">Add</span>
+            </button>
+        </div>
+    </div>
+{% endfor %}
+
+<script>
+
+    function select_stock(stock){
+        var exampleModal = document.getElementById('exampleModal')
+        var modalTitle = exampleModal.querySelector('.modal-title')
+
+        modalTitle.textContent = 'Adicionar investimento'
+        
+        $(".modal-footer .btn-danger").hide()
+        $(".modal-footer .btn-primary").show()
+
+        $(".modal-footer .btn-primary")[0].setAttribute('onclick',`save_investment()`)
+        $(".modal-footer .btn-primary")[0].innerHTML = "Save"
+
+        $(".modal-body").load("add_investment?"+ new URLSearchParams({
+            "stock": stock
+        }))
+
+    }
+
+</script>
+
+<style>
+    .add-stock {
+        display: none;
+    }
+
+    .stock:hover  {
+        background-color: #eeeeee;
+    }
+
+    .stock:hover .add-stock {
+        display: block;
+    }
+
+    .stock:hover .price-stock {
+        display: none;
+    }
+</style>

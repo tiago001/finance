@@ -1,1 +1,79 @@
 Investimentos
+
+<button type="button" class="btn btn-sm btn-primary float-end" onclick="open_add_investment()" data-bs-toggle="modal" data-bs-target="#exampleModal">Adicionar investimento</button>
+
+<div class="row investments">
+
+    {% if investments | length > 0%}
+        <div class="col-3">
+            Nome
+        </div>
+        <div class="col-3 text-center">
+            Qtd
+        </div>
+        <div class="col-3 text-center">
+            Valor
+        </div>
+        <div class="col-2 text-center">
+        </div>
+        <div class="col-1"></div>
+    {% endif%}
+
+    {% for investment in investments %}
+        <div class="col-4 col-sm-3">
+            {{investment.stock}}
+        </div>
+        <div class="col-3 col-sm-3 text-center">
+            Valor
+        </div>
+        <div class="col-4 col-sm-3 text-center">
+            {{investment.quantity}}
+        </div>
+        <div class="col-1"></div>
+    {% endfor %}
+</div>
+
+<script>
+
+    function open_add_investment(){
+        var exampleModal = document.getElementById('exampleModal')
+        var modalTitle = exampleModal.querySelector('.modal-title')
+
+        modalTitle.textContent = 'Adicionar investimento'
+
+        $(".modal-body").load("add_investment")
+        
+        $(".modal-footer .btn-primary").hide()
+        $(".modal-footer .btn-danger").hide()
+    }
+
+    /*function open_edit_investment(id){
+        var exampleModal = document.getElementById('exampleModal')
+        var modalTitle = exampleModal.querySelector('.modal-title')
+    
+        modalTitle.textContent = 'Editar despesa'
+    
+        $(".modal-body").load("editexpense", function() {
+            fetch("get_expense?" + new URLSearchParams({
+                "id": id
+            }), {redirect: 'follow'})
+            .then((response) => {
+                if (response.redirected) window.location.href = response.url;
+                return response.json()
+            })
+            .then((json) => {
+                document.getElementsByClassName("editnome")[0].value = json.name
+                document.getElementsByClassName("editmoney_value")[0].value = json.value
+                document.getElementsByClassName("editcategory")[0].value = json.category_id
+                document.getElementsByClassName("editdate")[0].value = json.date
+            })
+            .catch((error) => {
+                console.warn(error);
+            });
+        })
+        
+        $(".modal-footer .btn-primary")[0].setAttribute('onclick',`edit_expense(${id})`)
+        $(".modal-footer .btn-danger")[0].setAttribute('onclick',`delete_expense(${id})`)
+    }*/
+
+</script>

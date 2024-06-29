@@ -50,6 +50,9 @@ function open_edit_expense(id){
             console.warn(error);
         });
     })
+
+    $(".modal-footer .btn-danger").show()
+    $(".modal-footer .btn-primary").show()
     
     $(".modal .btn-primary")[0].setAttribute('onclick',`edit_expense(${id})`)
     $(".modal .btn-danger")[0].setAttribute('onclick',`delete_expense(${id})`)
@@ -81,6 +84,12 @@ function open_edit_expense(id){
 //         console.warn(error);
 //     });
 // }
+
+function searchInvestment(event){
+    $(".stocks-list").load("search_investment?"+ new URLSearchParams({
+        "stock": document.getElementsByClassName("stock_name")[0].value
+    }))
+}
 
 document.addEventListener("keypress", function(event) {
     if (event.key === "Enter") {
@@ -120,7 +129,7 @@ document.onclick = function (e) {
         element = element.parentElement 
     }
 
-    if (element.tagName == 'A') {
+    if (element != null && element.tagName == 'A') {
         let url = element.href;
         if(url != window.location){
             loadPage(element.href, true);
