@@ -116,11 +116,11 @@ pub async fn search_expenses_category(mut db: Connection<Logs>, user: Authentica
     #[derive(Serialize, Debug, Clone)]
     struct ExpensesCategory {category: Option<String>, months: Vec<MonthExpenses>}
     #[derive(Serialize, Debug, Clone)]
-    struct MonthExpenses{sum: Option<f64>, month: Option<i64>}
+    struct MonthExpenses{sum: Option<f64>, month: Option<i64>, year: i64}
     #[derive(Serialize, Debug, Clone)]
     struct Return{categories: Vec<ExpensesCategory>, months: Vec<Months>}
     #[derive(Serialize, Debug, Clone)]
-    struct Months{month: i64, sum: f64}
+    struct Months{month: i64, year: i64, sum: f64}
 
     let stream = sqlx::query_as!(Record, "SELECT sum(value) as sum, category, month(`date`) as month
         FROM expenses_view WHERE `date` between ? and ? and user_id = ? group by category,month(`date`) order by 3,2",
@@ -139,9 +139,9 @@ pub async fn search_expenses_category(mut db: Connection<Logs>, user: Authentica
             let mut e = ExpensesCategory{ category: s.category, months: Vec::new()};
             for _ in 0..3 {
                 utc = utc.add(chrono::Months::new(1));
-                e.months.push(MonthExpenses{sum: Some(0.0), month: Some(utc.month() as i64)});
+                e.months.push(MonthExpenses{sum: Some(0.0), month: Some(utc.month() as i64), year: utc.year() as i64});
                 if months.len() < 3 {
-                    months.push(Months{month: (utc.month() as i64), sum: 0.0});
+                    months.push(Months{month: utc.month() as i64, year: utc.year() as i64, sum: 0.0});
                 }
             }
             

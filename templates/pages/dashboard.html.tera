@@ -47,7 +47,6 @@
             return response.json()
         })
         .then((json) => {
-    
             document.getElementsByClassName("category_values")[0].innerHTML = `<div class="col-3 col-sm-6 fs-4">Categoria</div>`
     
             let label = []
@@ -81,8 +80,8 @@
                     document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                         "beforeend",
                         `
-                            <div class="col-3 col-sm-2 text-center" style=\"border-top: 2px solid #e1e1e1;\">
-                                ${m.sum.toFixed(2)} 
+                            <div class="col-3 col-sm-2 text-center" style=\"border-top: 2px solid #e1e1e1;\" onclick="search_expenses('${e.category}',${m.year},${m.month})">
+                                <span class="cursor-pointer">${m.sum.toFixed(2)}</span>
                             </div>
                         `
                     )
@@ -99,11 +98,12 @@
             )
 
             json.months.forEach(m => {
+                console.log(m)
                 document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                     "beforeend",
                     `
-                        <div class="col-3 col-sm-2 text-center" style=\"border-top: 2px solid #e1e1e1;font-weight: bold;font-size: 17px;\">
-                            ${m.sum.toFixed(2)} 
+                        <div class="col-3 col-sm-2 text-center" style=\"border-top: 2px solid #e1e1e1;font-weight: bold;font-size: 17px;\" onclick="search_expenses(null,${m.year},${m.month})">
+                            <span class="cursor-pointer">${m.sum.toFixed(2)}</span>
                         </div>
                     `
                 )
@@ -136,6 +136,16 @@
         });
     }
 
+    function search_expenses(category, year, month){
+        let startdate = new Date(year+"-"+month+"-1 00:00").toISOString().split("T")[0]
+        let enddate = new Date(year+"-"+(month+1)+"-0 00:00").toISOString().split("T")[0]
+        if(category != null){
+            loadPage(window.location.protocol + "//" + window.location.host+"/searchexpenses?category="+category.replace(" ","+")+"&startdate="+startdate+"&enddate="+enddate, true)
+        } else {
+            loadPage(window.location.protocol + "//" + window.location.host+"/searchexpenses?startdate="+startdate+"&enddate="+enddate, true)
+        }
+    }
+
     var today = new Date();
     var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
     var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth()-2, 1);
@@ -155,8 +165,6 @@
             return response.json()
         })
         .then((json) => {
-            console.log(json)
-
             let dataset = []
             
             dataset.push({

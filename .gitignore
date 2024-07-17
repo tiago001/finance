@@ -2,3 +2,5 @@
 *.lock
 Rocket.toml
 /.sqlx
+.dockerignore
+Dockerfile

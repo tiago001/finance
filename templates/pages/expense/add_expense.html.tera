@@ -5,7 +5,7 @@
 
 <div class="input-group mb-3">
     <span class="input-group-text" id="basic-addon1">Valor</span>
-    <input type="number" class="form-control money_value currency" aria-label="valor" aria-describedby="basic-addon1">
+    <input type="text" class="form-control money_value currency" aria-label="valor" aria-describedby="basic-addon1">
 </div>
 
 <div class="input-group mb-3">
@@ -47,6 +47,7 @@
 </div>
 
 <div class="row expenses mt-2">
+    
 </div>
 
 <script>
@@ -187,6 +188,7 @@
                 <div class="col-1 d-none d-sm-block"></div>
             `
         )
+        document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend", `<div class="row future-expenses p-0" style="background-color: #eeeeee;border-radius: 5px;"></div>`);
 
         let total = 0
         let lastDate = ""
@@ -194,13 +196,18 @@
         json.forEach(e => {
             total += e.value
 
+            tagExpense = "expenses"
+            if(new Date(e.date+" 00:00") > new Date()) {
+                tagExpense = "future-expenses"
+            }
+
             if(e.date != lastDate){
-                document.getElementsByClassName("expenses")[0].insertAdjacentHTML(
+                document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML(
                     "beforeend",
                     `<div class="col-11 mt-2 text-center d-block d-sm-none">
                             <i class="ti ti-calendar"></i> ${new Date(e.date+"T00:00").toLocaleString().substr(0,10)}
                         </div>`)
-                document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend",
+                document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML("beforeend",
                     `
                         <div class="col-4 col-sm-3 d-block d-sm-none">
                             Nome
@@ -215,34 +222,41 @@
                     `)
             }
 
-            document.getElementsByClassName("expenses")[0].insertAdjacentHTML(
-                "beforeend",
-                `
-                    <div class="col-4 col-sm-3 text-truncate" expense="${e.id}" value=${e.name} ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                        <span class="name" expense="${e.id}" value=${e.name} contenteditable="true">${e.name}</span> 
-                    </div>
-                    <div class="col-3 col-sm-3 text-center" expense="${e.id}" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                        <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
-                    </div>
-                    <div class="col-4 col-sm-3 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                        ${e.category} 
-                    </div>
-                    <div class="col-12 col-sm-2 text-center d-none d-sm-block" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                            ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
-                    </div>
-                    <div class="col-1 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                        <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
-                            <span><i class="ti ti-x"></i></span>
-                        </button>-->
-                        <button class="btn btn-sm btn-light py-0" onclick="open_edit_expense(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                            <span><i class="ti ti-pencil"></i></span>
-                        </button>
-                    </div>
-                `
-            )
+            document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML("beforeend",
+            `
+                <div class="col-4 col-sm-3 text-truncate" expense="${e.id}" value=${e.name} ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                    <span class="name" expense="${e.id}" value=${e.name} contenteditable="true">${e.name}</span> 
+                </div>
+                <div class="col-3 col-sm-3 text-center" expense="${e.id}" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                    <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
+                </div>
+                <div class="col-4 col-sm-3 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                    ${e.category} 
+                </div>
+                <div class="col-12 col-sm-2 text-center d-none d-sm-block" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
+                </div>
+                <div class="col-1 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                    <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
+                        <span><i class="ti ti-x"></i></span>
+                    </button>-->
+                    <button class="btn btn-sm btn-light py-0" onclick="open_edit_expense(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                        <span><i class="ti ti-pencil"></i></span>
+                    </button>
+                </div>
+            `)
 
             lastDate = e.date
-        })
+        });
+
+        if(document.getElementsByClassName("future-expenses ")[0].childNodes.length > 0){
+            document.getElementsByClassName("future-expenses")[0].insertAdjacentHTML("beforeend", 
+            `<div class="col-12 text-center" style="border-top: 2px solid #e1e1e1;">
+                Despesas futuras 
+                <i class="ti ti-arrow-narrow-up"></i>
+            </div>`
+            );
+        }
 
         document.getElementsByClassName("total")[0].innerHTML = `Total ${total.toFixed(2)}`
 

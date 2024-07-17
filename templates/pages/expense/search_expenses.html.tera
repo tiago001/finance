@@ -18,18 +18,10 @@
     <div class="col-12 col-sm-7 col-md-6 col-lg-3 date d-flex p-2">
         <span class="input-group-text d-block" id="basic-addon1">Inicio</span>
         <input type="date" class="form-control date1" data-provide="datepicker">
-        {# <span class="input-group-text" id="basic-addon1">Fim</span>
-        <input type="date" class="form-control date2" data-provide="datepicker">
-        <button type="button" class="btn btn-primary mx-2" onclick="previous_month()"><i class="ti ti-chevron-left"></i></button>
-        <button type="button" class="btn btn-primary" onclick="next_month()"><i class="ti ti-chevron-right"></i></button> #}
     </div>
     <div class="col-12 col-sm-7 col-md-6 col-lg-3 date d-flex p-2">
-        {# <span class="input-group-text" id="basic-addon1">Inicio</span>
-        <input type="date" class="form-control date1" data-provide="datepicker"> #}
         <span class="input-group-text" id="basic-addon1">Fim</span>
         <input type="date" class="form-control date2" data-provide="datepicker">
-        {# <button type="button" class="btn btn-primary mx-2" onclick="previous_month()"><i class="ti ti-chevron-left"></i></button>
-        <button type="button" class="btn btn-primary" onclick="next_month()"><i class="ti ti-chevron-right"></i></button> #}
     </div>
     <div class="col-md-7 d-none d-md-block d-lg-none"></div>
     <div class="col-3 col-sm-7 col-md-2 col-lg-1 date p-2 row">
@@ -42,10 +34,7 @@
     </div>
     <div class="col-9 col-sm-2 col-md-3 col-lg-2 p-2">
         <button type="button" class="btn btn-primary w-100" onclick="search_expenses()">Buscar Despesas</button>
-    </div>
-    <!-- <div class="col-1 d-flex">
-    </div> -->
-    
+    </div>    
 </div>
 
 <div class="row">
@@ -71,18 +60,19 @@
     document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
     document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
     
-    {# for (let i of document.getElementsByClassName("category")) {i.style.display = "none"}
-    document.getElementsByClassName("search")[0].addEventListener("change", function(){
-        if(document.getElementsByClassName("search")[0].value == "date"){
-            document.getElementsByClassName("category")[0].style.display = "none"
-            for (let i of document.getElementsByClassName("date")) {i.style.display = "flex"}
-        } else if(document.getElementsByClassName("search")[0].value == "category"){
-            document.getElementsByClassName("category")[0].style.display = "block"
-            for (let i of document.getElementsByClassName("date")) {i.style.display = "none"}
-        }
-    }); #}
-
     expenses = null
+
+    var params = new URLSearchParams(window.location.search);
+
+    if(params.get("category") != null){
+        document.getElementsByClassName("category_select")[0].value = params.get("category")
+    }
+    if(params.get("startdate") != null){
+        document.getElementsByClassName("date1")[0].valueAsDate = new Date(params.get("startdate")+" 00:00")
+    }
+    if(params.get("enddate") != null){
+        document.getElementsByClassName("date2")[0].valueAsDate = new Date(params.get("enddate")+" 00:00")
+    }
 
     function search_expenses(){
         fetch("search_expenses?" + new URLSearchParams({
@@ -521,6 +511,7 @@
                 <div class="col-1 d-none d-sm-block"></div>
             `
         )
+        document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend", `<div class="row future-expenses p-0" style="background-color: #eeeeee;border-radius: 5px;"></div>`);
         
         let total = 0
         let lastDate = ""
@@ -528,13 +519,18 @@
         json.forEach(e => {
             total += e.value
 
+            tagExpense = "expenses"
+            if(new Date(e.date+" 00:00") > new Date()) {
+                tagExpense = "future-expenses"
+            }
+
             if(e.date != lastDate){
-                document.getElementsByClassName("expenses")[0].insertAdjacentHTML(
+                document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML(
                     "beforeend",
                     `<div class="col-11 mt-2 text-center d-block d-sm-none">
                             <i class="ti ti-calendar"></i> ${new Date(e.date+"T00:00").toLocaleString().substr(0,10)}
                         </div>`)
-                document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend",
+                document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML("beforeend",
                     `
                         <div class="col-4 col-sm-3 d-block d-sm-none">
                             Nome
@@ -550,7 +546,7 @@
             }
 
 
-            document.getElementsByClassName("expenses")[0].insertAdjacentHTML(
+            document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML(
                 "beforeend",
                 `
                     <div class="col-4 col-sm-3 text-truncate" expense="${e.id}" value=${e.name} ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
@@ -578,6 +574,15 @@
 
             lastDate = e.date
         })
+
+        if(document.getElementsByClassName("future-expenses ")[0].childNodes.length > 0){
+            document.getElementsByClassName("future-expenses")[0].insertAdjacentHTML("beforeend", 
+            `<div class="col-12 text-center" style="border-top: 2px solid #e1e1e1;">
+                Despesas futuras 
+                <i class="ti ti-arrow-narrow-up"></i>
+            </div>`
+            );
+        }
 
         document.getElementsByClassName("expenses")[0].insertAdjacentHTML("afterbegin",
         `
