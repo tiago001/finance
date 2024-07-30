@@ -82,17 +82,8 @@ pub async fn search_expenses(mut db: Connection<Logs>, name: &str, category: Opt
             .fetch_all(db.as_mut())
             .await.unwrap();
         }
-    // } else if name == "date" {
-    //     stream = sqlx::query_as!(Expense,
-    //         "SELECT * FROM expenses where `date` between ? and ? and user_id = ? ORDER BY date DESC, id DESC",
-    //         value1,
-    //         value2,
-    //         user.user_id
-    //     )
-    //     .fetch_all(db.as_mut())
-    //     .await.unwrap();
     } else if name == "currentMonth" {
-        stream = sqlx::query_as!(ExpenseView, "SELECT * FROM expenses_view WHERE user_id = ? AND MONTH(`date`) = MONTH(now()) AND YEAR(`date`) = YEAR(now()) ORDER BY date DESC", user.user_id)
+        stream = sqlx::query_as!(ExpenseView, "SELECT * FROM expenses_view WHERE user_id = ? AND MONTH(`date`) = MONTH(now()) AND YEAR(`date`) = YEAR(now()) ORDER BY date DESC, id DESC", user.user_id)
         .fetch_all(db.as_mut())
         .await.unwrap();
     } else if name == "lastExpenses" {

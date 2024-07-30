@@ -1,14 +1,14 @@
-<div class="input-group mb-3">
+<div class="input-group mb-2">
     <span class="input-group-text" id="basic-addon1">Valor</span>
-    <input type="number" class="form-control money_value currency" aria-label="valor" aria-describedby="basic-addon1">
+    <input type="text" inputmode="decimal" class="form-control money_value currency" aria-label="valor" aria-describedby="basic-addon1" placeholder="0.00">
 </div>
 
-<div class="input-group mb-3">
+<div class="input-group mb-2">
     <span class="input-group-text" id="basic-addon1">Data</span>
     <input type="date" class="form-control date" data-provide="datepicker">
 </div>
 
-<div class="input-group mb-3">
+<div class="input-group mb-2">
     <span class="input-group-text" id="basic-addon1">Observação</span>
     <input type="text" class="form-control obs" aria-label="obs" aria-describedby="basic-addon1">
 </div>
@@ -47,6 +47,10 @@
 </style>
 
 <script>
+    setTimeout(function() {
+        $('.currency').mask("#0.00", {reverse: true});
+    }, 50);
+
     date = new Date();
     document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
 
@@ -378,7 +382,7 @@
             })
             .then((json) => {
                 document.getElementsByClassName("editobs")[0].value = json.obs
-                document.getElementsByClassName("editmoney_value")[0].value = json.value
+                document.getElementsByClassName("editmoney_value")[0].value = parseFloat(json.value).toFixed(2)
                 document.getElementsByClassName("editdate")[0].value = json.date
             })
             .catch((error) => {

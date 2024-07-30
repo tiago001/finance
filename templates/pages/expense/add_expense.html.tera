@@ -1,14 +1,14 @@
-<div class="input-group mb-3">
+<div class="input-group mb-2">
     <span class="input-group-text" id="basic-addon1">Nome</span>
     <input type="text" class="form-control nome" aria-label="nome" aria-describedby="basic-addon1">
 </div>
 
-<div class="input-group mb-3">
+<div class="input-group mb-2">
     <span class="input-group-text" id="basic-addon1">Valor</span>
-    <input type="text" class="form-control money_value currency" aria-label="valor" aria-describedby="basic-addon1">
+    <input type="text" inputmode="decimal" class="form-control money_value currency" aria-label="valor" aria-describedby="basic-addon1" placeholder="0.00">
 </div>
 
-<div class="input-group mb-3">
+<div class="input-group mb-2">
     <span class="input-group-text" id="basic-addon1">Categoria</span>
     <select class="form-select category" aria-label="Default select example">
         <option value="Indefinido" selected>Selecione a categoria</option>
@@ -25,7 +25,7 @@
     </select>
 </div>
 
-<div class="input-group mb-3">
+<div class="input-group mb-2">
     <span class="input-group-text" id="basic-addon1">Data</span>
     <input type="date" class="form-control date" data-provide="datepicker">
 </div>
@@ -34,10 +34,10 @@
 
 <div class="row mt-2">
     <div class="d-none d-sm-block col-md-4 col-lg-7"></div>
-    <div class="col-4 col-md-3 col-lg-2 m-auto">
+    <div class="col-4 col-md-3 col-lg-2 m-auto p-0">
         <span class="total">Total 0.00</span>
     </div>
-    <div class="col-8 col-md-5 col-lg-3">
+    <div class="col-8 col-md-5 col-lg-3 p-0">
         <select class="form-select search_type" onchange="search_expenses()">
             <option value="currentMonth" selected>Despesas do mês atual</option>
             <option value="lastExpenses">Despesas mais recentes</option>
@@ -51,6 +51,10 @@
 </div>
 
 <script>
+    setTimeout(function() {
+        $('.currency').mask("#0.00", {reverse: true});
+    }, 50);
+
     date = new Date();
     document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
     
@@ -230,7 +234,7 @@
                 <div class="col-3 col-sm-3 text-center" expense="${e.id}" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
                     <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
                 </div>
-                <div class="col-4 col-sm-3 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                <div class="col-4 col-sm-3 text-center text-truncate" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
                     ${e.category} 
                 </div>
                 <div class="col-12 col-sm-2 text-center d-none d-sm-block" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>

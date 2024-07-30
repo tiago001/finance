@@ -42,7 +42,7 @@ function open_edit_expense(id){
         })
         .then((json) => {
             document.getElementsByClassName("editnome")[0].value = json.name
-            document.getElementsByClassName("editmoney_value")[0].value = json.value
+            document.getElementsByClassName("editmoney_value")[0].value = parseFloat(json.value).toFixed(2)
             document.getElementsByClassName("editcategory")[0].value = json.category_id
             document.getElementsByClassName("editdate")[0].value = json.date
         })

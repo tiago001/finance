@@ -13,3 +13,9 @@
     <span class="input-group-text" id="basic-addon1">Obs</span>
     <input type="text" class="form-control editobs" aria-label="obs" aria-describedby="basic-addon1">
 </div>
+
+<script>
+    setTimeout(function() {
+        $('.currency').mask("#0.00", {reverse: true});
+    }, 50);
+</script>

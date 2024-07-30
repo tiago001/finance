@@ -9,10 +9,10 @@
                 <input type="date" class="form-control date2" data-provide="datepicker">
             </div>
         </div>
-        <div class="col-12">
+        <div class="col-12 p-0">
             <p class="fs-4 text-center text-md-start ps-md-3">Valor gasto por categoria</p>
         </div>
-        <div class="col-12 col-sm-6 col-md-6">
+        <div class="col-12 col-sm-6 col-md-6 p-0">
             <div class="row category_values">
             </div>
         </div>
@@ -137,8 +137,10 @@
     }
 
     function search_expenses(category, year, month){
-        let startdate = new Date(year+"-"+month+"-1 00:00").toISOString().split("T")[0]
-        let enddate = new Date(year+"-"+(month+1)+"-0 00:00").toISOString().split("T")[0]
+        month = month - 1
+        let startdate = new Date(year,month,1,0,0).toISOString().split("T")[0]
+        let enddate = new Date(year,(month+1),0,0,0).toISOString().split("T")[0]
+
         if(category != null){
             loadPage(window.location.protocol + "//" + window.location.host+"/searchexpenses?category="+category.replace(" ","+")+"&startdate="+startdate+"&enddate="+enddate, true)
         } else {

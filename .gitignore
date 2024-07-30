@@ -4,3 +4,6 @@ Rocket.toml
 /.sqlx
 .dockerignore
 Dockerfile
+finance.tar.gz
+Rocket.toml
+.env
