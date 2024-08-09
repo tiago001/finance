@@ -9,6 +9,16 @@
 </div>
 
 <div class="input-group mb-2">
+    <span class="input-group-text" id="basic-addon1">Categoria</span>
+    <select class="form-select category" aria-label="Default select example">
+        <option value="Indefinido" selected>Selecione a categoria</option>
+        {% for category in categories %}
+        <option value="{{category.id}}">{{category.category}}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="input-group mb-2">
     <span class="input-group-text" id="basic-addon1">Observação</span>
     <input type="text" class="form-control obs" aria-label="obs" aria-describedby="basic-addon1">
 </div>
@@ -53,12 +63,6 @@
 
     date = new Date();
     document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-
-    document.addEventListener("keypress", function(event) {
-        if (event.key === "Enter") {
-            save_income();
-        }
-    });
     
     function search_incomes(){
         fetch("search_income", {redirect: 'follow'})
@@ -165,6 +169,7 @@
     function save_income(){
         fetch("save_income?" + new URLSearchParams({
             "obs": document.getElementsByClassName("obs")[0].value,
+            "category_id": document.getElementsByClassName("category")[0].value,
             "value": document.getElementsByClassName("money_value")[0].value,
             "date": document.getElementsByClassName("date")[0].value}),
         {
@@ -184,7 +189,8 @@
             } else {
                 document.getElementsByClassName("obs")[0].value = ""
                 document.getElementsByClassName("money_value")[0].value = ""
-                document.getElementsByClassName("date")[0].valueAsDate = new Date()
+                date = new Date();
+                document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
     
                 Swal.fire({
                     position: 'top-end',
@@ -215,8 +221,11 @@
                 <div class="col-6 col-sm-5 text-center">
                     Valor
                 </div>
-                <div class="col-sm-4 d-none d-sm-block text-center">
+                <div class="col-sm-2 d-none d-sm-block text-center">
                     Obs
+                </div>
+                <div class="col-sm-2 d-none d-sm-block text-center">
+                    Categoria
                 </div>
                 <div class="col-4 col-sm-2 text-center">
                     Data
@@ -234,8 +243,11 @@
                         <div class="col-6 col-sm-5 text-center" expense="${e.id}" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
                             <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
                         </div>
-                        <div class="col-sm-4 d-none d-sm-block text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        <div class="col-sm-2 d-none d-sm-block text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
                             ${e.obs.length == 0 ? "-" : e.obs} 
+                        </div>
+                        <div class="col-sm-2 d-none d-sm-block text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                            ${e.category == "" ? "-" : e.category} 
                         </div>
                         <div class="col-4 col-sm-2 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
                              ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
@@ -322,6 +334,7 @@
             "id": id,
             "obs": document.getElementsByClassName("editobs")[0].value,
             "value": document.getElementsByClassName("editmoney_value")[0].value,
+            "category_id": document.getElementsByClassName("editcategory")[0].value,
             "date": document.getElementsByClassName("editdate")[0].value}),
         {
             method: "POST"
@@ -384,6 +397,7 @@
                 document.getElementsByClassName("editobs")[0].value = json.obs
                 document.getElementsByClassName("editmoney_value")[0].value = parseFloat(json.value).toFixed(2)
                 document.getElementsByClassName("editdate")[0].value = json.date
+                document.getElementsByClassName("editcategory")[0].value = json.category_id
             })
             .catch((error) => {
                 console.warn(error);

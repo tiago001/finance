@@ -5,5 +5,6 @@ pub mod settings;
 pub mod login_history;
 pub mod categories;
 pub mod expense_view;
+pub mod income_view;
 pub mod stocks;
 pub mod investments;

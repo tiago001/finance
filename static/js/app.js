@@ -93,7 +93,12 @@ function searchInvestment(event){
 
 document.addEventListener("keypress", function(event) {
     if (event.key === "Enter") {
-        save_expense();
+        page = window.location.toString().replace(window.location.protocol + "//" + window.location.host+"/", "")
+        if(page == "addexpenses") {
+            save_expense();
+        } else if(page == "income"){
+            save_income();
+        }
     }
 });
 

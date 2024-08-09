@@ -210,16 +210,30 @@ async fn editexpense(mut db: Connection<Logs>, user: AuthenticatedUser) -> Templ
 }
 
 #[get("/editincome")]
-async fn editincome(user: AuthenticatedUser) -> Template {
-    Template::render("pages/income/edit_income",json!({"username": user.name}))
+async fn editincome(mut db: Connection<Logs>, user: AuthenticatedUser) -> Template {
+    let categories = sqlx::query_as!(Categories,
+        "SELECT * FROM categories WHERE user_id = ? and category_type = 'incomes'",
+        user.user_id
+    )
+    .fetch_all(db.as_mut())
+    .await.unwrap();
+
+    Template::render("pages/income/edit_income",json!({"username": user.name, "categories": categories}))
 }
 
 #[get("/income")]
-async fn income(mode: FetchMode, user: AuthenticatedUser) -> Template {
+async fn income(mut db: Connection<Logs>, mode: FetchMode, user: AuthenticatedUser) -> Template {
+    let categories = sqlx::query_as!(Categories,
+        "SELECT * FROM categories WHERE user_id = ? and category_type = 'incomes'",
+        user.user_id
+    )
+    .fetch_all(db.as_mut())
+    .await.unwrap();
+
     if mode.0 == "navigate" {
-        Template::render("pages/extended/income", json!({"username": user.name}))
+        Template::render("pages/extended/income", json!({"username": user.name, "categories": categories}))
     } else {
-        Template::render("pages/income/income", json!({"username": user.name}))
+        Template::render("pages/income/income", json!({"username": user.name, "categories": categories}))
     }
 }
 

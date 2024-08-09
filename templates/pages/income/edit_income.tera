@@ -10,9 +10,20 @@
 </div>
 
 <div class="input-group mb-3">
+    <span class="input-group-text" id="basic-addon1">Categoria</span>
+    <select class="form-select editcategory" aria-label="Default select example">
+        <option value="Indefinido" selected>Selecione a categoria</option>
+        {% for category in categories %}
+            <option value="{{category.id}}">{{category.category}}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="input-group mb-3">
     <span class="input-group-text" id="basic-addon1">Obs</span>
     <input type="text" class="form-control editobs" aria-label="obs" aria-describedby="basic-addon1">
 </div>
+
 
 <script>
     setTimeout(function() {
