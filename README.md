@@ -6,6 +6,7 @@ Controle e acompanhe suas despesas
 ## Link
 
 - [Acesse o site](https://projetofinancas.com.br)
+- [Acesse o site BETA](https://beta.projetofinancas.com.br)
 
 ## Demonstração
 
