@@ -2,7 +2,6 @@ let graph
 let graphBalance
 
 function delete_expense(id){
-    
     fetch("delete_expense?" + new URLSearchParams({
         "id": id}), {method: "POST", redirect: 'follow'})
         .then((response) => {
@@ -23,7 +22,6 @@ function delete_expense(id){
         .catch((error) => {
             console.warn(error);
         });
-
 }
 
 function open_edit_expense(id){
@@ -84,6 +82,17 @@ function open_edit_expense(id){
 //         console.warn(error);
 //     });
 // }
+
+function mensagemErro(mensagem){
+    Swal.fire({
+        position: 'top-end',
+        icon: 'error',
+        title: mensagem,
+        showConfirmButton: false,
+        timer: 2500,
+        toast: true
+      })
+}
 
 function searchInvestment(event){
     $(".stocks-list").load("search_investment?"+ new URLSearchParams({

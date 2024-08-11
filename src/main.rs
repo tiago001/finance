@@ -65,6 +65,7 @@ async fn rocket() -> _ {
             expense_routes::edit_expense,
             expense_routes::delete_expense,
             expense_routes::get_balance,
+            expense_routes::predict_category,
             income_routes::save_income,
             income_routes::search_income,
             income_routes::delete_income,

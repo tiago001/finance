@@ -11,7 +11,7 @@
 <div class="input-group mb-2">
     <span class="input-group-text" id="basic-addon1">Categoria</span>
     <select class="form-select category" aria-label="Default select example">
-        <option value="Indefinido" selected>Selecione a categoria</option>
+        <option value="0" selected>Selecione a categoria</option>
         {% for category in categories %}
             <option value="{{category.id}}">{{category.category}}</option>
         {% endfor %}
@@ -51,7 +51,9 @@
 </div>
 
 <script>
+    
     setTimeout(function() {
+        $('.nome').on('blur', function () { predictCategory() })
         $('.currency').mask("#0.00", {reverse: true});
     }, 50);
 
@@ -75,6 +77,20 @@
     }
 
     function save_expense(){
+        if(document.getElementsByClassName("nome")[0].value.length == 0){
+            mensagemErro("Preencha o nome da despesa")
+            return
+        }
+        if(document.getElementsByClassName("money_value")[0].value.length == 0){
+            mensagemErro("Preencha o valor da despesa")
+            return
+        }
+        if(document.getElementsByClassName("category")[0].value == 0){
+            mensagemErro("Preencha a categoria da despesa")
+            return
+        }
+
+
         fetch("save_expense?" + new URLSearchParams({
             "name": document.getElementsByClassName("nome")[0].value,
             "value": document.getElementsByClassName("money_value")[0].value,
@@ -99,7 +115,7 @@
                     icon: 'success',
                     title: 'Despesa salva com sucesso',
                     showConfirmButton: false,
-                    timer: 2000,
+                    timer: 1500,
                     toast: true
                 })
 
@@ -140,28 +156,6 @@
                 position: 'top-end',
                 icon: 'success',
                 title: 'Despesa alterada com sucesso',
-                showConfirmButton: false,
-                timer: 2000,
-                toast: true
-            })
-        })
-        .catch((error) => {
-            console.warn(error);
-        });
-    }
-
-    function delete_expense(id){
-        fetch("delete_expense?" + new URLSearchParams({
-            "id": id}), {method: "POST", redirect: 'follow'
-        }).then((response) => {
-            if (response.redirected) window.location.href = response.url;
-            return
-        })
-        .then(() => {
-            Swal.fire({
-                position: 'top-end',
-                icon: 'success',
-                title: 'Despesa deletada com sucesso',
                 showConfirmButton: false,
                 timer: 2000,
                 toast: true
@@ -314,6 +308,26 @@
                 });
             }
         })
+    }
+    
+    function predictCategory() {
+        fetch("predict_category?" + new URLSearchParams({
+            "name": document.getElementsByClassName("nome")[0].value
+        }), {redirect: 'follow'})
+        .then((response) => {
+            if (response.redirected) window.location.href = response.url;
+            return response.json()
+        })
+        .then((json) => {
+            if(json.category_id != null){
+                document.getElementsByClassName("category")[0].value = json.category_id
+            } else {
+                document.getElementsByClassName("category")[0].selectedIndex = 0
+            }
+        })
+        .catch((error) => {
+            console.warn(error);
+        });
     }
 
     search_expenses()

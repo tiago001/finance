@@ -469,29 +469,6 @@
         });
     }
 
-    function delete_expense(id){
-        fetch("delete_expense?" + new URLSearchParams({
-            "id": id}), {method: "POST", redirect: 'follow'
-        }).then((response) => {
-            if (response.redirected) window.location.href = response.url;
-            return
-        })
-        .then(() => {
-            search_expenses()
-            Swal.fire({
-                position: 'top-end',
-                icon: 'success',
-                title: 'Despesa deletada com sucesso',
-                showConfirmButton: false,
-                timer: 2000,
-                toast: true
-            })
-        })
-        .catch((error) => {
-            console.warn(error);
-        });
-    }
-
     function fill_expenses(json){
         document.getElementsByClassName("expenses")[0].innerHTML = ''
         document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend",

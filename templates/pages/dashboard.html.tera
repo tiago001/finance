@@ -65,7 +65,7 @@
                 document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                     "beforeend",
                     `
-                    <div class="col-3 col-sm-6" style=\"border-top: 2px solid #e1e1e1;\">
+                    <div class="col-3 col-sm-6 text-truncate" style=\"border-top: 2px solid #e1e1e1;\">
                     ${e.category} 
                     </div>
                     `

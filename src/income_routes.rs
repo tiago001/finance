@@ -1,5 +1,4 @@
 
-use entity::income::Income as Income;
 use entity::income_view::IncomeView;
 use rocket_db_pools::{sqlx, Connection};
 use time::{PrimitiveDateTime, OffsetDateTime};

@@ -244,3 +244,19 @@ pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: Authentica
 
     // "ok".to_string()
 }
+
+#[get("/predict_category?<name>")]
+pub async fn predict_category(mut db: Connection<Logs>, name: &str, user: AuthenticatedUser) -> String {
+    let expense = sqlx::query_as!(ExpenseView,
+        "SELECT * FROM expenses_view WHERE user_id = ? AND name = ? order by id desc limit 1",
+        user.user_id, name
+    )
+    .fetch_optional(db.as_mut())
+    .await.unwrap();
+
+    if expense.is_some() {
+        serde_json::to_string(&expense).unwrap()
+    } else {
+        "{}".to_string()
+    }
+}
