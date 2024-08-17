@@ -81,6 +81,15 @@
                 <span class="badge bg-secondary fw-semibold">New</span>
               </a>
             </li>
+            <li class="sidebar-item install" hidden>
+              <a class="sidebar-link" href="#" aria-expanded="false" rel="no-refresh">
+                <span>
+                  <i class="ti ti-download"></i>
+                </span>
+                <span class="hide-menu">Install</span>
+              </a>
+            </li>
+            
             <!-- <li class="sidebar-item">
               <a class="sidebar-link" href="./ui-forms.html" aria-expanded="false">
                 <span>
@@ -223,8 +232,6 @@
       </div>
     </div>
   </div>
-
-
 
   <!-- Modal -->
   <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">

@@ -1,0 +1,16 @@
+{
+    "name": "Projeto Finanças",
+    "short_name": "ProjetoFinanças",
+    "start_url": "index",
+    "display": "standalone",
+    "background_color": "#fdfdfd",
+    "theme_color": "#2246ab",
+    "orientation": "landscape-primary",
+    "icons": [
+      {
+        "src": "/assets/images/logos/icon.png",
+        "type": "image/png", "sizes": "69x64"
+      }
+    ]
+  }
+  

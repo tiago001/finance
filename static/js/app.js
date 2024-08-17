@@ -168,3 +168,13 @@ function attSideBarMenu(){
     }
     })
 }
+
+let installPrompt = null;
+const installButton = document.querySelector("#install");
+
+window.addEventListener("beforeinstallprompt", (event) => {
+    console.log(event)
+    event.preventDefault();
+    installPrompt = event;
+    installButton.removeAttribute("hidden");
+});

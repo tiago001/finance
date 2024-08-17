@@ -84,6 +84,7 @@ async fn rocket() -> _ {
             settings_routes::save_category,
             settings_routes::delete_category,
             index,
+            index_pwa,
             settings,
             searchexpenses,
             addexpenses,
@@ -107,7 +108,7 @@ async fn run_scheduled_task() -> Result<(), JobSchedulerError>{
     let sched = JobScheduler::new().await?;
 
     sched.add(
-        Job::new_async("0 1 * * * *", |_uuid, _l| {
+        Job::new_async("0 0 1 * * *", |_uuid, _l| {
             Box::pin(async move {
                 match stock_update::update().await {
                     Ok(..) => println!("task completed successfully"),
@@ -125,6 +126,15 @@ async fn run_scheduled_task() -> Result<(), JobSchedulerError>{
 
 #[get("/")]
 async fn index(mode: FetchMode, user: AuthenticatedUser) -> Template {
+    if mode.0 == "navigate" {
+        Template::render("pages/extended/home", json!({"username": user.name}))
+    } else {
+        Template::render("pages/home", json!({"username": user.name}))
+    }
+}
+
+#[get("/index")]
+async fn index_pwa(mode: FetchMode, user: AuthenticatedUser) -> Template {
     if mode.0 == "navigate" {
         Template::render("pages/extended/home", json!({"username": user.name}))
     } else {
