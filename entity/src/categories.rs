@@ -7,5 +7,6 @@ pub struct Categories {
     pub category_type: String,
     pub category: String,
     pub user_id: i64,
+    pub budget: Option<f64>,
     pub created_date: Option<PrimitiveDateTime>
 }

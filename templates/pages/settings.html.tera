@@ -20,6 +20,9 @@
             <h5 class="card-title fw-semibold">Categorias despesa</h5>
             </div>
             <div>
+                <button class="btn btn-primary" onclick="open_budget_categories('expenses')" data-bs-toggle="modal" data-bs-target="#exampleModal">Orçamento</button>
+            </div>
+            <div>
                 <button class="btn btn-primary" onclick="open_create_category('expenses')" data-bs-toggle="modal" data-bs-target="#exampleModal">Adicionar</button>
             </div>
         </div>
@@ -85,6 +88,18 @@
             .catch((error) => {
                 console.warn(error);
             });
+    }
+
+    function open_budget_categories(){
+        var exampleModal = document.getElementById('exampleModal')
+        var modalTitle = exampleModal.querySelector('.modal-title')
+        $(".modal-footer .btn-danger").hide()
+    
+        modalTitle.textContent = 'Editar orçamento'
+    
+        $(".modal-body").load("get_budget_categories", function() {
+            
+        })
     }
 
     function open_create_category(tipo){

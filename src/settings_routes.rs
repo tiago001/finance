@@ -5,6 +5,10 @@ use rocket_db_pools::{sqlx, Connection};
 use entity::settings::Settings;
 use time::{PrimitiveDateTime, OffsetDateTime};
 use rocket::http::Status;
+use rocket_dyn_templates::Template;
+use serde_json::json;
+
+use rocket::serde::json::Json;
 
 use crate::user_routes::AuthenticatedUser;
 
@@ -110,4 +114,26 @@ pub async fn get_settings(mut db: Connection<Logs>, user: AuthenticatedUser) -> 
 
 
     serde_json::to_string(&settings).unwrap()
+}
+
+#[get("/get_budget_categories")]
+pub async fn get_budget_categories(mut db: Connection<Logs>, user: AuthenticatedUser) -> Template {
+    let categories: Vec<Categories> = match sqlx::query_as! {Categories,
+        "SELECT * FROM categories WHERE user_id = ? and category_type = 'expenses'",
+        user.user_id}
+        .fetch_all(db.as_mut())
+        .await{
+            Ok(result) => result,
+            Err(..) => Vec::new()
+        };
+
+    Template::render("pages/settings/budget_categorties", json!({"categories": categories}))
+}
+
+
+#[post("/save_budget_categories", format = "json", data = "<categories>")]
+pub async fn save_budget_categories(mut db: Connection<Logs>, categories: Json<Vec<Categories>>) -> Status {
+    println!("{:?}", categories);
+
+    Status::Ok
 }

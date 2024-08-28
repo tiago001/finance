@@ -9,7 +9,7 @@ edition = "2021"
 members = [".", "entity"]
 
 [dependencies]
-rocket = { version ="0.5.0", features = ["secrets"] }
+rocket = { version ="0.5.0", features = ["secrets", "json"] }
 serde = "1.0.193"
 serde_json = "1.0.108"
 sqlx = { version = "0.7.4", features = ["time", "bigdecimal"] }

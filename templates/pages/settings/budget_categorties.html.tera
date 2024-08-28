@@ -1,0 +1,51 @@
+<div class="row">
+    {% for category in categories %}
+    <div class="col-4 align-content-center text-end">
+        {{category.category}}
+    </div>
+    <div class="col-8">
+        <input class="form-control py-1 my-1" type="number" name="value" id="" value="{{category.budget}}">
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+
+    categories = [
+        {
+            "categories": "teste",
+            "budget": 1000,
+        },
+        {
+            "categories": "abc",
+            "budget": 500
+        }
+    ]
+
+    save_budget();
+
+    function save_budget(){
+        fetch("save_budget_categories", {
+            method: "POST",
+            body: categories,
+            headers: {
+                "Content-Type": "application/json",
+            },
+            redirect: 'follow'
+        })
+        .then((response) => {
+            if (response.redirected) window.location.href = response.url;
+            return response.json()
+        })
+        /*.then((json) => {
+            document.getElementsByClassName("editnome")[0].value = json.name
+            document.getElementsByClassName("editmoney_value")[0].value = parseFloat(json.value).toFixed(2)
+            document.getElementsByClassName("editcategory")[0].value = json.category_id
+            document.getElementsByClassName("editdate")[0].value = json.date
+        })*/
+        .catch((error) => {
+            console.warn(error);
+        });
+    }
+
+</script>

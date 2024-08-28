@@ -83,6 +83,8 @@ async fn rocket() -> _ {
             settings_routes::get_settings,
             settings_routes::save_category,
             settings_routes::delete_category,
+            settings_routes::get_budget_categories,
+            settings_routes::save_budget_categories,
             index,
             index_pwa,
             settings,
