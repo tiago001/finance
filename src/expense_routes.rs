@@ -1,6 +1,6 @@
 use std::ops::{Sub, Add};
 
-use chrono::{DateTime, Utc, Datelike};
+use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, Utc};
 use entity::expense_view::ExpenseView as ExpenseView;
 use rocket_db_pools::{sqlx, Connection};
 use serde::Serialize;
@@ -58,8 +58,7 @@ pub async fn get_expense(mut db: Connection<Logs>, id: i64, user: AuthenticatedU
 }
 
 #[get("/search_expenses?<name>&<value1>&<value2>&<category>")]
-pub async fn search_expenses(mut db: Connection<Logs>, name: &str, category: Option<&str>, value1: Option<&str>, value2: Option<&str>, user: AuthenticatedUser) -> String {
-
+pub async fn search_expenses(mut db: Connection<Logs>, name: &str, category: Option<&str>, value1: &str, value2: Option<&str>, user: AuthenticatedUser) -> String {
     let mut stream: Vec<ExpenseView> = vec![];
     if name == "category" {
         if category == Some("Indefinido") {
@@ -83,7 +82,11 @@ pub async fn search_expenses(mut db: Connection<Logs>, name: &str, category: Opt
             .await.unwrap();
         }
     } else if name == "currentMonth" {
-        stream = sqlx::query_as!(ExpenseView, "SELECT * FROM expenses_view WHERE user_id = ? AND MONTH(`date`) = MONTH(now()) AND YEAR(`date`) = YEAR(now()) ORDER BY date DESC, id DESC", user.user_id)
+        let naive_datetime: NaiveDateTime = NaiveDate::parse_from_str(value1, "%Y-%m-%d").unwrap().and_hms_opt(0,0,0).unwrap();
+        let utc: DateTime<Utc> = DateTime::<Utc>::from_naive_utc_and_offset (naive_datetime, Utc);
+
+        stream = sqlx::query_as!(ExpenseView, "SELECT * FROM expenses_view WHERE user_id = ? AND MONTH(`date`) = ? AND YEAR(`date`) = ? ORDER BY date DESC, id DESC", 
+        user.user_id, utc.month(), utc.year())
         .fetch_all(db.as_mut())
         .await.unwrap();
     } else if name == "lastExpenses" {
@@ -123,7 +126,8 @@ pub async fn search_expenses_category(mut db: Connection<Logs>, user: Authentica
     let mut months: Vec<Months> = vec![];
     
     for s in stream.clone().into_iter() {
-        let mut utc: DateTime<Utc> = Utc::now().sub(chrono::Months::new(3));
+        let naive_datetime: NaiveDateTime = NaiveDate::parse_from_str(value2, "%Y-%m-%d").unwrap().and_hms_opt(0,0,0).unwrap();
+        let mut utc: DateTime<Utc> = DateTime::<Utc>::from_naive_utc_and_offset (naive_datetime, Utc).sub(chrono::Months::new(3));
 
         let expense = expenses.iter_mut().find(|e| e.category == s.category);
         if expense.is_none() {
@@ -144,6 +148,9 @@ pub async fn search_expenses_category(mut db: Connection<Logs>, user: Authentica
         let expense = expenses.iter_mut().find(|e| e.category == s.category);
         if expense.is_some() {
             let expense_month = expense.unwrap().months.iter_mut().find(|m| m.month == s.month);
+
+            println!("{:?}", s.month);
+            println!("{:?}", expense_month);
 
             expense_month.unwrap().sum = s.sum;
         }

@@ -62,7 +62,8 @@
     
     function search_expenses(){
         fetch("search_expenses?" + new URLSearchParams({
-            "name": document.getElementsByClassName("search_type")[0].value
+            "name": document.getElementsByClassName("search_type")[0].value,
+            "value1": document.getElementsByClassName("date")[0].valueAsDate.toISOString().split("T")[0],
         }), {redirect: 'follow'})
         .then((response) => {
             if (response.redirected) window.location.href = response.url;
