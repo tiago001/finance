@@ -35,5 +35,40 @@
     <!-- SWEETALERT -->
     <script src="assets/libs/sweetalert/sweetalert2.js"></script>
 
+    <script src='https://js-de.sentry-cdn.com/1eeaca6844f9adde574f668c374008da.min.js' crossorigin="anonymous"></script>
+
+
+    <script>
+        window.sentryOnLoad = function () {
+          Sentry.init({
+            dsn: "https://1eeaca6844f9adde574f668c374008da@o4507855350988800.ingest.de.sentry.io/4507855357149264",
+      
+            // Alternatively, use `process.env.npm_package_version` for a dynamic release version
+            // if your build tool supports it.
+            release: "finance@0.1.0",
+            integrations: [
+              Sentry.browserTracingIntegration(),
+              Sentry.replayIntegration(),
+            ],
+      
+            // Set tracesSampleRate to 1.0 to capture 100%
+            // of transactions for tracing.
+            // We recommend adjusting this value in production
+            tracesSampleRate: 0.5,
+      
+            // Set `tracePropagationTargets` to control for which URLs trace propagation should be enabled
+            tracePropagationTargets: [
+              "localhost",
+              "https://projetofinancas.com.br",
+            ],
+      
+            // Capture Replay for 10% of all sessions,
+            // plus for 100% of sessions with an error
+            replaysSessionSampleRate: 0.1,
+            replaysOnErrorSampleRate: 1.0,
+          });
+        };
+      </script>
+
     <script src="js/app.js"></script>
 </html>

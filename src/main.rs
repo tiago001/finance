@@ -9,6 +9,7 @@ use rocket::request::{self, Outcome};
 use rocket_db_pools::{Database, Connection, sqlx};
 use rocket_dyn_templates::Template;
 
+use rocket_sentry::RocketSentry;
 use serde_json::json;
 
 use finance::{db::Logs, user_routes, expense_routes, income_routes, settings_routes, investment_routes};
@@ -102,8 +103,7 @@ async fn rocket() -> _ {
     ).register("/",catchers![unauthorized])
     .mount("/", FileServer::from("static")) // Enable for development
     .attach(Template::fairing())
-
-    
+    .attach(RocketSentry::fairing())
 }
 
 async fn run_scheduled_task() -> Result<(), JobSchedulerError>{
