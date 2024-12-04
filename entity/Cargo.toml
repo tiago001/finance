@@ -8,6 +8,6 @@ name = "entity"
 path = "src/lib.rs"
 
 [dependencies]
-serde = "1.0.193"
-rocket = { version ="0.5.0"}
-sqlx = {version = "0.7.3", features = ["time"]}
+serde = "1.0.215"
+rocket = { version ="0.5.1"}
+sqlx = {version = "0.7.4", features = ["time"]}

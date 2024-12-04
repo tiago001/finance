@@ -9,26 +9,27 @@ edition = "2021"
 members = [".", "entity"]
 
 [dependencies]
-rocket = { version ="0.5.0", features = ["secrets", "json"] }
-serde = "1.0.193"
-serde_json = "1.0.108"
+rocket = { version ="0.5.1", features = ["secrets", "json"] }
+serde = "1.0.215"
+serde_json = "1.0.133"
 sqlx = { version = "0.7.4", features = ["time", "bigdecimal"] }
-chrono = { version = "0.4.31", features = ["serde"] }
+chrono = { version = "0.4.38", features = ["serde"] }
 entity = { path = "entity" }
 
-time = { version = "0.3.31", features = ["serde","serde-human-readable", "local-offset"] }
+time = { version = "0.3.37", features = ["serde","serde-human-readable", "local-offset"] }
 
 rust-argon2 = "2.1.0"
-ring = "0.17.7"
-anyhow = "1.0.76"
-thiserror = "1.0.52"
+ring = "0.17.8"
+anyhow = "1.0.94"
+thiserror = "2.0.4"
 
 # Schedule tasks
-tokio-cron-scheduler = "0.10.2"
+tokio-cron-scheduler = "0.13.0"
 
-reqwest = { version = "0.12.4", features = ["json"] }
-bigdecimal = { version = "0.3", features = ["serde"] }
+reqwest = { version = "0.12.9", features = ["json"] }
+bigdecimal = { version = "0.3.1", features = ["serde"] }
 
+rocket-sentry = "0.18.0"
 
 dotenv = "0.15.0"
 
@@ -37,12 +38,12 @@ dotenv = "0.15.0"
 #features = ["sqlx_mysql"]
 
 [dependencies.rocket_db_pools]
-version = "0.1.0"
+version = "0.2.0"
 features = ["sqlx_mysql"]
 
 [dependencies.rocket_dyn_templates]
-version = "0.1.0"
+version = "0.2.0"
 features = ["tera"]
 
 [target.'cfg(unix)'.dependencies]
-openssl = { version = '0.10.64', features = ["vendored"] }
+openssl = { version = '0.10.68', features = ["vendored"] }
