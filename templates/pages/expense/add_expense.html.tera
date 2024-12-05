@@ -15,19 +15,16 @@
         {% for category in categories %}
             <option value="{{category.id}}">{{category.category}}</option>
         {% endfor %}
-        {# <option value="Education">Education</option>
-        <option value="Food">Food</option>
-        <option value="Fun">Fun</option>
-        <option value="Transport">Transport</option>
-        <option value="Tech">Tech</option>
-        <option value="Mercado">Mercado</option>
-        <option value="Others">Others</option> #}
     </select>
 </div>
 
-<div class="input-group mb-2">
+<div class="input-group mb-2 date-input">
     <span class="input-group-text" id="basic-addon1">Data</span>
-    <input type="date" class="form-control date" data-provide="datepicker">
+    <input type="date" class="form-control date" data-provide="datepicker" locked="false">
+    <button class="btn bg-body-secondary" type="button" onclick="toggleDate()">
+        <i class="ti ti-lock" style="display: none;"></i>
+        <i class="ti ti-lock-open" style="display: block;"></i>
+    </button>
 </div>
   
 <button type="button" class="btn btn-primary w-100" onclick="save_expense()">Salvar Despesa</button>
@@ -123,8 +120,10 @@
                 document.getElementsByClassName("nome")[0].value = ""
                 document.getElementsByClassName("money_value")[0].value = ""
                 document.getElementsByClassName("category")[0].selectedIndex = 0
-                let date = new Date();
-                document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+                if(document.getElementsByClassName("date")[0].getAttribute("locked") == "false") {
+                    let date = new Date();
+                    document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+                }
 
                 document.getElementsByClassName("expenses").innerHTML = ''
                 search_expenses()
@@ -187,6 +186,7 @@
                 <div class="col-1 d-none d-sm-block"></div>
             `
         )
+
         document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend", `<div class="row future-expenses p-0" style="background-color: #eeeeee;border-radius: 5px;"></div>`);
 
         let total = 0
@@ -196,8 +196,10 @@
             total += e.value
 
             tagExpense = "expenses"
-            if(new Date(e.date+" 00:00") > new Date()) {
-                tagExpense = "future-expenses"
+            if(document.getElementsByClassName("search_type")[0].value != "lastAddedExpenses"){
+                if(new Date(e.date+" 00:00") > new Date()) {
+                    tagExpense = "future-expenses"
+                }
             }
 
             if(e.date != lastDate){
@@ -235,10 +237,7 @@
                 <div class="col-12 col-sm-2 text-center d-none d-sm-block" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
                         ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
                 </div>
-                <div class="col-1 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
-                    <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
-                        <span><i class="ti ti-x"></i></span>
-                    </button>-->
+                <div class="col-1 text-center p-0" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
                     <button class="btn btn-sm btn-light py-0" onclick="open_edit_expense(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
                         <span><i class="ti ti-pencil"></i></span>
                     </button>
@@ -248,7 +247,7 @@
             lastDate = e.date
         });
 
-        if(document.getElementsByClassName("future-expenses ")[0].childNodes.length > 0){
+        if(document.getElementsByClassName("future-expenses")[0].childNodes.length > 0){
             document.getElementsByClassName("future-expenses")[0].insertAdjacentHTML("beforeend", 
             `<div class="col-12 text-center" style="border-top: 2px solid #e1e1e1;">
                 Despesas futuras 
@@ -257,7 +256,11 @@
             );
         }
 
-        document.getElementsByClassName("total")[0].innerHTML = `Total ${total.toFixed(2)}`
+        if(document.getElementsByClassName("search_type")[0].value == "currentMonth"){
+            document.getElementsByClassName("total")[0].innerHTML = `Total ${total.toFixed(2)}`
+        } else {
+            document.getElementsByClassName("total")[0].innerHTML = ""
+        }
 
         $('.name').on('blur', function(e){
             if(e.target.textContent.trim() != e.target.getAttribute("value")) {
@@ -329,6 +332,19 @@
         .catch((error) => {
             console.warn(error);
         });
+    }
+
+    function toggleDate(){
+        if(document.getElementsByClassName("date")[0].getAttribute("locked") == "false") {
+            document.getElementsByClassName("date")[0].setAttribute("locked", true)
+
+        } else {
+            document.getElementsByClassName("date")[0].setAttribute("locked", false)
+        }
+
+        $('.date-input button').toggleClass("bg-body-secondary bg-primary-subtle text-primary")
+        $('.date-input .ti-lock').toggle()
+        $('.date-input .ti-lock-open').toggle()
     }
 
     search_expenses()

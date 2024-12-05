@@ -118,21 +118,18 @@ pub async fn get_settings(mut db: Connection<Logs>, user: AuthenticatedUser) -> 
 
 #[get("/get_budget_categories")]
 pub async fn get_budget_categories(mut db: Connection<Logs>, user: AuthenticatedUser) -> Template {
-    let categories: Vec<Categories> = match sqlx::query_as! {Categories,
+    let categories: Vec<Categories> = (sqlx::query_as! {Categories,
         "SELECT * FROM categories WHERE user_id = ? and category_type = 'expenses'",
         user.user_id}
         .fetch_all(db.as_mut())
-        .await{
-            Ok(result) => result,
-            Err(..) => Vec::new()
-        };
+        .await).unwrap_or_default();
 
     Template::render("pages/settings/budget_categorties", json!({"categories": categories}))
 }
 
 
 #[post("/save_budget_categories", format = "json", data = "<categories>")]
-pub async fn save_budget_categories(mut db: Connection<Logs>, categories: Json<Vec<Categories>>) -> Status {
+pub async fn save_budget_categories(mut _db: Connection<Logs>, categories: Json<Vec<Categories>>) -> Status {
     println!("{:?}", categories);
 
     Status::Ok

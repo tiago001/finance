@@ -19,9 +19,9 @@
           <div class="mb-3 mb-sm-0">
             <h5 class="card-title fw-semibold">Categorias despesa</h5>
             </div>
-            <div>
+            {# <div>
                 <button class="btn btn-primary" onclick="open_budget_categories('expenses')" data-bs-toggle="modal" data-bs-target="#exampleModal">Orçamento</button>
-            </div>
+            </div> #}
             <div>
                 <button class="btn btn-primary" onclick="open_create_category('expenses')" data-bs-toggle="modal" data-bs-target="#exampleModal">Adicionar</button>
             </div>

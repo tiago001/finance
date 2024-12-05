@@ -125,7 +125,7 @@ function loadPage(href, pushState){
     }
     
     $("#content").load(href, function(e) {
-        if(e.includes("/verifyaccount")){ // Verify if user was logged out
+        if(e !== undefined && e.includes("/verifyaccount")){ // Verify if user was logged out
           window.location.replace(window.location.protocol + "//" + window.location.host+"/login")
         }
     })

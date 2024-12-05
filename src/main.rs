@@ -154,14 +154,11 @@ async fn settings(mode: FetchMode, mut db: Connection<Logs>, user: Authenticated
             Err(..) => Settings{user_id: 0, budget: None}
         };
 
-    let categories: Vec<Categories> = match sqlx::query_as! {Categories,
+    let categories: Vec<Categories> = (sqlx::query_as! {Categories,
         "SELECT * FROM categories WHERE user_id = ?",
         user.user_id}
         .fetch_all(db.as_mut())
-        .await{
-            Ok(result) => result,
-            Err(..) => Vec::new()
-        };
+        .await).unwrap_or_default();
     if mode.0 == "navigate" {
         Template::render("pages/extended/settings", json!({"username": user.name,"settings": stream, "categories": categories}))
     } else {
