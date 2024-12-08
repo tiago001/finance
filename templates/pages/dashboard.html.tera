@@ -14,6 +14,7 @@
         </div>
         <div class="col-12 col-sm-6 col-md-6 p-0">
             <div class="row category_values">
+                
             </div>
         </div>
         <div class="col-1 d-block "></div>
@@ -57,9 +58,14 @@
             json.months.forEach(m => {
                 document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                     "beforeend",
-                    `<div class="col-3 col-sm-2 text-center fs-4">Mês ${m.month}</div>`
+                    `<div class="col-3 col-sm-2 text-center fs-4 month-category">Mês ${m.month}</div>`
                 )
             })
+
+            /*$('.month-category').first()[0].insertAdjacentHTML("afterbegin", `
+                <button type="button" class="btn btn-primary p-0" onclick="previous_month()"><i class="ti ti-chevron-left"></i></button>`)
+            $('.month-category').last()[0].insertAdjacentHTML("beforeend", `
+                <button type="button" class="btn btn-primary p-0" onclick="previous_month()"><i class="ti ti-chevron-right"></i></button>`)*/
 
             json.categories.forEach(e => {
                 document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
@@ -171,10 +177,18 @@
             
             dataset.push({
                 type: 'line',
-                label: 'Balance',
-                data: json.balance.map(item => item.value),
+                label: 'Balance - Month',
+                data: json.balance_month.map(item => item.value),
                 borderColor: '#3bb000',
                 backgroundColor: "#3bb000"
+            })
+            dataset.push({
+                type: 'line',
+                label: 'Balance',
+                data: json.balance.map(item => item.value),
+                borderColor: '#236b00',
+                backgroundColor: "#236b00",
+                hidden: true,
             })
             dataset.push({
                 type: 'bar',

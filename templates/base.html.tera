@@ -58,7 +58,6 @@
       
             // Set `tracePropagationTargets` to control for which URLs trace propagation should be enabled
             tracePropagationTargets: [
-              "localhost",
               "https://projetofinancas.com.br",
             ],
       

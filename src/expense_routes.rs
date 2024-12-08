@@ -200,6 +200,7 @@ pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: Authentica
 
     let mut expenses: Vec<Balance> = Vec::new();
     let mut incomes: Vec<Balance> = Vec::new();
+    let mut balance_month: Vec<Balance> = Vec::new();
     let mut balance: Vec<Balance> = Vec::new();
     let mut labels: Vec<String> = Vec::new();
 
@@ -228,13 +229,20 @@ pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: Authentica
         }
 
         if let (Some(e), Some(i)) = (expense, income) {
-            balance.push(Balance { value: Some(i.value.unwrap() - e.value.unwrap()), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() })
+            balance_month.push(Balance { value: Some(i.value.unwrap() - e.value.unwrap()), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance_month".to_string() })
         } else if let Some(e) = expense {
-            balance.push(Balance { value: Some(-(e.value.unwrap())), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() })
+            balance_month.push(Balance { value: Some(-(e.value.unwrap())), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance_month".to_string() })
         } else if let Some(i) = income {
-            balance.push(Balance { value: Some(i.value.unwrap()), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() })
+            balance_month.push(Balance { value: Some(i.value.unwrap()), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance_month".to_string() })
         } else {
-            balance.push(Balance { value: Some(0.0), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() })
+            balance_month.push(Balance { value: Some(0.0), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance_month".to_string() })
+        }
+
+        if balance.len() == 0 {
+            balance.push(Balance { value: balance_month.get(0).unwrap().value, month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() });
+        } else {
+            let balance_value = balance.get(balance.len() - 1).unwrap().value.unwrap() + balance_month.get(balance_month.len() - 1).unwrap().value.unwrap();
+            balance.push(Balance { value: Some(balance_value), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() });
         }
 
         labels.push(format!("{}-{}", utc.month(), utc.year()));
@@ -243,9 +251,9 @@ pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: Authentica
     }
 
     #[derive(Serialize, Debug, Clone)]
-    struct Return{expenses: Vec<Balance>, incomes: Vec<Balance>, balance: Vec<Balance>, labels: Vec<String>}
+    struct Return{expenses: Vec<Balance>, incomes: Vec<Balance>, balance_month: Vec<Balance>, balance: Vec<Balance>, labels: Vec<String>}
 
-    let retorno = Return{ expenses, incomes, balance, labels};
+    let retorno = Return{ expenses, incomes, balance_month, balance, labels};
 
     serde_json::to_string(&retorno).unwrap()
 
