@@ -104,7 +104,6 @@
             )
 
             json.months.forEach(m => {
-                console.log(m)
                 document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                     "beforeend",
                     `
@@ -175,12 +174,26 @@
         .then((json) => {
             let dataset = []
             
+            let legend = {
+                ["balance-month"] : false,
+                ["balance"] : true,
+                ["expenses"] : false,
+                ["incomes"] : false,
+            }
+            if(graphBalance != undefined){
+                legend["balance-month"] = graphBalance.legend.legendItems.filter(legend => legend.text == "Balance - Month")[0].hidden
+                legend["balance"] = graphBalance.legend.legendItems.filter(legend => legend.text == "Balance")[0].hidden
+                legend["expenses"] = graphBalance.legend.legendItems.filter(legend => legend.text == "Expenses")[0].hidden
+                legend["incomes"] = graphBalance.legend.legendItems.filter(legend => legend.text == "Incomes")[0].hidden
+            }
+
             dataset.push({
                 type: 'line',
                 label: 'Balance - Month',
                 data: json.balance_month.map(item => item.value),
                 borderColor: '#3bb000',
-                backgroundColor: "#3bb000"
+                backgroundColor: "#3bb000",
+                hidden: legend["balance-month"]
             })
             dataset.push({
                 type: 'line',
@@ -188,27 +201,30 @@
                 data: json.balance.map(item => item.value),
                 borderColor: '#236b00',
                 backgroundColor: "#236b00",
-                hidden: true,
+                hidden: legend["balance"]
             })
             dataset.push({
                 type: 'bar',
                 label: 'Expenses',
                 data: json.expenses.map(item => item.value), // -Math.abs(item.value)
                 borderColor: '#ed686c',
-                backgroundColor: "#ed686c"
+                backgroundColor: "#ed686c",
+                hidden: legend["expenses"]
             })
             dataset.push({
                 type: 'bar',
                 label: 'Incomes',
                 data: json.incomes.map(item => item.value),
                 borderColor: '#36a2eb',
-                backgroundColor: "#36a2eb"
+                backgroundColor: "#36a2eb",
+                hidden: legend["incomes"]
             })
             
             if(graphBalance){
                 graphBalance.destroy()
             }
             let ctx = document.getElementById('balanceChart');
+
     
             graphBalance = new Chart(ctx, {
                 type: 'bar',
@@ -221,8 +237,20 @@
                         intersect: false,
                         mode: 'index'
                       },
-                    maintainAspectRatio: false
-                }
+                    maintainAspectRatio: false,
+                    onClick: (e) => {
+                        console.log(e)
+                    },
+                    /*plugins: {
+                        legend: {
+                            onClick: (e) => {
+                                console.log(e)
+                                console.log(e.chart.legend.legendItems.filter(legend => legend.text == "Balance")[0].hidden)
+                                e.chart.legend.legendItems.filter(legend => legend.text == "Balance")[0].hidden = false
+                            }
+                        }
+                    }*/
+                },
             });
         });
 

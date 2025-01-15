@@ -1,11 +1,97 @@
+<style>
+    .icon-close {
+        display		: inline-block;
+        width		: 16px;
+        height		: 16px;
+        background	: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAOwQAADsEBuJFr7QAAABh0RVh0U29mdHdhcmUAcGFpbnQubmV0IDQuMC42/Ixj3wAAAKVJREFUOE+VkAEKhDAQA/3/t4QDXyByj+ll2m3t2VR0INhms4G6pJQGOVwOedPgcsibBpdDVwPW2BlgViJdQY+MnakYSvDKKGd8AUQAWgnnYqU97vMCICjBJwR5GXS+LwAND6lyhJ3R/VHBJlW2sDO63xdoUN/8DUH/T+YFBCXo3/z3Y/U9C/qLNCxX8MooZ9pOO4RgWK4wK5F5wWtZ842s+Vxp+QHxxC/F3JqzBgAAAABJRU5ErkJggg==');
+    }
+    
+    /*.taglist {
+        overflow	: hidden;
+        display		: block;
+        padding		: 6px 6px 0;
+        border		: 1px solid #ccc;
+        border-radius : 3px;
+        font-family : Arial, sans-serif;
+        font-size	: 13px;
+        line-height	: 16px;
+        white-space	: nowrap;
+    }*/
+    
+    .taglist-highlight {
+        /*border		: 1px solid #158daa;*/
+        box-shadow	: 0px 0px 1px 1px #60b0dd;
+    }
+    
+    .taglist-tag, .taglist-input {
+        float		: left;
+        display		: inline-table;
+        /*margin-bottom : 6px;*/
+    }
+    
+    .taglist-tag {
+        max-width		: 300px;
+        padding			: 3px 4px;
+        border			: 1px solid transparent;
+        border-radius	: 2px;
+        /*margin	: 5px;*/
+        margin: 0px 2px;
+        background		: #ddd;
+        text-overflow 	: ellipsis;
+        height: 100%;
+    }
+    
+    .taglist-tag-highlight {
+        background		: #bbb;
+        border-color	: black;
+        color			: #333;
+    }
+    
+    .taglist-tag-text, .taglist-tag-remove {
+        display 		: table-cell;
+        vertical-align	: middle;
+    }
+    
+    .taglist-tag-text {
+        /*padding-right	: 4px;*/
+        padding: 0px 5px;
+    }
+    
+    .taglist-tag-remove {
+        /*background		: #158daa;*/
+        cursor			: pointer;
+        /*opacity			: 0.5;*/
+        padding: 0px 4px;
+    }
+    
+    .taglist-tag-remove:hover, .taglist-tag-highlight .taglist-tag-remove {
+        opacity			: 1;
+    }
+    
+    /*.taglist-input {
+        min-width		: 200px;
+        height			: 24px;
+        padding			: 4px;
+        border			: 0 !important;
+        overflow		: hidden;
+        outline			: none;
+        resize			: none;
+        font-family		: Arial, sans-serif;
+        font-size		: 13px;
+        line-height		: 16px;
+    }*/
+    
+</style>
+
 <div class="input-group mb-2">
     <span class="input-group-text" id="basic-addon1">Nome</span>
     <input type="text" class="form-control nome" aria-label="nome" aria-describedby="basic-addon1">
 </div>
 
-<div class="input-group mb-2">
+<div class="input-group mb-2 taglist">
     <span class="input-group-text" id="basic-addon1">Valor</span>
-    <input type="text" inputmode="decimal" class="form-control money_value currency" aria-label="valor" aria-describedby="basic-addon1" placeholder="0.00">
+    <div class="taglist-tags"></div>
+    <input type="text" inputmode="decimal" class="form-control money_value currency taglist-input" aria-label="valor" aria-describedby="basic-addon1" placeholder="0.00">
 </div>
 
 <div class="input-group mb-2">
@@ -48,6 +134,56 @@
 </div>
 
 <script>
+
+    var keyCode = {
+        'backspace' : 8,
+        'space'	  	: 32,
+        'plus'      : 61,
+        'plus-numpad': 107
+    }
+
+    setTimeout(function() {
+         $('.taglist').on( 'click', '.taglist-tag-remove', function() {
+            $(this).closest('.taglist-tag').remove()
+            if($('.taglist-tags').children().length == 0){
+                $('.taglist .total-tag').remove()
+            } else {
+                let valor = 0
+                $('.taglist-tags').children().each(function(el){
+                    valor = valor + parseFloat($(this).text().trim())
+                })
+                $('.taglist .total-tag').text('Total '+parseFloat(valor).toFixed(2))
+            }
+        });
+
+        $('.taglist .taglist-input').on({
+            // handle keyboard events on textarea
+            keydown : function( $event ) {
+                var inputKeyCode = $event.which;
+                if(inputKeyCode == keyCode['plus'] || inputKeyCode == keyCode['plus-numpad'] && $('.taglist .taglist-input').val() != "") {
+                    $('.taglist-tags').append(
+                        `<div class="taglist-tag rounded-1">
+                            <span class="taglist-tag-text">${parseFloat($('.taglist .taglist-input').val()).toFixed(2)}</span>
+                            <span class="taglist-tag-remove btn btn-primary">
+                                <i class="ti ti-x fs-4"></i>
+                            </span>
+                        </div>`)
+                    $('.taglist .taglist-input').val('')
+
+                    if($('.taglist .total-tag').length == 0){
+                        $('.taglist').append('<span class="input-group-text total-tag" id="basic-addon1">Total</span>')
+                    }
+
+                    // Calculate value
+                    let valor = 0
+                    $('.taglist-tags').children().each(function(el){
+                        valor = valor + parseFloat($(this).text().trim())
+                    })
+                    $('.taglist .total-tag').text('Total '+parseFloat(valor).toFixed(2))
+                }
+            }
+        })
+    }, 50)
     
     setTimeout(function() {
         $('.nome').on('blur', function () { predictCategory() })
@@ -79,19 +215,32 @@
             mensagemErro("Preencha o nome da despesa")
             return
         }
-        if(document.getElementsByClassName("money_value")[0].value.length == 0){
+        /*if(document.getElementsByClassName("money_value")[0].value.length == 0){
             mensagemErro("Preencha o valor da despesa")
             return
-        }
+        }*/
         if(document.getElementsByClassName("category")[0].value == 0){
             mensagemErro("Preencha a categoria da despesa")
             return
         }
 
+        let valor = 0
+        $('.taglist-tags').children().each(function(el){
+            valor = valor + parseFloat($(this).text().trim())
+        })
+
+        if($('.taglist .taglist-input').val() != ''){
+            valor = valor + parseFloat($('.taglist .taglist-input').val())
+        }
+
+        if(valor == 0){
+            mensagemErro("Preencha o valor da despesa")
+            return
+        }
 
         fetch("save_expense?" + new URLSearchParams({
             "name": document.getElementsByClassName("nome")[0].value,
-            "value": document.getElementsByClassName("money_value")[0].value,
+            "value": valor,
             "category_id": document.getElementsByClassName("category")[0].value,
             "date": document.getElementsByClassName("date")[0].value}),
         {
@@ -124,6 +273,9 @@
                     let date = new Date();
                     document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
                 }
+
+                $('.taglist-tags').children().remove()
+                $('.taglist .total-tag').remove()
 
                 document.getElementsByClassName("expenses").innerHTML = ''
                 search_expenses()
@@ -315,23 +467,25 @@
     }
     
     function predictCategory() {
-        fetch("predict_category?" + new URLSearchParams({
-            "name": document.getElementsByClassName("nome")[0].value
-        }), {redirect: 'follow'})
-        .then((response) => {
-            if (response.redirected) window.location.href = response.url;
-            return response.json()
-        })
-        .then((json) => {
-            if(json.category_id != null){
-                document.getElementsByClassName("category")[0].value = json.category_id
-            } else {
-                document.getElementsByClassName("category")[0].selectedIndex = 0
-            }
-        })
-        .catch((error) => {
-            console.warn(error);
-        });
+        if(document.getElementsByClassName("nome")[0].value != ""){
+            fetch("predict_category?" + new URLSearchParams({
+                "name": document.getElementsByClassName("nome")[0].value
+            }), {redirect: 'follow'})
+            .then((response) => {
+                if (response.redirected) window.location.href = response.url;
+                return response.json()
+            })
+            .then((json) => {
+                if(json.category_id != null){
+                    document.getElementsByClassName("category")[0].value = json.category_id
+                } else {
+                    document.getElementsByClassName("category")[0].selectedIndex = 0
+                }
+            })
+            .catch((error) => {
+                console.warn(error);
+            });
+        }
     }
 
     function toggleDate(){

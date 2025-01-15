@@ -1,6 +1,10 @@
 
+use chrono::NaiveDate;
 use entity::categories::Categories;
+use entity::expense_view::ExpenseView;
 use rocket_db_pools::{sqlx, Connection};
+use std::fs::File;
+use std::{error::Error, io, process};
 
 use entity::settings::Settings;
 use time::{PrimitiveDateTime, OffsetDateTime};
@@ -131,6 +135,68 @@ pub async fn get_budget_categories(mut db: Connection<Logs>, user: Authenticated
 #[post("/save_budget_categories", format = "json", data = "<categories>")]
 pub async fn save_budget_categories(mut _db: Connection<Logs>, categories: Json<Vec<Categories>>) -> Status {
     println!("{:?}", categories);
+
+    Status::Ok
+}
+
+#[post("/import_expenses")]
+pub async fn import_expenses(mut db: Connection<Logs>, user: AuthenticatedUser) -> Status {
+
+    #[derive(Debug, serde::Deserialize)]
+    struct Record {
+        #[serde(alias = "Id")]
+        id: Option<i64>,
+        #[serde(alias = "Descrição")]
+        description: String,
+        #[serde(alias = "Categoria")]
+        category: String,
+        #[serde(alias = "Valor")]
+        value: f64,
+        #[serde(alias = "Data")]
+        date: String, // Option<PrimitiveDateTime>
+    }
+
+    let file = File::open(r"C:\Users\Tiago\Documents\expenses.csv").expect("File not found");
+    let mut rdr = csv::Reader::from_reader(file);
+    for result in rdr.deserialize() {
+        // Notice that we need to provide a type hint for automatic
+        // deserialization.
+        let record: Record = result.unwrap();
+        println!("{:?}", record);
+
+        // let stream = sqlx::query_as!(ExpenseView,
+        //     "SELECT id, name, value, `date`, user_id, created_date, category, category_id
+        //         FROM expenses_view
+        //         where name = ?
+        //         and `date` = ?
+        //         and value = ?
+        //         and category = ?",
+        //     record.description, NaiveDate::parse_from_str(&record.date, "%d/%m/%Y").unwrap().to_string(), record.value, record.category
+        // )
+        // .fetch_optional(db.as_mut())
+        // .await.unwrap();
+
+        // if stream.is_none() {
+            let category = sqlx::query_as!(Categories,
+                "SELECT * FROM categories WHERE user_id = ? and category_type = 'expenses' and category = ?",
+                user.user_id, record.category
+            )
+            .fetch_optional(db.as_mut())
+            .await.unwrap();
+
+            let category_id = if category.is_some() { Some(category.unwrap().id) } else {None};
+
+            let now = OffsetDateTime::now_utc();
+
+            // println!("{:?}", stream);
+            sqlx::query!("INSERT INTO expenses
+                (name, value, category_id, date, user_id, created_date)
+                VALUES(?, ?, ?, ?, ?, ?)",
+                record.description, record.value, category_id, NaiveDate::parse_from_str(&record.date, "%d/%m/%Y").unwrap().to_string(), user.user_id, PrimitiveDateTime::new(now.date(), now.time()))
+                .execute(db.as_mut()).await.unwrap();
+        // }
+
+    }
 
     Status::Ok
 }

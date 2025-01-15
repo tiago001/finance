@@ -9,6 +9,7 @@ use rocket::request::{self, Outcome};
 use rocket_db_pools::{Database, Connection, sqlx};
 use rocket_dyn_templates::Template;
 
+use rocket_prometheus::PrometheusMetrics;
 use rocket_sentry::RocketSentry;
 use serde_json::json;
 
@@ -55,7 +56,9 @@ async fn rocket() -> _ {
             Err(e) => println!("error initiating task {}", e)
         };
     });
-    
+
+    let prometheus = PrometheusMetrics::new();
+
     rocket::build()
     .attach(Logs::init())
     .mount("/", routes![
@@ -86,6 +89,7 @@ async fn rocket() -> _ {
             settings_routes::delete_category,
             settings_routes::get_budget_categories,
             settings_routes::save_budget_categories,
+            settings_routes::import_expenses,
             index,
             index_pwa,
             settings,
@@ -102,8 +106,10 @@ async fn rocket() -> _ {
         ]
     ).register("/",catchers![unauthorized])
     .mount("/", FileServer::from("static")) // Enable for development
-    .attach(Template::fairing())
     .attach(RocketSentry::fairing())
+    .attach(Template::fairing())
+    .attach(prometheus.clone())
+    .mount("/metrics", prometheus)
 }
 
 async fn run_scheduled_task() -> Result<(), JobSchedulerError>{

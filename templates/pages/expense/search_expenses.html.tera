@@ -249,23 +249,6 @@
             categories.push({name: e, data: []});
         })
 
-        defaultCategories = [
-            {name:"Education", data: [], color: "#e60049"},
-            {name:"Food", data: [], color: "#0bb4ff"},
-            {name:"Fun", data: [], color: "#50e991"},
-            {name:"Indefinido", data: [], color: "#e6d800"},
-            {name:"Mercado", data: [], color: "#00bfa0"},
-            {name:"Others", data: [], color: "#ffa300"},
-            {name:"Tech", data: [], color: "#dc0ab4"},
-            {name:"Transport", data: [], color: "#b3d4ff"},
-        ]
-
-        defaultCategories.forEach(e => {
-            if(!jsonCategories.includes(e.name)){
-                categories.push(e)
-            }
-        });
-
         categories.forEach(c => {
             daysInMonth.forEach((v, pos) => {
                 let dayFound = false
@@ -390,9 +373,14 @@
                         filter: (tooltipItem) => tooltipItem.raw > 0,
                         /*itemSort: function(a, b) {
                             console.log(b.dataset.label)
-                            return b.raw - a.raw || b.dataset.label == "Budget";
+                            return (b.raw - a.raw) || b.dataset.label == "Acumulado" ||b.dataset.label == "Budget";
                         }*/
-                    }, 
+                    },
+                    legend: {
+                        labels: {
+                            filter: (label) => label.text == "Acumulado" || label.text == "Budget"
+                        }
+                    }
                 }
             }
         });

@@ -149,9 +149,6 @@ pub async fn search_expenses_category(mut db: Connection<Logs>, user: Authentica
         if expense.is_some() {
             let expense_month = expense.unwrap().months.iter_mut().find(|m| m.month == s.month);
 
-            println!("{:?}", s.month);
-            println!("{:?}", expense_month);
-
             expense_month.unwrap().sum = s.sum;
         }
 

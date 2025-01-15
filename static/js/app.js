@@ -145,7 +145,7 @@ document.onclick = function (e) {
 
     if (element != null && element.tagName == 'A') {
         let url = element.href;
-        if(url != window.location){
+        if(url != window.location && url != "javascript:void(0)"){
             loadPage(element.href, true);
         }
         return false; // prevent default action and stop event propagation
