@@ -25,8 +25,12 @@
   
 <button type="button" class="btn btn-primary w-100" onclick="save_income()">Salvar Receita</button>
 
-<div class="pt-4 incomes-year text-sm-end text-center">
+<div class="row pt-2" style="max-height: 280px;">
+    <canvas id="graph"></canvas>
+</div>
 
+<div class="pt-4 incomes-year text-sm-end text-center">
+    
 </div>
 
 <div class="row pt-4 incomes">
@@ -120,13 +124,17 @@
                 </div>`
             );
 
+        dataGraph = []
+        labelGraph = []
+
         for (var key in data) {
             total = 0;
             document.getElementsByClassName("incomes-year")[0].insertAdjacentHTML("beforeend",
                 `<div class="row show-value">
-                    <div class="col-6 col-sm-1 text-center" style="border-bottom: 2px solid #e1e1e1;">${key.substring(3,key.length)}</div>
+                    <div class="col-6 col-sm-1 text-center value" style="border-bottom: 2px solid #e1e1e1;">${key.substring(3,key.length)}</div>
+                    <div class="col-6 col-sm-1 text-center full-value" style="border-bottom: 2px solid #e1e1e1;">${key.substring(1,key.length)}</div>
                     <div class="col-6 col-sm-1 income-${key} d-block d-sm-none" style="border-bottom: 2px solid #e1e1e1;"></div>
-                    <div class="row col-12 col-sm-10 ${key} px-0" style="border-bottom: 2px solid #e1e1e1;"></div>
+                    <div class="row col-12 col-sm-10 ${key} px-0 flex-sm-wrap flex-wrap-reverse" style="border-bottom: 2px solid #e1e1e1;"></div>
                     <div class="col-2 col-sm-1 income-${key} d-none d-sm-block" style="border-bottom: 2px solid #e1e1e1;"></div>
                 </div>`
             );
@@ -136,15 +144,18 @@
                 if(data[key][i] != null){
                     sum = data[key][i].reduce(function (acc, obj) { return acc + obj.value; }, 0)
                 }
-
+                
                 document.getElementsByClassName(key)[0].insertAdjacentHTML("beforeend",
-                    `
-                    <div class="col-6 d-block d-sm-none">${months[i]}</div>
-                    <div class="col-6 col-sm-1 value">${sum == 0 ? "-" : sum > 1000 ? toFixed(sum/1000,2)+"K" : sum}</div>
-                    <div class="col-6 col-sm-1 full-value">${sum == 0 ? "-" : sum.toFixed(2)}</div>`
+                `
+                <div class="col-6 d-block d-sm-none">${months[i]}</div>
+                <div class="col-6 col-sm-1 value">${sum == 0 ? "-" : sum > 1000 ? toFixed(sum/1000,2)+"K" : sum}</div>
+                <div class="col-6 col-sm-1 full-value">${sum == 0 ? "-" : sum.toFixed(2)}</div>`
                 );
                 total = total + sum
             }
+            
+            dataGraph.push(total)
+            labelGraph.push(key.substring(1,key.length))
 
             if(total == 0){
                 for (var i = 0; i < document.getElementsByClassName("income-"+key).length; i++) {
@@ -164,6 +175,36 @@
                 `<div class="col-1">${months[i].substring(0,3)}</div>`
             );
         }
+
+        dataGraph.reverse()
+        labelGraph.reverse()
+
+        show_graph(labelGraph, dataGraph)
+    }
+
+    function show_graph(label, data){
+        if(graph){
+            graph.destroy()
+        }
+
+        let ctx = document.getElementById('graph');
+
+        graph = new Chart(ctx, {
+            options: {
+                maintainAspectRatio: false
+            },
+            type: 'bar',
+            data: {
+                labels: label,
+                datasets: [{
+                    label: 'Receita Anual',
+                    data: data,
+                    borderWidth: 1,
+                    borderColor: '#36a2eb',
+                    backgroundColor: "#36a2eb"
+                }]
+            }
+        });
     }
 
     function save_income(){
@@ -176,7 +217,6 @@
             method: "POST"
         })
         .then((response) => {
-            console.log(response.status)
             if(response.status != 200){
                 Swal.fire({
                     position: 'top-end',
