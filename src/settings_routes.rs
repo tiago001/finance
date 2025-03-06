@@ -184,7 +184,7 @@ pub async fn import_expenses(mut db: Connection<Logs>, user: AuthenticatedUser) 
             .fetch_optional(db.as_mut())
             .await.unwrap();
 
-            let category_id = if category.is_some() { Some(category.unwrap().id) } else {None};
+            let category_id = if let Some(category) = category { Some(category.id) } else { None };
 
             let now = OffsetDateTime::now_utc();
 

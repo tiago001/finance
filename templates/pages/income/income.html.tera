@@ -280,19 +280,19 @@
                 document.getElementsByClassName("incomes")[0].insertAdjacentHTML(
                     "beforeend",
                     `
-                        <div class="col-6 col-sm-5 text-center" expense="${e.id}" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        <div class="col-6 col-sm-5 text-center ${e.date != lastDate ? "border-top-grey" : ""}" expense="${e.id}">
                             <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
                         </div>
-                        <div class="col-sm-2 d-none d-sm-block text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        <div class="col-sm-2 d-none d-sm-block text-center ${e.date != lastDate ? "border-top-grey" : ""}">
                             ${e.obs.length == 0 ? "-" : e.obs} 
                         </div>
-                        <div class="col-sm-2 d-none d-sm-block text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        <div class="col-sm-2 d-none d-sm-block text-center ${e.date != lastDate ? "border-top-grey" : ""}">
                             ${e.category == "" ? "-" : e.category} 
                         </div>
-                        <div class="col-4 col-sm-2 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        <div class="col-4 col-sm-2 text-center ${e.date != lastDate ? "border-top-grey" : ""}">
                              ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
                         </div>
-                        <div class="col-2 col-sm-1 text-center" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                        <div class="col-2 col-sm-1 text-center ${e.date != lastDate ? "border-top-grey" : ""}">
                             <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
                                 <span><i class="ti ti-x"></i></span>
                             </button>-->

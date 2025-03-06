@@ -15,3 +15,7 @@
 .width-33 {
     width: 33px;
 }
+
+.border-top-grey {
+    border-top: 2px solid #e1e1e1;
+}

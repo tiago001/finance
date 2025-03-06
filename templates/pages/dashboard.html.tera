@@ -12,16 +12,17 @@
         <div class="col-12 p-0">
             <p class="fs-4 text-center text-md-start ps-md-3">Valor gasto por categoria</p>
         </div>
-        <div class="col-12 col-sm-6 col-md-6 p-0">
+        <div class="col-12 col-lg-5 p-0">
             <div class="row category_values">
                 
             </div>
         </div>
-        <div class="col-1 d-block "></div>
-        <div class="col-10 col-sm-6 col-md-4 col-lg-3">
+        <div class="col-12 col-sm-6 col-md-6 col-lg-4 py-2 py-sm-0">
             <canvas id="myChart"></canvas>
         </div>
-        <div class="col-1 d-block"></div>
+        <div class="col-12 col-sm-6 col-md-6 col-lg-3 align-content-around">
+            <div class="row expenses-month py-2"></div>
+        </div>
         <div class="col-4 col-sm-6 col-md-10"></div>
         <div class="col-8 col-sm-6 col-md-2 d-flex">
             <div class="input-group input-group-sm">
@@ -67,37 +68,56 @@
             $('.month-category').last()[0].insertAdjacentHTML("beforeend", `
                 <button type="button" class="btn btn-primary p-0" onclick="previous_month()"><i class="ti ti-chevron-right"></i></button>`)*/
 
+            let totalMes = json.months[json.months.length - 1].sum
+
             json.categories.forEach(e => {
                 document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                     "beforeend",
                     `
-                    <div class="col-3 col-sm-6 text-truncate" style=\"border-top: 2px solid #e1e1e1;\">
+                    <div class="col-3 col-sm-6 text-truncate border-top-grey">
                     ${e.category} 
                     </div>
                     `
                 )
 
                 e.months.forEach(m => {
-                    if(m.month == endMonth && m.sum > 0){
-                        label.push(e.category)
-                        sum.push(m.sum)
-                    }
-
                     document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                         "beforeend",
                         `
-                            <div class="col-3 col-sm-2 text-center" style=\"border-top: 2px solid #e1e1e1;\" onclick="search_expenses('${e.category}',${m.year},${m.month})">
+                            <div class="col-3 col-sm-2 text-center border-top-grey" onclick="search_expenses('${e.category}',${m.year},${m.month})">
                                 <span class="cursor-pointer">${m.sum.toFixed(2)}</span>
                             </div>
                         `
                     )
                 })
             })
+            
+            json.categories.sort(function(a,b) {
+                return a.months[a.months.length - 1].sum < b.months[b.months.length - 1].sum
+            })
+
+            json.categories.forEach(e => {
+                e.months.forEach(m => {
+                    if(m.month == endMonth && m.sum > 0){
+                        label.push(e.category)
+                        sum.push(m.sum)
+
+                        document.getElementsByClassName("expenses-month")[0].insertAdjacentHTML(
+                            "beforeend",
+                            `
+                                <div class="col-6 border-top-grey">${e.category}</div>
+                                <div class="col-3 text-center border-top-grey">${m.sum.toFixed(2)}</div>
+                                <div class="col-3 text-center border-top-grey">${(m.sum * 100 / totalMes).toFixed(1)}% </div>
+                            `
+                        )
+                    }
+                })
+            })
     
             document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                 "beforeend",
                 `
-                <div class="col-3 col-sm-6" style=\"border-top: 2px solid #e1e1e1;font-weight: bold;font-size: 17px;\">
+                <div class="col-3 col-sm-6 border-top-grey" style=\"font-weight: bold;font-size: 17px;\">
                     Total
                 </div>
                 `
@@ -107,7 +127,7 @@
                 document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
                     "beforeend",
                     `
-                        <div class="col-3 col-sm-2 text-center" style=\"border-top: 2px solid #e1e1e1;font-weight: bold;font-size: 17px;\" onclick="search_expenses(null,${m.year},${m.month})">
+                        <div class="col-3 col-sm-2 text-center border-top-grey" style=\"font-weight: bold;font-size: 17px;\" onclick="search_expenses(null,${m.year},${m.month})">
                             <span class="cursor-pointer">${m.sum.toFixed(2)}</span>
                         </div>
                     `

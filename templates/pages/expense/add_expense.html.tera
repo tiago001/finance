@@ -377,19 +377,19 @@
 
             document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML("beforeend",
             `
-                <div class="col-4 col-sm-3 text-truncate" expense="${e.id}" value=${e.name} ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                <div class="col-4 col-sm-3 text-truncate ${e.date != lastDate ? "border-top-grey" : ""}" expense="${e.id}" value=${e.name}>
                     <span class="name" expense="${e.id}" value=${e.name} contenteditable="true">${e.name}</span> 
                 </div>
-                <div class="col-3 col-sm-3 text-center" expense="${e.id}" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                <div class="col-3 col-sm-3 text-center ${e.date != lastDate ? "border-top-grey" : ""}" expense="${e.id}">
                     <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
                 </div>
-                <div class="col-4 col-sm-3 text-center text-truncate" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                <div class="col-4 col-sm-3 text-center text-truncate ${e.date != lastDate ? "border-top-grey" : ""}">
                     ${e.category} 
                 </div>
-                <div class="col-12 col-sm-2 text-center d-none d-sm-block" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                <div class="col-12 col-sm-2 text-center d-none d-sm-block ${e.date != lastDate ? "border-top-grey" : ""}">
                         ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
                 </div>
-                <div class="col-1 text-center p-0" ${e.date != lastDate ? "style=\"border-top: 2px solid #e1e1e1;\"" : ""}>
+                <div class="col-1 text-center p-0 ${e.date != lastDate ? "border-top-grey" : ""}">
                     <button class="btn btn-sm btn-light py-0" onclick="open_edit_expense(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
                         <span><i class="ti ti-pencil"></i></span>
                     </button>
@@ -401,7 +401,7 @@
 
         if(document.getElementsByClassName("future-expenses")[0].childNodes.length > 0){
             document.getElementsByClassName("future-expenses")[0].insertAdjacentHTML("beforeend", 
-            `<div class="col-12 text-center" style="border-top: 2px solid #e1e1e1;">
+            `<div class="col-12 text-center border-top-grey">
                 Despesas futuras 
                 <i class="ti ti-arrow-narrow-up"></i>
             </div>`

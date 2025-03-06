@@ -235,10 +235,10 @@ pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: Authentica
             balance_month.push(Balance { value: Some(0.0), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance_month".to_string() })
         }
 
-        if balance.len() == 0 {
-            balance.push(Balance { value: balance_month.get(0).unwrap().value, month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() });
+        if balance.is_empty() {
+            balance.push(Balance { value: balance_month.first().unwrap().value, month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() });
         } else {
-            let balance_value = balance.get(balance.len() - 1).unwrap().value.unwrap() + balance_month.get(balance_month.len() - 1).unwrap().value.unwrap();
+            let balance_value = balance.last().unwrap().value.unwrap() + balance_month.last().unwrap().value.unwrap();
             balance.push(Balance { value: Some(balance_value), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() });
         }
 
