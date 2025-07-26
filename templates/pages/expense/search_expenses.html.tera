@@ -190,7 +190,7 @@
             type: 'bar',
             data: {
                 labels: labels,
-                datasets: [ {
+                datasets: [{
                     type: 'line',
                     label: 'Acumulado',
                     data: acumulative,
@@ -205,11 +205,11 @@
                     borderColor: '#3bb000',
                     backgroundColor: "#1c7a11"
                 },{
-                label: 'Valor',
-                data: data,
-                borderWidth: 1,
-                borderColor: '#36a2eb',
-                backgroundColor: "#36a2eb"
+                    label: 'Valor',
+                    data: data,
+                    borderWidth: 1,
+                    borderColor: '#36a2eb',
+                    backgroundColor: "#36a2eb"
                 }]
             },
             options: {

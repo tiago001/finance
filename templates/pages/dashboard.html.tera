@@ -91,9 +91,9 @@
                     )
                 })
             })
-            
+
             json.categories.sort(function(a,b) {
-                return a.months[a.months.length - 1].sum < b.months[b.months.length - 1].sum
+                return a.months[a.months.length - 1].sum < b.months[b.months.length - 1].sum ? 1 : -1
             })
 
             json.categories.forEach(e => {

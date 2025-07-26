@@ -98,6 +98,124 @@
         12 : "Dezembro"
     }
 
+    function calculatePercentageDifferences(data) {
+        const differences = [];
+        for (let i = 0; i < data.length - 1; i++) {
+            const val1 = data[i];
+            const val2 = data[i + 1];
+            if (val1 === 0) {
+                differences.push(val2 > 0 ? '∞%' : '0%');
+            } else {
+                const diff = ((val2 - val1) / val1) * 100;
+                differences.push(`${diff.toFixed(1)}%`);
+            }
+        }
+        return differences;
+    }
+
+    function calculatePercentageDifferencesLine(data) {
+        const differences = [];
+        for (let i = 0; i < data.length - 1; i++) {
+            const val1 = data[i];
+            const val2 = data[i + 1];
+            if (val1 === 0) {
+                differences.push(0);
+            } else {
+                const diff = ((val2 - val1) / val1) * 100;
+                differences.push(parseFloat(diff.toFixed(1)));
+            }
+        }
+        return differences;
+    }
+
+
+    let legend = {
+        ["percentage"] : true
+    }
+
+    function checkGraphLegend(){
+        legend["percentage"] = graph.legend.legendItems.filter(legend => legend.text == "%")[0].hidden
+    }
+
+    percentageDifferencePlugin = {
+        id: 'percentageDifferencePlugin',
+        afterDatasetsDraw(chart, args, options) {
+            const { ctx, chartArea: { top, height }, scales: { x, y } } = chart;
+            ctx.save();
+            ctx.font = 'bold 12px Inter';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const dataset = chart.data.datasets[1];
+            const meta = chart.getDatasetMeta(1);
+
+            meta.data.forEach((bar, index) => {
+                if (index < meta.data.length - 1) {
+                    const nextBar = meta.data[index + 1];
+
+                    const x1 = bar.x;
+                    const x2 = nextBar.x;
+                    const y1 = bar.y;
+                    const y2 = nextBar.y;
+
+                    const minY = Math.min(y1, y2);
+                    const maxY = Math.max(y1, y2);
+
+                    const midX = (x1 + x2) / 2;
+                    const diffText = percentageDifferences[index];
+                    const textY = (minY + maxY) / 2;
+
+                    let textFillColor = 'rgb(75, 192, 192)';
+                    let errorBarStrokeColor = 'rgba(170, 230, 230, 0.8)';
+
+                    if (diffText.includes('-')) {
+                        textFillColor = 'rgb(255, 99, 132)';
+                        errorBarStrokeColor = 'rgba(255, 190, 200, 0.8)';
+                    } else if (diffText !== '0%' && diffText !== '∞%') {
+                        textFillColor = 'rgb(54, 162, 235)';
+                        errorBarStrokeColor = 'rgba(150, 210, 255, 0.8)';
+                    }
+
+                    ctx.strokeStyle = errorBarStrokeColor;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(midX, minY);
+                    ctx.lineTo(midX, maxY);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(midX - 5, minY);
+                    ctx.lineTo(midX + 5, minY);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(midX - 5, maxY);
+                    ctx.lineTo(midX + 5, maxY);
+                    ctx.stroke();
+
+                    if(!legend["percentage"]){
+                        const textMetrics = ctx.measureText(diffText);
+                        const textWidth = textMetrics.width;
+                        const textHeight = 5;
+    
+                        const padding = 5;
+                        const rectX = midX - (textWidth / 2) - padding;
+                        const rectY = textY - (textHeight / 2) - padding;
+                        const rectWidth = textWidth + (padding * 2);
+                        const rectHeight = textHeight + (padding * 2);
+    
+                        ctx.fillStyle = 'rgba(226, 226, 226, 0.95)';
+                        ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
+                    }
+
+                    ctx.fillStyle = textFillColor;
+                    ctx.fillText(diffText, midX, (minY + maxY) / 2);
+                }
+            });
+            ctx.restore();
+        }
+    };
+
     function organize_incomes(json){
         let data = []
         json.forEach(e => {
@@ -182,10 +300,17 @@
         show_graph(labelGraph, dataGraph)
     }
 
+    percentageDifferences = [];
+
     function show_graph(label, data){
         if(graph){
             graph.destroy()
         }
+
+        percentageDifferences = calculatePercentageDifferences(data);
+        percentageDifferencesLine = calculatePercentageDifferencesLine(data);
+
+        percentageDifferencesLine.unshift(0)
 
         let ctx = document.getElementById('graph');
 
@@ -197,13 +322,58 @@
             data: {
                 labels: label,
                 datasets: [{
+                    type: 'line',
+                    label: '%',
+                    data: percentageDifferencesLine,
+                    yAxisID: 'myScale',
+                    borderColor: function(context) {
+                        var index = context.dataIndex;
+                        var value = context.dataset.data[index];
+                        if(index == 0) return 'rgba(255, 255, 255, 0)'
+                        return value < 0 ? 'rgb(255, 99, 132)' : 'rgba(33, 70, 192, 1)'
+                    },
+                    backgroundColor: function(context) {
+                        var index = context.dataIndex;
+                        var value = context.dataset.data[index];
+                        if(index == 0) return 'rgba(255, 255, 255, 0)'
+                        return value < 0 ? 'rgb(255, 99, 132)' : 'rgba(33, 70, 192, 1)';
+                    },
+                    segment: {
+                        borderColor: (context) => {
+                            return context.p1.parsed.y >= 0 ? 'rgba(138, 159, 210, 1)' : 'rgba(255, 190, 200, 0.8)';
+                        }
+                    },
+                    hidden: legend["percentage"]
+                },{
                     label: 'Receita Anual',
                     data: data,
                     borderWidth: 1,
                     borderColor: '#36a2eb',
                     backgroundColor: "#36a2eb"
                 }]
-            }
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    },
+                    myScale: {
+                        suggestedMax: 100,
+                        position: 'right'
+                    }
+                },
+                plugins: {
+                    legend: {
+                        onClick: (e, legendItem, legend) => {
+                            const defaultAction = Chart.defaults.plugins.legend.onClick;
+                            defaultAction(e, legendItem, legend);
+                            checkGraphLegend();
+                        },
+                    }
+                }
+            },
+            plugins: [percentageDifferencePlugin]
         });
     }
 
