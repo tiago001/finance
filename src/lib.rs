@@ -8,3 +8,4 @@ pub mod investment_routes;
 pub mod stock_update;
 pub mod db;
 pub mod error;
+pub mod filters;

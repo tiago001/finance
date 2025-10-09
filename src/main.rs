@@ -19,7 +19,11 @@ use finance::stock_update;
 
 use entity::{settings::Settings, categories::Categories, investments::Investment};
 
+use entity::expense_view::ExpenseView;
+
 use tokio_cron_scheduler::{Job, JobScheduler, JobSchedulerError};
+
+use finance::filters::{format_date, tofixed};
 
 use dotenv::dotenv;
 
@@ -107,7 +111,10 @@ async fn rocket() -> _ {
     ).register("/",catchers![unauthorized])
     .mount("/", FileServer::from("static")) // Enable for development
     .attach(RocketSentry::fairing())
-    .attach(Template::fairing())
+    .attach(Template::custom(|engines| {
+        engines.tera.register_filter("tofixed", tofixed);
+        engines.tera.register_filter("format_date", format_date);
+    }))
     .attach(prometheus.clone())
     .mount("/metrics", prometheus)
 }
@@ -213,8 +220,8 @@ async fn dashboard(mode: FetchMode, user: AuthenticatedUser) -> Template {
     }
 }
 
-#[get("/editexpense")]
-async fn editexpense(mut db: Connection<Logs>, user: AuthenticatedUser) -> Template {
+#[get("/editexpense?<id>")]
+async fn editexpense(mut db: Connection<Logs>, user: AuthenticatedUser, id: i64) -> Template {
     let categories = sqlx::query_as!(Categories,
             "SELECT * FROM categories WHERE user_id = ? and category_type = 'expenses'",
             user.user_id
@@ -222,7 +229,14 @@ async fn editexpense(mut db: Connection<Logs>, user: AuthenticatedUser) -> Templ
         .fetch_all(db.as_mut())
         .await.unwrap();
 
-    Template::render("pages/expense/edit_expense",json!({"username": user.name, "categories": categories}))
+    let expense = sqlx::query_as!(ExpenseView,
+            "SELECT * FROM expenses_view WHERE user_id = ? AND id = ?",
+            user.user_id, id
+        )
+        .fetch_one(db.as_mut())
+        .await.unwrap();
+
+    Template::render("pages/expense/edit_expense",json!({"username": user.name, "categories": categories, "expense": expense}))
 }
 
 #[get("/editincome")]

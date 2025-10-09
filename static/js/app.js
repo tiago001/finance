@@ -30,24 +30,8 @@ function open_edit_expense(id){
 
     modalTitle.textContent = 'Editar despesa'
 
-    $(".modal-body").load("editexpense", function() {
-        fetch("get_expense?" + new URLSearchParams({
-            "id": id
-        }), {redirect: 'follow'})
-        .then((response) => {
-            if (response.redirected) window.location.href = response.url;
-            return response.json()
-        })
-        .then((json) => {
-            document.getElementsByClassName("editnome")[0].value = json.name
-            document.getElementsByClassName("editmoney_value")[0].value = parseFloat(json.value).toFixed(2)
-            document.getElementsByClassName("editcategory")[0].value = json.category_id
-            document.getElementsByClassName("editdate")[0].value = json.date
-        })
-        .catch((error) => {
-            console.warn(error);
-        });
-    })
+    $(".modal-body").html("")
+    $(".modal-body").load("editexpense?id="+id)
 
     $(".modal-footer .btn-danger").show()
     $(".modal-footer .btn-primary").show()
@@ -55,33 +39,6 @@ function open_edit_expense(id){
     $(".modal .btn-primary")[0].setAttribute('onclick',`edit_expense(${id})`)
     $(".modal .btn-danger")[0].setAttribute('onclick',`delete_expense(${id})`)
 }
-
-// function edit_expense(id){
-//     fetch("edit_expense?" + new URLSearchParams({
-//         "id": id,
-//         "name": document.getElementsByClassName("editnome")[0].value,
-//         "value": document.getElementsByClassName("editmoney_value")[0].value,
-//         "category_id": document.getElementsByClassName("editcategory")[0].value,
-//         "date": document.getElementsByClassName("editdate")[0].value}),
-//     {
-//         method: "POST"
-//     })
-//     .then((response) => response.text())
-//     .then(() => {
-//         search_expenses()
-//         Swal.fire({
-//             position: 'top-end',
-//             icon: 'success',
-//             title: 'Despesa alterada com sucesso',
-//             showConfirmButton: false,
-//             timer: 2000,
-//             toast: true
-//         })
-//     })
-//     .catch((error) => {
-//         console.warn(error);
-//     });
-// }
 
 function mensagemErro(mensagem){
     Swal.fire({

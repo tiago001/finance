@@ -1,26 +1,30 @@
 <div class="input-group mb-3">
     <span class="input-group-text" id="basic-addon1">Nome</span>
-    <input type="text" class="form-control editnome" aria-label="nome" aria-describedby="basic-addon1">
+    <input type="text" class="form-control editnome" aria-label="nome" aria-describedby="basic-addon1" value="{{expense.name}}">
 </div>
 
 <div class="input-group mb-3">
     <span class="input-group-text" id="basic-addon1">Valor</span>
-    <input type="text" inputmode="decimal" class="form-control editmoney_value currency" aria-label="valor" aria-describedby="basic-addon1">
+    <input type="text" inputmode="decimal" class="form-control editmoney_value currency" aria-label="valor" aria-describedby="basic-addon1" value="{{expense.value | tofixed(precision=2)}}">
 </div>
 
 <div class="input-group mb-3">
     <span class="input-group-text" id="basic-addon1">Categoria</span>
-    <select class="form-select editcategory" aria-label="Default select example">
+    <select class="form-select editcategory" aria-label="Default select example" value="{{expense.category_id}}">
         <option value="Indefinido" selected>Selecione a categoria</option>
         {% for category in categories %}
-            <option value="{{category.id}}">{{category.category}}</option>
+        <option value="{{category.id}}" {% if category.id == expense.category_id %}selected{% endif %}>{{category.category}}</option>
         {% endfor %}
     </select>
 </div>
 
-<div class="input-group mb-3">
+<div class="input-group mb-1">
     <span class="input-group-text" id="basic-addon1">Data</span>
-    <input type="date" class="form-control editdate" data-provide="datepicker">
+    <input type="date" class="form-control editdate" data-provide="datepicker" value="{{expense.date}}">
+</div>
+
+<div class="float-end fs-2 text-body-secondary">
+    Data criação: <span class="text-body">{{expense.created_date | format_date}}</span>
 </div>
 
 <script>

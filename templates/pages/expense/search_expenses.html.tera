@@ -23,12 +23,16 @@
     </div>
 
     <div class="col-12 col-sm-7 col-md-6 col-lg-3 date d-flex p-1">
-        <span class="input-group-text d-block" id="basic-addon1">Inicio</span>
-        <input type="date" class="form-control date1" data-provide="datepicker">
+        <div class="input-group">
+            <span class="input-group-text d-block" id="basic-addon1">Inicio</span>
+            <input type="date" class="form-control date1" data-provide="datepicker">
+        </div>
     </div>
     <div class="col-12 col-sm-7 col-md-6 col-lg-3 date d-flex p-1">
-        <span class="input-group-text" id="basic-addon1">Fim</span>
-        <input type="date" class="form-control date2" data-provide="datepicker">
+        <div class="input-group">
+            <span class="input-group-text" id="basic-addon1">Fim</span>
+            <input type="date" class="form-control date2" data-provide="datepicker">
+        </div>
     </div>
     <div class="col-md-7 d-none d-md-block d-lg-none"></div>
     <div class="col-3 col-sm-7 col-md-2 col-lg-1 date p-1 row">
@@ -56,6 +60,17 @@
 <div class="row expenses">
 
 </div>
+
+<style>
+    .chart {
+        min-height: 250px;
+    }
+    @media screen and (min-width: 480px) {
+        .chart {
+            min-height: 390px
+        }
+    }
+</style>
 
 <script>
     var today = new Date();
@@ -432,6 +447,8 @@
         
         document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
         document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
+
+        search_expenses()
     }
     
     function next_month(){
@@ -442,6 +459,8 @@
         
         document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
         document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
+
+        search_expenses()
     }
 
     function edit_expense(id){
