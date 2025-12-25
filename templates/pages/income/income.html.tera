@@ -25,11 +25,14 @@
   
 <button type="button" class="btn btn-primary w-100" onclick="save_income()">Salvar Receita</button>
 
-<div class="row pt-2" style="max-height: 280px;">
-    <canvas id="graph"></canvas>
+<div class="row pt-2">
+    <div class="p-0" style="max-height: 280px;">
+        <button id="btn-yearly-view" class="btn btn-sm btn-primary float-end" onclick="change_yearly_view()" style="visibility: hidden;">Voltar</button>
+        <canvas id="graph"></canvas>
+    </div>
 </div>
 
-<div class="pt-4 incomes-year text-sm-end text-center">
+<div class="pt-5 incomes-year text-sm-end text-center">
     
 </div>
 
@@ -65,6 +68,8 @@
         $('.currency').mask("#0.00", {reverse: true});
     }, 50);
 
+    graph = null
+
     date = new Date();
     document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
     
@@ -83,6 +88,9 @@
         });
     }
 
+    dataGraphMonth = []
+    years = []
+
     months = {
         1 : "Janeiro",
         2 : "Fevereiro",
@@ -97,6 +105,21 @@
         11 : "Novembro",
         12 : "Dezembro"
     }
+
+    monthsArray = [
+        "Janeiro",
+        "Fevereiro",
+        "Março",
+        "Abril",
+        "Maio",
+        "Junho",
+        "Julho",
+        "Agosto",
+        "Setembro",
+        "Outubro",
+        "Novembro",
+        "Dezembro"
+    ]
 
     function calculatePercentageDifferences(data) {
         const differences = [];
@@ -129,7 +152,7 @@
     }
 
 
-    let legend = {
+    legend = {
         ["percentage"] : true
     }
 
@@ -140,9 +163,11 @@
     percentageDifferencePlugin = {
         id: 'percentageDifferencePlugin',
         afterDatasetsDraw(chart, args, options) {
+            if(currentView == 'monthly') return;
+
             const { ctx, chartArea: { top, height }, scales: { x, y } } = chart;
             ctx.save();
-            ctx.font = 'bold 12px Inter';
+            ctx.font = 'bold 12px Arial ';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
@@ -248,7 +273,7 @@
         for (var key in data) {
             total = 0;
             document.getElementsByClassName("incomes-year")[0].insertAdjacentHTML("beforeend",
-                `<div class="row show-value">
+                `<div class="row show-value year-${key.substring(1,key.length)}">
                     <div class="col-6 col-sm-1 text-center value" style="border-bottom: 2px solid #e1e1e1;">${key.substring(3,key.length)}</div>
                     <div class="col-6 col-sm-1 text-center full-value" style="border-bottom: 2px solid #e1e1e1;">${key.substring(1,key.length)}</div>
                     <div class="col-6 col-sm-1 income-${key} d-block d-sm-none" style="border-bottom: 2px solid #e1e1e1;"></div>
@@ -256,6 +281,8 @@
                     <div class="col-2 col-sm-1 income-${key} d-none d-sm-block" style="border-bottom: 2px solid #e1e1e1;"></div>
                 </div>`
             );
+
+            year = []
 
             for (let i = 1; i <= 12; i++) {
                 sum = 0
@@ -270,8 +297,12 @@
                 <div class="col-6 col-sm-1 full-value">${sum == 0 ? "-" : sum.toFixed(2)}</div>`
                 );
                 total = total + sum
+
+                year.push(sum)
             }
-            
+
+            dataGraphMonth.push(year)
+
             dataGraph.push(total)
             labelGraph.push(key.substring(1,key.length))
 
@@ -295,17 +326,21 @@
         }
 
         dataGraph.reverse()
+        dataGraphMonth.reverse()
         labelGraph.reverse()
+
+        years = labelGraph
 
         show_graph(labelGraph, dataGraph)
     }
 
     percentageDifferences = [];
 
+    currentView = 'yearly';
+    selectedYear = null; 
+
     function show_graph(label, data){
-        if(graph){
-            graph.destroy()
-        }
+        let clickHandler = null;
 
         percentageDifferences = calculatePercentageDifferences(data);
         percentageDifferencesLine = calculatePercentageDifferencesLine(data);
@@ -314,67 +349,90 @@
 
         let ctx = document.getElementById('graph');
 
-        graph = new Chart(ctx, {
-            options: {
-                maintainAspectRatio: false
-            },
-            type: 'bar',
-            data: {
-                labels: label,
-                datasets: [{
-                    type: 'line',
-                    label: '%',
-                    data: percentageDifferencesLine,
-                    yAxisID: 'myScale',
-                    borderColor: function(context) {
-                        var index = context.dataIndex;
-                        var value = context.dataset.data[index];
-                        if(index == 0) return 'rgba(255, 255, 255, 0)'
-                        return value < 0 ? 'rgb(255, 99, 132)' : 'rgba(33, 70, 192, 1)'
-                    },
-                    backgroundColor: function(context) {
-                        var index = context.dataIndex;
-                        var value = context.dataset.data[index];
-                        if(index == 0) return 'rgba(255, 255, 255, 0)'
-                        return value < 0 ? 'rgb(255, 99, 132)' : 'rgba(33, 70, 192, 1)';
-                    },
-                    segment: {
-                        borderColor: (context) => {
-                            return context.p1.parsed.y >= 0 ? 'rgba(138, 159, 210, 1)' : 'rgba(255, 190, 200, 0.8)';
+        clickHandler = (event, elements) => {
+            if(elements[0].index != null && currentView == "yearly"){
+                console.log(labelGraph[elements[0].index]);
+                console.log(elements[0].index);
+                $(".show-value").hide()
+                $(".year-"+labelGraph[elements[0].index]).show()
+
+                currentView = "monthly"
+                graph.data.labels = monthsArray;
+                graph.data.datasets[0].data = null;
+                graph.data.datasets[1].data = dataGraphMonth[elements[0].index];
+                graph.update()
+
+                $("#btn-yearly-view").css("visibility", "inherit")
+            }
+        };
+
+        if(graph == undefined){
+            graph = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: label,
+                    datasets: [{
+                        type: 'line',
+                        label: '%',
+                        data: percentageDifferencesLine,
+                        yAxisID: 'myScale',
+                        borderColor: function(context) {
+                            var index = context.dataIndex;
+                            var value = context.dataset.data[index];
+                            if(index == 0) return 'rgba(255, 255, 255, 0)'
+                            return value < 0 ? 'rgb(255, 99, 132)' : 'rgba(33, 70, 192, 1)'
+                        },
+                        backgroundColor: function(context) {
+                            var index = context.dataIndex;
+                            var value = context.dataset.data[index];
+                            if(index == 0) return 'rgba(255, 255, 255, 0)'
+                            return value < 0 ? 'rgb(255, 99, 132)' : 'rgba(33, 70, 192, 1)';
+                        },
+                        segment: {
+                            borderColor: (context) => {
+                                return context.p1.parsed.y >= 0 ? 'rgba(138, 159, 255, 1)' : 'rgba(242, 140, 145, 1)';
+                            }
+                        },
+                        hidden: legend["percentage"]
+                    },{
+                        label: 'Receita Anual',
+                        data: data,
+                        borderWidth: 1,
+                        borderColor: '#36a2eb',
+                        backgroundColor: "#36a2eb"
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        },
+                        myScale: {
+                            suggestedMax: 100,
+                            position: 'right'
                         }
                     },
-                    hidden: legend["percentage"]
-                },{
-                    label: 'Receita Anual',
-                    data: data,
-                    borderWidth: 1,
-                    borderColor: '#36a2eb',
-                    backgroundColor: "#36a2eb"
-                }]
-            },
-            options: {
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
+                    plugins: {
+                        legend: {
+                            onClick: (e, legendItem, legend) => {
+                                const defaultAction = Chart.defaults.plugins.legend.onClick;
+                                defaultAction(e, legendItem, legend);
+                                checkGraphLegend();
+                            },
+                        }
                     },
-                    myScale: {
-                        suggestedMax: 100,
-                        position: 'right'
-                    }
+                    onClick: clickHandler
                 },
-                plugins: {
-                    legend: {
-                        onClick: (e, legendItem, legend) => {
-                            const defaultAction = Chart.defaults.plugins.legend.onClick;
-                            defaultAction(e, legendItem, legend);
-                            checkGraphLegend();
-                        },
-                    }
-                }
-            },
-            plugins: [percentageDifferencePlugin]
-        });
+                plugins: [percentageDifferencePlugin]
+            });
+        } else {
+            graph.data.labels = label;
+            graph.data.datasets[0].data = percentageDifferencesLine;
+            graph.data.datasets[1].data = data;
+            graph.update()
+        }
+
     }
 
     function save_income(){
@@ -443,100 +501,49 @@
                 <div class="col-2 col-sm-1"></div>
             `
             )
-            let total = 0
-            let lastDate = ""
-            json.forEach(e => {
-                total += e.value
-                document.getElementsByClassName("incomes")[0].insertAdjacentHTML(
-                    "beforeend",
-                    `
-                        <div class="col-6 col-sm-5 text-center ${e.date != lastDate ? "border-top-grey" : ""}" expense="${e.id}">
-                            <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
-                        </div>
-                        <div class="col-sm-2 d-none d-sm-block text-center ${e.date != lastDate ? "border-top-grey" : ""}">
-                            ${e.obs.length == 0 ? "-" : e.obs} 
-                        </div>
-                        <div class="col-sm-2 d-none d-sm-block text-center ${e.date != lastDate ? "border-top-grey" : ""}">
-                            ${e.category == "" ? "-" : e.category} 
-                        </div>
-                        <div class="col-4 col-sm-2 text-center ${e.date != lastDate ? "border-top-grey" : ""}">
-                             ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
-                        </div>
-                        <div class="col-2 col-sm-1 text-center ${e.date != lastDate ? "border-top-grey" : ""}">
-                            <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
-                                <span><i class="ti ti-x"></i></span>
-                            </button>-->
-                            <button class="btn btn-sm btn-light py-0" onclick="open_edit_income(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                                <span><i class="ti ti-pencil"></i></span>
-                            </button>
-                        </div>
-                    `
-                )
-    
-                lastDate = e.date
-            })
-            document.getElementsByClassName("incomes")[0].insertAdjacentHTML("afterbegin",
-            `
-                <div class="col-3"></div>
-                <div class="col-3"></div>
-                <div class="col-3"></div>
-                <div class="col-2 text-center">
-                    Total ${total.toFixed(2)}
-                </div>
-                <div class="col-1"></div>
-            `
+        let total = 0
+        let lastDate = ""
+        json.forEach(e => {
+            total += e.value
+            document.getElementsByClassName("incomes")[0].insertAdjacentHTML(
+                "beforeend",
+                `
+                    <div class="col-6 col-sm-5 text-center ${e.date != lastDate ? "border-top-grey" : ""}" expense="${e.id}">
+                        <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
+                    </div>
+                    <div class="col-sm-2 d-none d-sm-block text-center ${e.date != lastDate ? "border-top-grey" : ""}">
+                        ${e.obs.length == 0 ? "-" : e.obs} 
+                    </div>
+                    <div class="col-sm-2 d-none d-sm-block text-center ${e.date != lastDate ? "border-top-grey" : ""}">
+                        ${e.category == "" ? "-" : e.category} 
+                    </div>
+                    <div class="col-4 col-sm-2 text-center ${e.date != lastDate ? "border-top-grey" : ""}">
+                            ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
+                    </div>
+                    <div class="col-2 col-sm-1 text-center ${e.date != lastDate ? "border-top-grey" : ""}">
+                        <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
+                            <span><i class="ti ti-x"></i></span>
+                        </button>-->
+                        <button class="btn btn-sm btn-light py-0" onclick="open_edit_income(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                            <span><i class="ti ti-pencil"></i></span>
+                        </button>
+                    </div>
+                `
             )
-    
-            /*$('.name').on('blur', function(e){
-                if(e.target.textContent.trim() != e.target.getAttribute("value")) {
-                    e.target.setAttribute("value", e.target.textContent.trim()) 
-                    fetch("edit_expense?" + new URLSearchParams({
-                        "name": e.target.textContent.trim(),
-                        "id": e.target.getAttribute("expense")}),
-                    {
-                        method: "POST"
-                    })
-                    .then((response) => response.text())
-                    .then((html) => {
-                        Swal.fire({
-                            position: 'top-end',
-                            icon: 'success',
-                            title: 'Despesa salva com sucesso',
-                            showConfirmButton: false,
-                            timer: 2000,
-                            toast: true
-                          })
-                    })
-                    .catch((error) => {
-                        console.warn(error);
-                    });
-                }
-            })
-            $('.valor').on('blur', function(e){
-                if(e.target.textContent.trim() != e.target.getAttribute("value")) {
-                    e.target.setAttribute("value", e.target.textContent.trim()) 
-                    fetch("edit_expense?" + new URLSearchParams({
-                        "value": e.target.textContent.trim(),
-                        "id": e.target.getAttribute("expense")}),
-                    {
-                        method: "POST"
-                    })
-                    .then((response) => response.text())
-                    .then((html) => {
-                        Swal.fire({
-                            position: 'top-end',
-                            icon: 'success',
-                            title: 'Despesa salva com sucesso',
-                            showConfirmButton: false,
-                            timer: 2000,
-                            toast: true
-                          })
-                    })
-                    .catch((error) => {
-                        console.warn(error);
-                    });
-                }
-            })*/
+
+            lastDate = e.date
+        })
+        document.getElementsByClassName("incomes")[0].insertAdjacentHTML("afterbegin",
+        `
+            <div class="col-3"></div>
+            <div class="col-3"></div>
+            <div class="col-3"></div>
+            <div class="col-2 text-center">
+                Total ${total.toFixed(2)}
+            </div>
+            <div class="col-1"></div>
+        `
+        )
     }
 
     function edit_income(id){
@@ -619,6 +626,14 @@
         
         $(".modal-footer .btn-primary")[0].setAttribute('onclick',`edit_income(${id})`)
         $(".modal-footer .btn-danger")[0].setAttribute('onclick',`delete_income(${id})`)
+    }
+
+    function change_yearly_view(){
+        currentView = "yearly"
+        $("#btn-yearly-view").css("visibility", "hidden")
+        $(".show-value").show()
+
+        show_graph(labelGraph, dataGraph)
     }
 
     search_incomes()
