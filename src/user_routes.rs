@@ -76,8 +76,11 @@ fn get_user_id_cookie<'a>(cookies: &'a CookieJar) -> Option<Cookie<'a>> {
 
 fn set_user_id_cookie(cookies: & CookieJar, user_id: i64) {
     let now = OffsetDateTime::now_utc().add(Duration::hours(48));
-    cookies.add_private(Cookie::build(("user_id", user_id.to_string())).expires(now).secure(true).build());
-    // cookies.add_private(Cookie::build(("user_id", user_id.to_string())).expires(now).build()); // For testing
+    if cfg!(not(debug_assertions)) {
+        cookies.add_private(Cookie::build(("user_id", user_id.to_string())).expires(now).secure(true).build());
+    } else {
+        cookies.add_private(Cookie::build(("user_id", user_id.to_string())).expires(now).build()); // For testing
+    }
 }
 
 fn remove_user_id_cookie(cookies: & CookieJar) {
@@ -90,8 +93,11 @@ fn get_user_name_cookie<'a>(cookies: &'a CookieJar) -> Option<Cookie<'a>> {
 
 fn set_user_name_cookie(cookies: & CookieJar, name: String) {
     let now = OffsetDateTime::now_utc().add(Duration::hours(48));
-    cookies.add_private(Cookie::build(("name", name.to_string())).expires(now).secure(true).build());
-    // cookies.add_private(Cookie::build(("name", name.to_string())).expires(now).build()); // For testing
+    if cfg!(not(debug_assertions)) {
+        cookies.add_private(Cookie::build(("name", name.to_string())).expires(now).secure(true).build());
+    } else {
+        cookies.add_private(Cookie::build(("name", name.to_string())).expires(now).build()); // For testing
+    }
 }
 
 fn remove_user_name_cookie(cookies: & CookieJar) {

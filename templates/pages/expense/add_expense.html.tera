@@ -6,27 +6,13 @@
         background	: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAOwQAADsEBuJFr7QAAABh0RVh0U29mdHdhcmUAcGFpbnQubmV0IDQuMC42/Ixj3wAAAKVJREFUOE+VkAEKhDAQA/3/t4QDXyByj+ll2m3t2VR0INhms4G6pJQGOVwOedPgcsibBpdDVwPW2BlgViJdQY+MnakYSvDKKGd8AUQAWgnnYqU97vMCICjBJwR5GXS+LwAND6lyhJ3R/VHBJlW2sDO63xdoUN/8DUH/T+YFBCXo3/z3Y/U9C/qLNCxX8MooZ9pOO4RgWK4wK5F5wWtZ842s+Vxp+QHxxC/F3JqzBgAAAABJRU5ErkJggg==');
     }
     
-    /*.taglist {
-        overflow	: hidden;
-        display		: block;
-        padding		: 6px 6px 0;
-        border		: 1px solid #ccc;
-        border-radius : 3px;
-        font-family : Arial, sans-serif;
-        font-size	: 13px;
-        line-height	: 16px;
-        white-space	: nowrap;
-    }*/
-    
     .taglist-highlight {
-        /*border		: 1px solid #158daa;*/
         box-shadow	: 0px 0px 1px 1px #60b0dd;
     }
     
     .taglist-tag, .taglist-input {
         float		: left;
         display		: inline-table;
-        /*margin-bottom : 6px;*/
     }
     
     .taglist-tag {
@@ -35,7 +21,6 @@
         border			: 1px solid transparent;
         border-radius	: 2px;
         margin	        : 3px 1px;
-        /*margin: 0px 2px;*/
         background		: #ddd;
         text-overflow 	: ellipsis;
     }
@@ -52,14 +37,11 @@
     }
     
     .taglist-tag-text {
-        /*padding-right	: 4px;*/
         padding: 0px 5px;
     }
     
     .taglist-tag-remove {
-        /*background		: #158daa;*/
         cursor			: pointer;
-        /*opacity			: 0.5;*/
         padding: 0px 4px;
     }
     
@@ -67,28 +49,31 @@
         opacity			: 1;
     }
     
-    /*.taglist-input {
-        min-width		: 200px;
-        height			: 24px;
-        padding			: 4px;
-        border			: 0 !important;
-        overflow		: hidden;
-        outline			: none;
-        resize			: none;
-        font-family		: Arial, sans-serif;
-        font-size		: 13px;
-        line-height		: 16px;
-    }*/
-
     .taglist-div {
         display: flex;
         flex: 1 1 auto;
+        flex-basis: min-content;
         border: var(--bs-border-width) solid #DFE5EF;
         border-radius: 7px;
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
         box-shadow: inset 0 1px 2px rgba(var(--bs-body-color-rgb), 0.075);
     }
+
+    @media screen and (max-width: 480px) {
+        .total-tag {
+            max-width: 75px;
+            text-wrap-mode: wrap;
+        }
+
+        .taglist-div {
+            flex-wrap: wrap;
+        }
+
+        .taglist-tags {
+            flex-wrap: wrap;
+        }
+    }   
 
     .no-style-input {
         border: none;
@@ -180,27 +165,35 @@
                 }
             });
 
+            document.querySelector(".taglist-input").addEventListener('input', (event) => {
+                if (event.data === '+' && $('.taglist .taglist-input').val() != "+") {
+                    $('.taglist-tags').append(
+                        `<div class="taglist-tag rounded-1">
+                            <span class="taglist-tag-text">${parseFloat($('.taglist .taglist-input').val()).toFixed(2)}</span>
+                            <span class="taglist-tag-remove btn btn-primary">
+                                <i class="ti ti-x fs-4"></i>
+                            </span>
+                        </div>`)
+                    $('.taglist .taglist-input').val('')
+
+                    if($('.taglist .total-tag').length == 0){
+                        $('.taglist').append('<span class="input-group-text total-tag p-2" id="basic-addon1">Total</span>')
+                    }
+
+                    calculateTotalValue();
+                }
+            });
+
             $('.taglist .taglist-input').on({
-                // handle keyboard events on textarea
                 keydown : function( $event ) {
                     var inputKeyCode = $event.which;
-                    if(inputKeyCode == keyCode['plus'] || inputKeyCode == keyCode['plus-numpad'] && $('.taglist .taglist-input').val() != "") {
-                        $('.taglist-tags').append(
-                            `<div class="taglist-tag rounded-1">
-                                <span class="taglist-tag-text">${parseFloat($('.taglist .taglist-input').val()).toFixed(2)}</span>
-                                <span class="taglist-tag-remove btn btn-primary">
-                                    <i class="ti ti-x fs-4"></i>
-                                </span>
-                            </div>`)
-                        $('.taglist .taglist-input').val('')
 
-                        if($('.taglist .total-tag').length == 0){
-                            $('.taglist').append('<span class="input-group-text total-tag" id="basic-addon1">Total</span>')
-                        }
-
-                        calculateTotalValue();
-                    } else if(inputKeyCode == keyCode['backspace']) {
+                    if(inputKeyCode == keyCode['backspace']) {
                         length = $('.taglist-tags').children().length
+
+                        if(length == 1){
+                            $('.taglist .total-tag').remove()
+                        }
 
                         if(length > 0 && event.target.value === ""){
                             $('.taglist-tags').children()[length - 1].remove()
@@ -210,13 +203,10 @@
                     }
                 }
             })
+
+            $('.currency').mask("#0.00", {reverse: true});
         }, 50)
         
-        setTimeout(function() {
-            //$('.nome').on('blur', function () { predictCategory() })
-            $('.currency').mask("#0.00", {reverse: true});
-        }, 50);
-
         date = new Date();
         document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
         
