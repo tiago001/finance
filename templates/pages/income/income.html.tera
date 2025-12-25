@@ -273,7 +273,7 @@
         for (var key in data) {
             total = 0;
             document.getElementsByClassName("incomes-year")[0].insertAdjacentHTML("beforeend",
-                `<div class="row show-value year-${key.substring(1,key.length)}">
+                `<div class="row show-value year year-${key.substring(1,key.length)}">
                     <div class="col-6 col-sm-1 text-center value" style="border-bottom: 2px solid #e1e1e1;">${key.substring(3,key.length)}</div>
                     <div class="col-6 col-sm-1 text-center full-value" style="border-bottom: 2px solid #e1e1e1;">${key.substring(1,key.length)}</div>
                     <div class="col-6 col-sm-1 income-${key} d-block d-sm-none" style="border-bottom: 2px solid #e1e1e1;"></div>
@@ -353,7 +353,7 @@
             if(elements[0].index != null && currentView == "yearly"){
                 console.log(labelGraph[elements[0].index]);
                 console.log(elements[0].index);
-                $(".show-value").hide()
+                $(".year").hide()
                 $(".year-"+labelGraph[elements[0].index]).show()
 
                 currentView = "monthly"
@@ -363,6 +363,7 @@
                 graph.data.datasets[1].label = "Receita Mensal";
                 graph.update()
 
+                $(".total").hide()
                 $("#btn-yearly-view").css("visibility", "inherit")
             }
         };
@@ -506,29 +507,33 @@
         let total = 0
         let lastDate = ""
         json.forEach(e => {
+            year = new Date(e.date+"T00:00").getFullYear()
             total += e.value
+
             document.getElementsByClassName("incomes")[0].insertAdjacentHTML(
                 "beforeend",
                 `
-                    <div class="col-6 col-sm-5 text-center ${e.date != lastDate ? "border-top-grey" : ""}" expense="${e.id}">
-                        <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
-                    </div>
-                    <div class="col-sm-2 d-none d-sm-block text-center ${e.date != lastDate ? "border-top-grey" : ""}">
-                        ${e.obs.length == 0 ? "-" : e.obs} 
-                    </div>
-                    <div class="col-sm-2 d-none d-sm-block text-center ${e.date != lastDate ? "border-top-grey" : ""}">
-                        ${e.category == "" ? "-" : e.category} 
-                    </div>
-                    <div class="col-4 col-sm-2 text-center ${e.date != lastDate ? "border-top-grey" : ""}">
-                            ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
-                    </div>
-                    <div class="col-2 col-sm-1 text-center ${e.date != lastDate ? "border-top-grey" : ""}">
-                        <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
-                            <span><i class="ti ti-x"></i></span>
-                        </button>-->
-                        <button class="btn btn-sm btn-light py-0" onclick="open_edit_income(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                            <span><i class="ti ti-pencil"></i></span>
-                        </button>
+                    <div class="row p-0 year year-${year}">
+                        <div class="col-6 col-sm-5 text-center ${e.date != lastDate ? "border-top-grey" : ""}" expense="${e.id}">
+                            <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
+                        </div>
+                        <div class="col-sm-2 d-none d-sm-block text-center ${e.date != lastDate ? "border-top-grey" : ""}">
+                            ${e.obs.length == 0 ? "-" : e.obs} 
+                        </div>
+                        <div class="col-sm-2 d-none d-sm-block text-center ${e.date != lastDate ? "border-top-grey" : ""}">
+                            ${e.category == "" ? "-" : e.category} 
+                        </div>
+                        <div class="col-4 col-sm-2 text-center ${e.date != lastDate ? "border-top-grey" : ""}">
+                                ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
+                        </div>
+                        <div class="col-2 col-sm-1 text-center ${e.date != lastDate ? "border-top-grey" : ""}">
+                            <!--<button class="btn btn-sm btn-outline-danger py-0" onclick="delete_expense(${e.id})">
+                                <span><i class="ti ti-x"></i></span>
+                            </button>-->
+                            <button class="btn btn-sm btn-light py-0" onclick="open_edit_income(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                                <span><i class="ti ti-pencil"></i></span>
+                            </button>
+                        </div>
                     </div>
                 `
             )
@@ -540,7 +545,7 @@
             <div class="col-3"></div>
             <div class="col-3"></div>
             <div class="col-3"></div>
-            <div class="col-2 text-center">
+            <div class="col-2 text-center total">
                 Total ${total.toFixed(2)}
             </div>
             <div class="col-1"></div>
@@ -604,24 +609,7 @@
     
         modalTitle.textContent = 'Editar despesa'
     
-        $(".modal-body").load("editincome", function() {
-            fetch("get_income?" + new URLSearchParams({
-                "id": id
-            }), {redirect: 'follow'})
-            .then((response) => {
-                if (response.redirected) window.location.href = response.url;
-                return response.json()
-            })
-            .then((json) => {
-                document.getElementsByClassName("editobs")[0].value = json.obs
-                document.getElementsByClassName("editmoney_value")[0].value = parseFloat(json.value).toFixed(2)
-                document.getElementsByClassName("editdate")[0].value = json.date
-                document.getElementsByClassName("editcategory")[0].value = json.category_id
-            })
-            .catch((error) => {
-                console.warn(error);
-            });
-        })
+        $(".modal-body").load("editincome?id="+id)
 
         $(".modal-footer .btn-danger").show()
         $(".modal-footer .btn-primary").show()
@@ -634,6 +622,7 @@
         currentView = "yearly"
         $("#btn-yearly-view").css("visibility", "hidden")
         $(".show-value").show()
+        $(".total").show()
 
         show_graph(labelGraph, dataGraph)
     }

@@ -1,5 +1,6 @@
 #[macro_use] extern crate rocket;
 
+use entity::income_view::IncomeView;
 use rocket::http::Status;
 use rocket::fs::FileServer;
 use rocket::response::Redirect;
@@ -239,8 +240,8 @@ async fn editexpense(mut db: Connection<Logs>, user: AuthenticatedUser, id: i64)
     Template::render("pages/expense/edit_expense",json!({"username": user.name, "categories": categories, "expense": expense}))
 }
 
-#[get("/editincome")]
-async fn editincome(mut db: Connection<Logs>, user: AuthenticatedUser) -> Template {
+#[get("/editincome?<id>")]
+async fn editincome(mut db: Connection<Logs>, user: AuthenticatedUser, id: i64) -> Template {
     let categories = sqlx::query_as!(Categories,
         "SELECT * FROM categories WHERE user_id = ? and category_type = 'incomes'",
         user.user_id
@@ -248,7 +249,14 @@ async fn editincome(mut db: Connection<Logs>, user: AuthenticatedUser) -> Templa
     .fetch_all(db.as_mut())
     .await.unwrap();
 
-    Template::render("pages/income/edit_income",json!({"username": user.name, "categories": categories}))
+    let income = sqlx::query_as!(IncomeView,
+            "SELECT * FROM incomes_view WHERE user_id = ? AND id = ?",
+            user.user_id, id
+        )
+        .fetch_one(db.as_mut())
+        .await.unwrap();
+
+    Template::render("pages/income/edit_income",json!({"username": user.name, "categories": categories, "income": income}))
 }
 
 #[get("/income")]

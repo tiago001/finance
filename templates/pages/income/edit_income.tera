@@ -1,12 +1,12 @@
 
 <div class="input-group mb-3">
     <span class="input-group-text" id="basic-addon1">Valor</span>
-    <input type="number" class="form-control editmoney_value currency" aria-label="valor" aria-describedby="basic-addon1">
+    <input type="number" class="form-control editmoney_value currency" aria-label="valor" aria-describedby="basic-addon1" value="{{income.value | tofixed(precision=2)}}">
 </div>
 
 <div class="input-group mb-3">
     <span class="input-group-text" id="basic-addon1">Data</span>
-    <input type="date" class="form-control editdate" data-provide="datepicker">
+    <input type="date" class="form-control editdate" data-provide="datepicker" value="{{income.date}}">
 </div>
 
 <div class="input-group mb-3">
@@ -14,16 +14,15 @@
     <select class="form-select editcategory" aria-label="Default select example">
         <option value="Indefinido" selected>Selecione a categoria</option>
         {% for category in categories %}
-            <option value="{{category.id}}">{{category.category}}</option>
+            <option value="{{category.id}}" {% if category.id == income.category_id %}selected{% endif %}>{{category.category}}</option>
         {% endfor %}
     </select>
 </div>
 
 <div class="input-group mb-3">
     <span class="input-group-text" id="basic-addon1">Obs</span>
-    <input type="text" class="form-control editobs" aria-label="obs" aria-describedby="basic-addon1">
+    <input type="text" class="form-control editobs" aria-label="obs" aria-describedby="basic-addon1" value="{{income.obs}}">
 </div>
-
 
 <script>
     setTimeout(function() {
