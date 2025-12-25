@@ -1,7 +1,10 @@
+use std::collections::HashMap;
 use std::ops::{Sub, Add};
 
 use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, Utc};
 use entity::expense_view::ExpenseView as ExpenseView;
+use rocket::http::Status;
+use rocket::serde::json::Json;
 use rocket_db_pools::{sqlx, Connection};
 use serde::Serialize;
 use time::{PrimitiveDateTime, OffsetDateTime};
@@ -172,12 +175,21 @@ pub async fn delete_expense(mut db: Connection<Logs>,id: i64, user: Authenticate
     "ok".to_string()
 }
 
-#[get("/get_balance?<months>")]
-pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: AuthenticatedUser) -> String {
-    #[derive(Serialize, Debug, Clone)]
-    struct Balance {value: Option<f64>, month: Option<i64>, year: Option<i64>, balance_type: String}
+#[derive(Serialize, Debug, Clone)]
+struct Balance {value: f64, month: i64, year: i64, balance_type: String}
 
-    let stream = sqlx::query_as!(Balance,
+#[derive(Serialize, Debug)]
+pub struct BalanceResponse {
+    expenses: Vec<Balance>,
+    incomes: Vec<Balance>,
+    balance_month: Vec<Balance>,
+    balance: Vec<Balance>,
+    labels: Vec<String>,
+}
+
+#[get("/get_balance?<months>")]
+pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: AuthenticatedUser) -> Result<Json<BalanceResponse>, String> {
+    let records = sqlx::query!(
         "SELECT sum(value) as value, month(`date`) as month, year(`date`) as year, 'incomes' as balance_type
         FROM incomes 
         where user_id = ?
@@ -191,84 +203,66 @@ pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: Authentica
         user.user_id, user.user_id
     )
     .fetch_all(db.as_mut())
-    .await.unwrap();
+    .await
+    .map_err(|e| e.to_string())?;
 
-    let mut utc: DateTime<Utc> = Utc::now().sub(chrono::Months::new(months-1));
-
-    let mut expenses: Vec<Balance> = Vec::new();
-    let mut incomes: Vec<Balance> = Vec::new();
-    let mut balance_month: Vec<Balance> = Vec::new();
-    let mut balance: Vec<Balance> = Vec::new();
-    let mut labels: Vec<String> = Vec::new();
-
-    for _ in 0..months {
-        let expense = stream.iter().find(|s| 
-            s.month.unwrap() == utc.month() as i64 && 
-            s.year.unwrap() == utc.year() as i64 &&
-            s.balance_type == "expenses"
-        );
-        
-        if let Some(e) = expense {
-            expenses.push(e.clone());
-        } else {
-            expenses.push(Balance { value: Some(0.0), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "expenses".to_string() })
+    let mut data_map: HashMap<(i64, i64, String), f64> = HashMap::new();
+    for rec in records {
+        if rec.year.is_some() && rec.month.is_some(){
+            let key = (rec.year.unwrap(), rec.month.unwrap(), rec.balance_type);
+            data_map.insert(key, rec.value.unwrap_or(0.0));
         }
-
-        let income = stream.iter().find(|s| 
-            s.month.unwrap() == utc.month() as i64 && 
-            s.year.unwrap() == utc.year() as i64 &&
-            s.balance_type == "incomes"
-        );
-        if let Some(i) = income {
-            incomes.push(i.clone());
-        } else {
-            incomes.push(Balance { value: Some(0.0), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "incomes".to_string() })
-        }
-
-        if let (Some(e), Some(i)) = (expense, income) {
-            balance_month.push(Balance { value: Some(i.value.unwrap() - e.value.unwrap()), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance_month".to_string() })
-        } else if let Some(e) = expense {
-            balance_month.push(Balance { value: Some(-(e.value.unwrap())), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance_month".to_string() })
-        } else if let Some(i) = income {
-            balance_month.push(Balance { value: Some(i.value.unwrap()), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance_month".to_string() })
-        } else {
-            balance_month.push(Balance { value: Some(0.0), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance_month".to_string() })
-        }
-
-        if balance.is_empty() {
-            balance.push(Balance { value: balance_month.first().unwrap().value, month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() });
-        } else {
-            let balance_value = balance.last().unwrap().value.unwrap() + balance_month.last().unwrap().value.unwrap();
-            balance.push(Balance { value: Some(balance_value), month: Some(utc.month() as i64), year: Some(utc.year() as i64), balance_type: "balance".to_string() });
-        }
-
-        labels.push(format!("{}-{}", utc.month(), utc.year()));
-
-        utc = utc.add(chrono::Months::new(1));
     }
 
-    #[derive(Serialize, Debug, Clone)]
-    struct Return{expenses: Vec<Balance>, incomes: Vec<Balance>, balance_month: Vec<Balance>, balance: Vec<Balance>, labels: Vec<String>}
+    let mut expenses = Vec::with_capacity(months as usize);
+    let mut incomes = Vec::with_capacity(months as usize);
+    let mut balance_month = Vec::with_capacity(months as usize);
+    let mut balance = Vec::with_capacity(months as usize);
+    let mut labels = Vec::with_capacity(months as usize);
 
-    let retorno = Return{ expenses, incomes, balance_month, balance, labels};
+    let mut current_date: DateTime<Utc> = Utc::now().sub(chrono::Months::new(months - 1));
+    let mut cumulative_balance = 0.0;
 
-    serde_json::to_string(&retorno).unwrap()
+    for _ in 0..months {
+        let y = current_date.year() as i64;
+        let m = current_date.month() as i64;
 
-    // "ok".to_string()
+        let incomes_value = *data_map.get(&(y, m, "incomes".to_string())).unwrap_or(&0.0);
+        let expenses_value = *data_map.get(&(y, m, "expenses".to_string())).unwrap_or(&0.0);
+        let month_diff = incomes_value - expenses_value;
+        cumulative_balance += month_diff;
+
+        let label = format!("{}-{}", m, y);
+        
+        incomes.push(Balance { value: incomes_value, month: m, year: y, balance_type: "incomes".into() });
+        expenses.push(Balance { value: expenses_value, month: m, year: y, balance_type: "expenses".into() });
+        balance_month.push(Balance { value: month_diff, month: m, year: y, balance_type: "balance_month".into() });
+        balance.push(Balance { value: cumulative_balance, month: m, year: y, balance_type: "balance".into() });
+        labels.push(label);
+
+        current_date = current_date.add(chrono::Months::new(1));
+    }
+
+    Ok(Json(BalanceResponse {
+        expenses,
+        incomes,    
+        balance_month,
+        balance,
+        labels,
+    }))
 }
 
 #[get("/predict_category?<name>")]
-pub async fn predict_category(mut db: Connection<Logs>, name: &str, user: AuthenticatedUser) -> String {
-    let expense = sqlx::query_as!(ExpenseView,
-        "SELECT * FROM expenses_view WHERE user_id = ? AND name = ? order by id desc limit 1",
+pub async fn predict_category(mut db: Connection<Logs>, name: &str, user: AuthenticatedUser) -> Result<Json<i64>, Status> {
+    let category_id = sqlx::query_scalar!(
+        "SELECT category_id FROM expenses_view WHERE user_id = ? AND name = ? order by id desc limit 1",
         user.user_id, name
     )
     .fetch_optional(db.as_mut())
-    .await.unwrap();
+    .await
+    .map_err(|_| Status::InternalServerError)?
+    .flatten()
+    .unwrap_or(0);
 
-    if expense.is_some() {
-        serde_json::to_string(&expense).unwrap()
-    } else {
-        "{}".to_string()
-    }
+    Ok(Json(category_id))
 }

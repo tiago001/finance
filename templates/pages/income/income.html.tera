@@ -360,6 +360,7 @@
                 graph.data.labels = monthsArray;
                 graph.data.datasets[0].data = null;
                 graph.data.datasets[1].data = dataGraphMonth[elements[0].index];
+                graph.data.datasets[1].label = "Receita Mensal";
                 graph.update()
 
                 $("#btn-yearly-view").css("visibility", "inherit")
@@ -430,6 +431,7 @@
             graph.data.labels = label;
             graph.data.datasets[0].data = percentageDifferencesLine;
             graph.data.datasets[1].data = data;
+            graph.data.datasets[1].label = "Receita Anual";
             graph.update()
         }
 

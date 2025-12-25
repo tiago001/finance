@@ -34,11 +34,10 @@
         padding			: 3px 4px;
         border			: 1px solid transparent;
         border-radius	: 2px;
-        /*margin	: 5px;*/
-        margin: 0px 2px;
+        margin	        : 3px 1px;
+        /*margin: 0px 2px;*/
         background		: #ddd;
         text-overflow 	: ellipsis;
-        height: 100%;
     }
     
     .taglist-tag-highlight {
@@ -80,18 +79,35 @@
         font-size		: 13px;
         line-height		: 16px;
     }*/
+
+    .taglist-div {
+        display: flex;
+        flex: 1 1 auto;
+        border: var(--bs-border-width) solid #DFE5EF;
+        border-radius: 7px;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        box-shadow: inset 0 1px 2px rgba(var(--bs-body-color-rgb), 0.075);
+    }
+
+    .no-style-input {
+        border: none;
+        box-shadow: none;
+    }
     
 </style>
 
 <div class="input-group mb-2">
     <span class="input-group-text" id="basic-addon1">Nome</span>
-    <input type="text" class="form-control nome" aria-label="nome" aria-describedby="basic-addon1">
+    <input type="text" class="form-control nome" oninput="onNameInput()" onblur="onNameBlur()">
 </div>
 
 <div class="input-group mb-2 taglist">
     <span class="input-group-text" id="basic-addon1">Valor</span>
-    <div class="taglist-tags"></div>
-    <input type="text" inputmode="decimal" class="form-control money_value currency taglist-input" aria-label="valor" aria-describedby="basic-addon1" placeholder="0.00">
+    <div class="taglist-div" style="padding-left: 3px;">
+        <div class="taglist-tags d-flex"></div>
+        <input type="text" inputmode="decimal" class="form-control money_value currency taglist-input no-style-input ps-2" placeholder="0.00" style="padding-left: 13px;">
+    </div>
 </div>
 
 <div class="input-group mb-2">
@@ -134,372 +150,400 @@
 </div>
 
 <script>
-
-    var keyCode = {
-        'backspace' : 8,
-        'space'	  	: 32,
-        'plus'      : 61,
-        'plus-numpad': 107
-    }
-
-    setTimeout(function() {
-         $('.taglist').on( 'click', '.taglist-tag-remove', function() {
-            $(this).closest('.taglist-tag').remove()
-            if($('.taglist-tags').children().length == 0){
-                $('.taglist .total-tag').remove()
-            } else {
-                let valor = 0
-                $('.taglist-tags').children().each(function(el){
-                    valor = valor + parseFloat($(this).text().trim())
-                })
-                $('.taglist .total-tag').text('Total '+parseFloat(valor).toFixed(2))
-            }
-        });
-
-        $('.taglist .taglist-input').on({
-            // handle keyboard events on textarea
-            keydown : function( $event ) {
-                var inputKeyCode = $event.which;
-                if(inputKeyCode == keyCode['plus'] || inputKeyCode == keyCode['plus-numpad'] && $('.taglist .taglist-input').val() != "") {
-                    $('.taglist-tags').append(
-                        `<div class="taglist-tag rounded-1">
-                            <span class="taglist-tag-text">${parseFloat($('.taglist .taglist-input').val()).toFixed(2)}</span>
-                            <span class="taglist-tag-remove btn btn-primary">
-                                <i class="ti ti-x fs-4"></i>
-                            </span>
-                        </div>`)
-                    $('.taglist .taglist-input').val('')
-
-                    if($('.taglist .total-tag').length == 0){
-                        $('.taglist').append('<span class="input-group-text total-tag" id="basic-addon1">Total</span>')
-                    }
-
-                    // Calculate value
-                    let valor = 0
-                    $('.taglist-tags').children().each(function(el){
-                        valor = valor + parseFloat($(this).text().trim())
-                    })
-                    $('.taglist .total-tag').text('Total '+parseFloat(valor).toFixed(2))
-                }
-            }
-        })
-    }, 50)
-    
-    setTimeout(function() {
-        $('.nome').on('blur', function () { predictCategory() })
-        $('.currency').mask("#0.00", {reverse: true});
-    }, 50);
-
-    date = new Date();
-    document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-    
-    function search_expenses(){
-        fetch("search_expenses?" + new URLSearchParams({
-            "name": document.getElementsByClassName("search_type")[0].value,
-            "value1": document.getElementsByClassName("date")[0].valueAsDate.toISOString().split("T")[0],
-        }), {redirect: 'follow'})
-        .then((response) => {
-            if (response.redirected) window.location.href = response.url;
-            return response.json()
-        })
-        .then((json) => {
-            fill_expenses(json)
-        })
-        .catch((error) => {
-            console.warn(error);
-        });
-    }
-
-    function save_expense(){
-        if(document.getElementsByClassName("nome")[0].value.length == 0){
-            mensagemErro("Preencha o nome da despesa")
-            return
+    (function() {
+        let keyCode = {
+            'backspace' : 8,
+            'space'	  	: 32,
+            'plus'      : 61,
+            'plus-numpad': 107
         }
-        /*if(document.getElementsByClassName("money_value")[0].value.length == 0){
-            mensagemErro("Preencha o valor da despesa")
-            return
-        }*/
-        if(document.getElementsByClassName("category")[0].value == 0){
-            mensagemErro("Preencha a categoria da despesa")
-            return
-        }
+        
+        let debounceTimer;
+        let lastSearchedValue = "";
+        window.predictionCache = window.predictionCache || {};
 
-        let valor = 0
-        $('.taglist-tags').children().each(function(el){
-            valor = valor + parseFloat($(this).text().trim())
-        })
-
-        if($('.taglist .taglist-input').val() != ''){
-            valor = valor + parseFloat($('.taglist .taglist-input').val())
-        }
-
-        if(valor == 0){
-            mensagemErro("Preencha o valor da despesa")
-            return
-        }
-
-        fetch("save_expense?" + new URLSearchParams({
-            "name": document.getElementsByClassName("nome")[0].value,
-            "value": valor,
-            "category_id": document.getElementsByClassName("category")[0].value,
-            "date": document.getElementsByClassName("date")[0].value}),
-        {
-            method: "POST"
-        })
-        .then((response) => {
-            if(response.status != 200){
-                Swal.fire({
-                    position: 'top-end',
-                    icon: 'error',
-                    title: 'Erro ao salvar despesa',
-                    showConfirmButton: false,
-                    timer: 2500,
-                    toast: true
-                })
-            } else {
-                Swal.fire({
-                    position: 'top-end',
-                    icon: 'success',
-                    title: 'Despesa salva com sucesso',
-                    showConfirmButton: false,
-                    timer: 1500,
-                    toast: true
-                })
-
-                document.getElementsByClassName("nome")[0].value = ""
-                document.getElementsByClassName("money_value")[0].value = ""
-                document.getElementsByClassName("category")[0].selectedIndex = 0
-                if(document.getElementsByClassName("date")[0].getAttribute("locked") == "false") {
-                    let date = new Date();
-                    document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-                }
-
-                $('.taglist-tags').children().remove()
-                $('.taglist .total-tag').remove()
-
-                document.getElementsByClassName("expenses").innerHTML = ''
-                search_expenses()
-                setTimeout(() => {
-                    document.getElementsByClassName("nome")[0].focus();
-                }, 200);
-
-                return response.text()
-            }
-        })
-        .catch((error) => {
-            console.warn(error);
-        });
-    }
-
-    function edit_expense(id){
-        fetch("edit_expense?" + new URLSearchParams({
-            "id": id,
-            "name": document.getElementsByClassName("editnome")[0].value,
-            "value": document.getElementsByClassName("editmoney_value")[0].value,
-            "category_id": document.getElementsByClassName("editcategory")[0].value,
-            "date": document.getElementsByClassName("editdate")[0].value}),
-        {
-            method: "POST"
-        })
-        .then((response) => response.text())
-        .then(() => {
-            search_expenses()
-            Swal.fire({
-                position: 'top-end',
-                icon: 'success',
-                title: 'Despesa alterada com sucesso',
-                showConfirmButton: false,
-                timer: 2000,
-                toast: true
+        function calculateTotalValue() {
+            let valor = 0
+            $('.taglist-tags').children().each(function(el){
+                valor = valor + parseFloat($(this).text().trim())
             })
-        })
-        .catch((error) => {
-            console.warn(error);
-        });
-    }
+            $('.taglist .total-tag').text('Total '+parseFloat(valor).toFixed(2))
+        }
 
-    function fill_expenses(json){
-        document.getElementsByClassName("expenses")[0].innerHTML = ''
-        let searchType = document.getElementsByClassName("search_type")[0].value
-        document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend",
-            `
-                <div class="col-3 d-none d-sm-block">
-                    Nome
-                </div>
-                <div class="col-3 d-none d-sm-block text-center">
-                    Valor
-                </div>
-                <div class="col-3 d-none d-sm-block text-center">
-                    Categoria
-                </div>
-                <div class="col-2 d-none d-sm-block text-center">
-                    Data
-                </div>
-                <div class="col-1 d-none d-sm-block"></div>
-            `
-        )
-
-        document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend", `<div class="row future-expenses p-0" style="background-color: #eeeeee;border-radius: 5px;"></div>`);
-
-        let total = 0
-        let lastDate = ""
-
-        json.forEach(e => {
-            total += e.value
-
-            tagExpense = "expenses"
-            if(document.getElementsByClassName("search_type")[0].value != "lastAddedExpenses"){
-                if(new Date(e.date+" 00:00") > new Date()) {
-                    tagExpense = "future-expenses"
+        setTimeout(function() {
+            $('.taglist').on('click', '.taglist-tag-remove', function() {
+                $(this).closest('.taglist-tag').remove()
+                if($('.taglist-tags').children().length == 0){
+                    $('.taglist .total-tag').remove()
+                } else {
+                    calculateTotalValue();
                 }
-            }
+            });
 
-            if(e.date != lastDate){
-                document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML(
-                    "beforeend",
-                    `<div class="col-11 mt-2 text-center d-block d-sm-none">
-                            <i class="ti ti-calendar"></i> ${new Date(e.date+"T00:00").toLocaleString().substr(0,10)}
-                        </div>`)
-                document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML("beforeend",
-                    `
-                        <div class="col-4 col-sm-3 d-block d-sm-none">
-                            Nome
-                        </div>
-                        <div class="col-3 col-sm-3 d-block d-sm-none text-center">
-                            Valor
-                        </div>
-                        <div class="col-4 col-sm-3 d-block d-sm-none text-center">
-                            Categoria
-                        </div>
-                        <div class="col-1 d-block d-sm-none"></div>
-                    `)
-            }
+            $('.taglist .taglist-input').on({
+                // handle keyboard events on textarea
+                keydown : function( $event ) {
+                    var inputKeyCode = $event.which;
+                    if(inputKeyCode == keyCode['plus'] || inputKeyCode == keyCode['plus-numpad'] && $('.taglist .taglist-input').val() != "") {
+                        $('.taglist-tags').append(
+                            `<div class="taglist-tag rounded-1">
+                                <span class="taglist-tag-text">${parseFloat($('.taglist .taglist-input').val()).toFixed(2)}</span>
+                                <span class="taglist-tag-remove btn btn-primary">
+                                    <i class="ti ti-x fs-4"></i>
+                                </span>
+                            </div>`)
+                        $('.taglist .taglist-input').val('')
 
-            document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML("beforeend",
-            `
-                <div class="col-4 col-sm-3 text-truncate ${e.date != lastDate ? "border-top-grey" : ""}" expense="${e.id}" value=${e.name}>
-                    <span class="name" expense="${e.id}" value=${e.name} contenteditable="true">${e.name}</span> 
-                </div>
-                <div class="col-3 col-sm-3 text-center ${e.date != lastDate ? "border-top-grey" : ""}" expense="${e.id}">
-                    <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
-                </div>
-                <div class="col-4 col-sm-3 text-center text-truncate ${e.date != lastDate ? "border-top-grey" : ""}">
-                    ${e.category} 
-                </div>
-                <div class="col-12 col-sm-2 text-center d-none d-sm-block ${e.date != lastDate ? "border-top-grey" : ""}">
-                        ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
-                </div>
-                <div class="col-1 text-center p-0 ${e.date != lastDate ? "border-top-grey" : ""}">
-                    <button class="btn btn-sm btn-light py-0" onclick="open_edit_expense(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                        <span><i class="ti ti-pencil"></i></span>
-                    </button>
-                </div>
-            `)
+                        if($('.taglist .total-tag').length == 0){
+                            $('.taglist').append('<span class="input-group-text total-tag" id="basic-addon1">Total</span>')
+                        }
 
-            lastDate = e.date
-        });
+                        calculateTotalValue();
+                    } else if(inputKeyCode == keyCode['backspace']) {
+                        length = $('.taglist-tags').children().length
 
-        if(document.getElementsByClassName("future-expenses")[0].childNodes.length > 0){
-            document.getElementsByClassName("future-expenses")[0].insertAdjacentHTML("beforeend", 
-            `<div class="col-12 text-center border-top-grey">
-                Despesas futuras 
-                <i class="ti ti-arrow-narrow-up"></i>
-            </div>`
-            );
-        }
-
-        if(document.getElementsByClassName("search_type")[0].value == "currentMonth"){
-            document.getElementsByClassName("total")[0].innerHTML = `Total ${total.toFixed(2)}`
-        } else {
-            document.getElementsByClassName("total")[0].innerHTML = ""
-        }
-
-        $('.name').on('blur', function(e){
-            if(e.target.textContent.trim() != e.target.getAttribute("value")) {
-                e.target.setAttribute("value", e.target.textContent.trim()) 
-                fetch("edit_expense?" + new URLSearchParams({
-                    "name": e.target.textContent.trim(),
-                    "id": e.target.getAttribute("expense")}),
-                {
-                    method: "POST"
-                })
-                .then((response) => response.text())
-                .then((html) => {
-                    Swal.fire({
-                        position: 'top-end',
-                        icon: 'success',
-                        title: 'Despesa salva com sucesso',
-                        showConfirmButton: false,
-                        timer: 2000,
-                        toast: true
-                        })
-                })
-                .catch((error) => {
-                    console.warn(error);
-                });
-            }
-        })
-        $('.valor').on('blur', function(e){
-            if(e.target.textContent.trim() != e.target.getAttribute("value")) {
-                e.target.setAttribute("value", e.target.textContent.trim()) 
-                fetch("edit_expense?" + new URLSearchParams({
-                    "value": e.target.textContent.trim(),
-                    "id": e.target.getAttribute("expense")}),
-                {
-                    method: "POST"
-                })
-                .then((response) => response.text())
-                .then((html) => {
-                    Swal.fire({
-                        position: 'top-end',
-                        icon: 'success',
-                        title: 'Despesa salva com sucesso',
-                        showConfirmButton: false,
-                        timer: 2000,
-                        toast: true
-                        })
-                })
-                .catch((error) => {
-                    console.warn(error);
-                });
-            }
-        })
-    }
+                        if(length > 0 && event.target.value === ""){
+                            $('.taglist-tags').children()[length - 1].remove()
     
-    function predictCategory() {
-        if(document.getElementsByClassName("nome")[0].value != ""){
-            fetch("predict_category?" + new URLSearchParams({
-                "name": document.getElementsByClassName("nome")[0].value
+                            calculateTotalValue();
+                        }
+                    }
+                }
+            })
+        }, 50)
+        
+        setTimeout(function() {
+            //$('.nome').on('blur', function () { predictCategory() })
+            $('.currency').mask("#0.00", {reverse: true});
+        }, 50);
+
+        date = new Date();
+        document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+        
+        window.search_expenses = function(){
+            fetch("search_expenses?" + new URLSearchParams({
+                "name": document.getElementsByClassName("search_type")[0].value,
+                "value1": document.getElementsByClassName("date")[0].valueAsDate.toISOString().split("T")[0],
             }), {redirect: 'follow'})
             .then((response) => {
                 if (response.redirected) window.location.href = response.url;
                 return response.json()
             })
             .then((json) => {
-                if(json.category_id != null){
-                    document.getElementsByClassName("category")[0].value = json.category_id
+                fill_expenses(json)
+            })
+            .catch((error) => {
+                console.warn(error);
+            });
+        }
+
+        window.save_expense = function(){
+            if(document.getElementsByClassName("nome")[0].value.length == 0){
+                mensagemErro("Preencha o nome da despesa")
+                return
+            }
+            if(document.getElementsByClassName("category")[0].value == 0){
+                mensagemErro("Preencha a categoria da despesa")
+                return
+            }
+
+            let valor = 0
+            $('.taglist-tags').children().each(function(el){
+                valor = valor + parseFloat($(this).text().trim())
+            })
+
+            if($('.taglist .taglist-input').val() != ''){
+                valor = valor + parseFloat($('.taglist .taglist-input').val())
+            }
+
+            if(valor == 0){
+                mensagemErro("Preencha o valor da despesa")
+                return
+            }
+
+            fetch("save_expense?" + new URLSearchParams({
+                "name": document.getElementsByClassName("nome")[0].value,
+                "value": valor,
+                "category_id": document.getElementsByClassName("category")[0].value,
+                "date": document.getElementsByClassName("date")[0].value}),
+            {
+                method: "POST"
+            })
+            .then((response) => {
+                if(response.status != 200){
+                    Swal.fire({
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Erro ao salvar despesa',
+                        showConfirmButton: false,
+                        timer: 2500,
+                        toast: true
+                    })
                 } else {
+                    Swal.fire({
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Despesa salva com sucesso',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        toast: true
+                    })
+
+                    document.getElementsByClassName("nome")[0].value = ""
+                    document.getElementsByClassName("money_value")[0].value = ""
                     document.getElementsByClassName("category")[0].selectedIndex = 0
+                    if(document.getElementsByClassName("date")[0].getAttribute("locked") == "false") {
+                        let date = new Date();
+                        document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+                    }
+
+                    $('.taglist-tags').children().remove()
+                    $('.taglist .total-tag').remove()
+
+                    document.getElementsByClassName("expenses").innerHTML = ''
+                    search_expenses()
+                    setTimeout(() => {
+                        document.getElementsByClassName("nome")[0].focus();
+                    }, 200);
+
+                    return response.text()
                 }
             })
             .catch((error) => {
                 console.warn(error);
             });
         }
-    }
 
-    function toggleDate(){
-        if(document.getElementsByClassName("date")[0].getAttribute("locked") == "false") {
-            document.getElementsByClassName("date")[0].setAttribute("locked", true)
-
-        } else {
-            document.getElementsByClassName("date")[0].setAttribute("locked", false)
+        function edit_expense(id){
+            fetch("edit_expense?" + new URLSearchParams({
+                "id": id,
+                "name": document.getElementsByClassName("editnome")[0].value,
+                "value": document.getElementsByClassName("editmoney_value")[0].value,
+                "category_id": document.getElementsByClassName("editcategory")[0].value,
+                "date": document.getElementsByClassName("editdate")[0].value}),
+            {
+                method: "POST"
+            })
+            .then((response) => response.text())
+            .then(() => {
+                search_expenses()
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Despesa alterada com sucesso',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    toast: true
+                })
+            })
+            .catch((error) => {
+                console.warn(error);
+            });
         }
 
-        $('.date-input button').toggleClass("bg-body-secondary bg-primary-subtle text-primary")
-        $('.date-input .ti-lock').toggle()
-        $('.date-input .ti-lock-open').toggle()
-    }
+        function fill_expenses(json){
+            document.getElementsByClassName("expenses")[0].innerHTML = ''
+            let searchType = document.getElementsByClassName("search_type")[0].value
+            document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend",
+                `
+                    <div class="col-3 d-none d-sm-block">
+                        Nome
+                    </div>
+                    <div class="col-3 d-none d-sm-block text-center">
+                        Valor
+                    </div>
+                    <div class="col-3 d-none d-sm-block text-center">
+                        Categoria
+                    </div>
+                    <div class="col-2 d-none d-sm-block text-center">
+                        Data
+                    </div>
+                    <div class="col-1 d-none d-sm-block"></div>
+                `
+            )
 
-    search_expenses()
+            document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend", `<div class="row future-expenses p-0" style="background-color: #eeeeee;border-radius: 5px;"></div>`);
+
+            let total = 0
+            let lastDate = ""
+
+            json.forEach(e => {
+                total += e.value
+
+                tagExpense = "expenses"
+                if(document.getElementsByClassName("search_type")[0].value != "lastAddedExpenses"){
+                    if(new Date(e.date+" 00:00") > new Date()) {
+                        tagExpense = "future-expenses"
+                    }
+                }
+
+                if(e.date != lastDate){
+                    document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML(
+                        "beforeend",
+                        `<div class="col-11 mt-2 text-center d-block d-sm-none">
+                                <i class="ti ti-calendar"></i> ${new Date(e.date+"T00:00").toLocaleString().substr(0,10)}
+                            </div>`)
+                    document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML("beforeend",
+                        `
+                            <div class="col-4 col-sm-3 d-block d-sm-none">
+                                Nome
+                            </div>
+                            <div class="col-3 col-sm-3 d-block d-sm-none text-center">
+                                Valor
+                            </div>
+                            <div class="col-4 col-sm-3 d-block d-sm-none text-center">
+                                Categoria
+                            </div>
+                            <div class="col-1 d-block d-sm-none"></div>
+                        `)
+                }
+
+                document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML("beforeend",
+                `
+                    <div class="col-4 col-sm-3 text-truncate ${e.date != lastDate ? "border-top-grey" : ""}" expense="${e.id}" value=${e.name}>
+                        <span class="name" expense="${e.id}" value=${e.name} contenteditable="true">${e.name}</span> 
+                    </div>
+                    <div class="col-3 col-sm-3 text-center ${e.date != lastDate ? "border-top-grey" : ""}" expense="${e.id}">
+                        <span class="valor" expense="${e.id}" value="${e.value.toFixed(2)}" contenteditable="true">${e.value.toFixed(2)}</span>
+                    </div>
+                    <div class="col-4 col-sm-3 text-center text-truncate ${e.date != lastDate ? "border-top-grey" : ""}">
+                        ${e.category} 
+                    </div>
+                    <div class="col-12 col-sm-2 text-center d-none d-sm-block ${e.date != lastDate ? "border-top-grey" : ""}">
+                            ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
+                    </div>
+                    <div class="col-1 text-center p-0 ${e.date != lastDate ? "border-top-grey" : ""}">
+                        <button class="btn btn-sm btn-light py-0" onclick="open_edit_expense(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                            <span><i class="ti ti-pencil"></i></span>
+                        </button>
+                    </div>
+                `)
+
+                lastDate = e.date
+            });
+
+            if(document.getElementsByClassName("future-expenses")[0].childNodes.length > 0){
+                document.getElementsByClassName("future-expenses")[0].insertAdjacentHTML("beforeend", 
+                `<div class="col-12 text-center border-top-grey">
+                    Despesas futuras 
+                    <i class="ti ti-arrow-narrow-up"></i>
+                </div>`
+                );
+            }
+
+            if(document.getElementsByClassName("search_type")[0].value == "currentMonth"){
+                document.getElementsByClassName("total")[0].innerHTML = `Total ${total.toFixed(2)}`
+            } else {
+                document.getElementsByClassName("total")[0].innerHTML = ""
+            }
+
+            $('.name').on('blur', function(e){
+                if(e.target.textContent.trim() != e.target.getAttribute("value")) {
+                    e.target.setAttribute("value", e.target.textContent.trim()) 
+                    fetch("edit_expense?" + new URLSearchParams({
+                        "name": e.target.textContent.trim(),
+                        "id": e.target.getAttribute("expense")}),
+                    {
+                        method: "POST"
+                    })
+                    .then((response) => response.text())
+                    .then((html) => {
+                        Swal.fire({
+                            position: 'top-end',
+                            icon: 'success',
+                            title: 'Despesa salva com sucesso',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            toast: true
+                            })
+                    })
+                    .catch((error) => {
+                        console.warn(error);
+                    });
+                }
+            })
+            $('.valor').on('blur', function(e){
+                if(e.target.textContent.trim() != e.target.getAttribute("value")) {
+                    e.target.setAttribute("value", e.target.textContent.trim()) 
+                    fetch("edit_expense?" + new URLSearchParams({
+                        "value": e.target.textContent.trim(),
+                        "id": e.target.getAttribute("expense")}),
+                    {
+                        method: "POST"
+                    })
+                    .then((response) => response.text())
+                    .then((html) => {
+                        Swal.fire({
+                            position: 'top-end',
+                            icon: 'success',
+                            title: 'Despesa salva com sucesso',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            toast: true
+                            })
+                    })
+                    .catch((error) => {
+                        console.warn(error);
+                    });
+                }
+            })
+        }
+
+        window.onNameInput = function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(predictCategory, 500);
+        }
+
+        window.onNameBlur = function() {
+            clearTimeout(debounceTimer);
+            predictCategory();
+        }
+        
+        function predictCategory() {
+            const nameInput = document.getElementsByClassName("nome")[0];
+            const categorySelect = document.getElementsByClassName("category")[0];
+            const nameValue = nameInput.value.trim();
+
+            if (nameValue === "" || nameValue === lastSearchedValue) return;
+
+            if (window.predictionCache[nameValue] !== undefined) {
+                const cachedId = window.predictionCache[nameValue];
+                if (cachedId > 0) categorySelect.value = cachedId;
+                lastSearchedValue = nameValue;
+                return;
+            }
+
+            lastSearchedValue = nameValue;
+
+            categorySelect.style.opacity = "0.5";
+
+            fetch("predict_category?" + new URLSearchParams({ "name": nameValue }))
+                .then(response => {
+                    if (response.redirected) window.location.href = response.url;
+                    return response.json()
+                })
+                .then(category_id => {
+                    window.predictionCache[nameValue] = category_id;
+
+                    categorySelect.value = category_id;
+                    categorySelect.style.opacity = "1.0";
+                })
+                .catch(error => console.warn("Prediction error:", error));
+        }
+
+        window.toggleDate = function(){
+            if(document.getElementsByClassName("date")[0].getAttribute("locked") == "false") {
+                document.getElementsByClassName("date")[0].setAttribute("locked", true)
+
+            } else {
+                document.getElementsByClassName("date")[0].setAttribute("locked", false)
+            }
+
+            $('.date-input button').toggleClass("bg-body-secondary bg-primary-subtle text-primary")
+            $('.date-input .ti-lock').toggle()
+            $('.date-input .ti-lock-open').toggle()
+        }
+
+        search_expenses()
+    })();
 </script>
