@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
-    <head>
+  <head>
+    <link rel="manifest" href="manifest.json" />
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     {# <meta http-equiv="Content-Security-Policy" content="
@@ -20,6 +21,16 @@
     <body data-bs-theme="light">
         {% block content %}{% endblock content %}
     </body>
+    {# <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker registered!', reg))
+            .catch(err => console.err('Service Worker failed:', err));
+        });
+      }
+    </script> #}
+
     <script src="../assets/libs/jquery/dist/jquery.min.js"></script>
     <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/app.min.js"></script>

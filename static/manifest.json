@@ -1,16 +1,53 @@
 {
-    "name": "Projeto Finanças",
-    "short_name": "ProjetoFinanças",
-    "start_url": "index",
-    "display": "standalone",
-    "background_color": "#fdfdfd",
-    "theme_color": "#2246ab",
-    "orientation": "landscape-primary",
-    "icons": [
-      {
-        "src": "/assets/images/logos/icon.png",
-        "type": "image/png", "sizes": "69x64"
-      }
-    ]
-  }
+  "id": "https://projetofinancas.com.br/",
+  "start_url": "https://projetofinancas.com.br/",
+  "name": "Projeto Finanças",
+  "short_name": "Projeto Finanças",
+  "description": "App to control and track your expenses",
+  "display": "standalone",
+  "background_color": "#fdfdfd",
+  "theme_color": "#2246ab",
+  "icons": [
+    {
+      "src": "/assets/images/logos/icon-192px.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/images/logos/icon-512px.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/images/logos/maskable-icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/images/screenshots/screenshot1.png",
+      "sizes": "1200x600",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Screenshot 1"
+    },
+    {
+      "src": "/assets/images/screenshots/screenshot2.png",
+      "sizes": "1200x600",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Screenshot 2"
+    },
+    {
+      "src": "/assets/images/screenshots/screenshot-portrait1.png",
+      "sizes": "530x1000",
+      "type": "image/png",
+      "label": "Screenshot 1"
+    }
+  ]
+}
   
