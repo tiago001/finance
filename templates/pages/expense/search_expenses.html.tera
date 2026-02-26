@@ -37,10 +37,28 @@
     <div class="col-md-7 d-none d-md-block d-lg-none"></div>
     <div class="col-3 col-sm-7 col-md-2 col-lg-1 date p-1 row">
         <div class="col-6 p-0">
-            <button type="button" class="btn btn-primary w-100 px-0 rounded-0 rounded-start" onclick="previous_month()"><i class="ti ti-chevron-left"></i></button>
+            <button type="button" 
+                    id="btn-previous"
+                    class="btn btn-primary w-100 px-0 rounded-0 rounded-start btn-nav" 
+                    onclick="navigate_months(event, -1)"
+                    data-bs-toggle="tooltip" 
+                    data-bs-placement="top" 
+                    data-bs-html="true"
+                    title="<b>Clique:</b> Retroceder 1 mês<br><b>Shift:</b> Remover 1 mês<br><b>Ctrl:</b> Pular janela inteira">
+                <i class="ti ti-chevron-left"></i>
+            </button>
         </div>
         <div class="col-6 p-0">
-            <button type="button" class="btn btn-primary w-100 px-0 rounded-0 rounded-end" onclick="next_month()"><i class="ti ti-chevron-right"></i></button>
+            <button type="button" 
+                    id="btn-next"
+                    class="btn btn-primary w-100 px-0 rounded-0 rounded-end btn-nav" 
+                    onclick="navigate_months(event, 1)"
+                    data-bs-toggle="tooltip" 
+                    data-bs-placement="top" 
+                    data-bs-html="true"
+                    title="<b>Clique:</b> Avançar 1 mês<br><b>Shift:</b> Adicionar 1 mês<br><b>Ctrl:</b> Pular janela inteira">
+                <i class="ti ti-chevron-right"></i>
+            </button>
         </div>
     </div>
     <div class="col-9 col-sm-2 col-md-3 col-lg-2 p-1">
@@ -81,6 +99,13 @@
     
     document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
     document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
     
     expenses = null
 
@@ -96,11 +121,11 @@
     if(params.get("category") != null){
         document.getElementsByClassName("category_select")[0].value = params.get("category")
     }
-    if(params.get("startdate") != null){
-        document.getElementsByClassName("date1")[0].valueAsDate = new Date(params.get("startdate")+" 00:00")
+    if(params.get("startdate")){
+        document.getElementsByClassName("date1")[0].value = params.get("startdate");
     }
-    if(params.get("enddate") != null){
-        document.getElementsByClassName("date2")[0].valueAsDate = new Date(params.get("enddate")+" 00:00")
+    if(params.get("enddate")){
+        document.getElementsByClassName("date2")[0].value = params.get("enddate");
     }
 
     function search_expenses(){
@@ -137,6 +162,32 @@
         .catch((error) => {
             console.warn(error);
         });
+
+        updateURLParams()
+    }
+
+    function updateURLParams() {
+        const category = document.getElementsByClassName("category_select")[0].value;
+        const startDate = document.getElementsByClassName("date1")[0].value;
+        const endDate = document.getElementsByClassName("date2")[0].value;
+
+        const url = new URL(window.location);
+        
+        if (category) {
+            url.searchParams.set("category", category);
+        } else {
+            url.searchParams.delete("category");
+        }
+
+        if (startDate) {
+            url.searchParams.set("startdate", startDate);
+        }
+
+        if (endDate) {
+            url.searchParams.set("enddate", endDate);
+        }
+
+        window.history.pushState({}, '', url);
     }
 
     function getDaysInMonth(month, year) {
@@ -602,26 +653,37 @@
         })
     }
 
-    function previous_month() {
-        var today = new Date(document.getElementsByClassName("date1")[0].value.split("-"));
-        today.setMonth(today.getMonth() - 1)
-        var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
-        var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        
-        document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
-        document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
+    function navigate_months(event, direction) {
+        const tooltip = bootstrap.Tooltip.getInstance(event.currentTarget);
+        if (tooltip) tooltip.hide();
 
-        search_expenses()
-    }
-    
-    function next_month(){
-        var today = new Date(document.getElementsByClassName("date1")[0].value.split("-"));
-        today.setMonth(today.getMonth() + 1)
-        var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
-        var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        
-        document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
-        document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
+        let input1 = document.getElementsByClassName("date1")[0];
+        let input2 = document.getElementsByClassName("date2")[0];
+
+        let d1 = new Date(input1.value.replace(/-/g, '\/'));
+        let d2 = new Date(input2.value.replace(/-/g, '\/'));
+
+        let monthsDiff = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+
+        if (event.shiftKey) {
+            d2.setMonth(d2.getMonth() + direction);
+        } else if (event.ctrlKey) {
+            let shiftAmount = (monthsDiff + 1) * direction;
+            d1.setMonth(d1.getMonth() + shiftAmount);
+            d2.setMonth(d2.getMonth() + shiftAmount);
+        } 
+        else {
+            d1.setMonth(d1.getMonth() + direction);
+            d2.setMonth(d2.getMonth() + direction);
+        }
+
+        if(d1 > d2) {
+            if (event.currentTarget.classList.contains('rounded-start')) d1 = new Date(d2);
+            else d2 = new Date(d1);
+        }
+
+        input1.value = d1.toISOString().split('T')[0];
+        input2.value = d2.toISOString().split('T')[0];
 
         search_expenses()
     }
@@ -806,4 +868,44 @@
     }
 
     search_expenses()
+
+    const icons = {
+        left: { default: 'ti-chevron-left', shift: 'ti-minus', ctrl: 'ti-chevrons-left' },
+        right: { default: 'ti-chevron-right', shift: 'ti-plus', ctrl: 'ti-chevrons-right'  }
+    };
+
+    function toggleShiftIcons(key) {
+        const iconLeft = document.querySelector('#btn-previous i');
+        const iconRight = document.querySelector('#btn-next i');
+
+        iconLeft.classList.remove(icons.left.default, icons.left.shift, icons.left.ctrl);
+        iconRight.classList.remove(icons.right.default, icons.right.shift, icons.right.ctrl);
+
+        if(key == "Shift") {
+            iconLeft.classList.add(icons.left.shift);
+            iconRight.classList.add(icons.right.shift);
+        } else if(key == "Control") {
+            iconLeft.classList.add(icons.left.ctrl);
+            iconRight.classList.add(icons.right.ctrl);
+        }
+    }
+
+    function resetIcons(){
+        const iconLeft = document.querySelector('#btn-previous i');
+        const iconRight = document.querySelector('#btn-next i');
+
+        iconLeft.classList.remove(icons.left.default, icons.left.shift, icons.left.ctrl);
+        iconRight.classList.remove(icons.right.default, icons.right.shift, icons.right.ctrl);
+
+        iconLeft.classList.add(icons.left.default);
+        iconRight.classList.add(icons.right.default);
+    }
+
+    document.addEventListener('keydown', (e) => {
+        toggleShiftIcons(e.key);
+    });
+
+    document.addEventListener('keyup', (e) => {
+        resetIcons();
+    });
 </script>
