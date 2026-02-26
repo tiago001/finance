@@ -126,6 +126,22 @@ function attSideBarMenu(){
     })
 }
 
+function isDifferentMonth(){
+    d1 = new Date(document.getElementsByClassName("date1")[0].value.replace(/-/g, '\/'));
+    d2 = new Date(document.getElementsByClassName("date2")[0].value.replace(/-/g, '\/'));
+
+    return d1.getMonth() !== d2.getMonth() || d1.getFullYear() !== d2.getFullYear();
+}
+
+function getMonthsCount(){
+    let d1 = new Date(document.getElementsByClassName("date1")[0].value.replace(/-/g, '\/'));
+    let d2 = new Date(document.getElementsByClassName("date2")[0].value.replace(/-/g, '\/'));
+
+    let monthsCount = Math.abs((d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth())) + 1;
+
+    return monthsCount;
+}
+
 // let installPrompt = null;
 // const installButton = document.querySelector("#install");
 

@@ -51,7 +51,7 @@
 <div class="row">
     <div class="col-12 col-sm-12 col-md-12">
         <div class="chart mb-4">
-            <button class="btn btn-sm btn-primary float-end" onclick="change_graph()">Trocar gráfico</button>
+            <button class="btn btn-sm btn-primary float-end change-graph-btn" onclick="change_graph()">Trocar gráfico</button>
             <canvas id="graph" ></canvas>
         </div>
     </div>
@@ -117,10 +117,21 @@
         .then((json) => {
             expenses = json
             fill_expenses(json)
-            if(graphType == "total"){
-                show_expenses_graph()
+            months = getMonthsCount()
+
+            if(months > 12){
+                show_expenses_graph_yearly()
+                $(".change-graph-btn").hide()
+            } else if(months > 1){
+                $(".change-graph-btn").hide()
+                show_expenses_graph_monthly()
             } else {
-                show_expenses_graph_category()
+                $(".change-graph-btn").show()
+                if(graphType == "total"){
+                    show_expenses_graph()
+                } else {
+                    show_expenses_graph_category()
+                }
             }
         })
         .catch((error) => {
@@ -136,6 +147,157 @@
           date.setDate(date.getDate() + 1);
         }
         return days;
+    }
+    
+    async function show_expenses_graph_yearly() {
+        let json = expenses;
+
+        if (graph) {
+            graph.destroy();
+        }
+        let ctx = document.getElementById('graph');
+
+        let startDate = new Date(document.getElementsByClassName("date1")[0].value.replace(/-/g, '\/'));
+        let endDate = new Date(document.getElementsByClassName("date2")[0].value.replace(/-/g, '\/'));
+
+        let yearlyData = {};
+        let currentYear = startDate.getFullYear();
+        let lastYear = endDate.getFullYear();
+
+        for (let y = currentYear; y <= lastYear; y++) {
+            yearlyData[y.toString()] = { value: 0 };
+        }
+
+        json.forEach(e => {
+            let yearKey = e.date.substring(0, 4);
+            if (yearlyData[yearKey]) {
+                yearlyData[yearKey].value += parseFloat(e.value);
+            }
+        });
+
+        let labels = Object.keys(yearlyData).sort();
+        let data = [];
+        let acumulative = [];
+        let total = 0;
+
+        labels.forEach(month => {
+            let d = yearlyData[month];
+            data.push(d.value.toFixed(2));
+            
+            total += d.value
+            acumulative.push(total.toFixed(2));
+        });
+
+        graph = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    type: 'line',
+                    label: 'Acumulado',
+                    data: acumulative,
+                    yAxisID: 'myScale',
+                    borderColor: '#ff6384',
+                    backgroundColor: "#ff6384"
+                }, {
+                    label: 'Valor',
+                    data: data,
+                    borderWidth: 1,
+                    borderColor: '#36a2eb',
+                    backgroundColor: "#36a2eb"
+                }]
+            },
+            options: {
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true },
+                    myScale: { position: 'right' }
+                }
+            }
+        });
+    }
+
+    async function show_expenses_graph_monthly(){
+        let json = expenses
+
+        if(graph){
+            graph.destroy()
+        }
+        let ctx = document.getElementById('graph');
+
+        let datas = []
+
+        let startDate = new Date(document.getElementsByClassName("date1")[0].value.replace(/-/g, '\/'))
+        let endDate = new Date(document.getElementsByClassName("date2")[0].value.replace(/-/g, '\/'))
+        
+        let monthlyData = {};
+        let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+        
+        while (current <= endDate) {
+            let monthKey = current.toISOString().substring(0, 7);
+            monthlyData[monthKey] = { value: 0 };
+            current.setMonth(current.getMonth() + 1);
+        }
+
+        json.forEach(e => {
+            let monthKey = e.date.substring(0, 7);
+            if (monthlyData[monthKey]) {
+                monthlyData[monthKey].value += parseFloat(e.value);
+            }
+        });
+
+        let labels = Object.keys(monthlyData).sort();
+        let data = [];
+        let acumulative = [];
+        let total = 0;
+
+        labels.forEach(month => {
+            let d = monthlyData[month];
+            data.push(d.value.toFixed(2));
+            
+            total += d.value
+            acumulative.push(total.toFixed(2));
+        });
+
+        graph = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    type: 'line',
+                    label: 'Acumulado',
+                    data: acumulative,
+                    yAxisID: 'myScale',
+                    borderColor: '#ff6384',
+                    backgroundColor: "#ff6384"
+                },{
+                    label: 'Valor',
+                    data: data,
+                    borderWidth: 1,
+                    borderColor: '#36a2eb',
+                    backgroundColor: "#36a2eb"
+                }]
+            },
+            options: {
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    },
+                    myScale: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
     }
 
     async function show_expenses_graph(){
@@ -193,6 +355,7 @@
         let total = 0
         let acumulative = []
         let budget = []
+
         datas.forEach(d => {
             labels.push(d.date)
             data.push(d.value.toFixed(2))
