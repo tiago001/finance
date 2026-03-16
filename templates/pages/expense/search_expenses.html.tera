@@ -275,9 +275,6 @@
     async function show_expenses_graph_monthly(){
         let json = expenses
 
-        if(graph){
-            graph.destroy()
-        }
         let ctx = document.getElementById('graph');
 
         let datas = []
@@ -314,41 +311,51 @@
             acumulative.push(total.toFixed(2));
         });
 
-        graph = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    type: 'line',
-                    label: 'Acumulado',
-                    data: acumulative,
-                    yAxisID: 'myScale',
-                    borderColor: '#ff6384',
-                    backgroundColor: "#ff6384"
-                },{
-                    label: 'Valor',
-                    data: data,
-                    borderWidth: 1,
-                    borderColor: '#36a2eb',
-                    backgroundColor: "#36a2eb"
-                }]
-            },
-            options: {
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
+        if(graph == undefined) {
+            graph = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        type: 'line',
+                        label: 'Acumulado',
+                        data: acumulative,
+                        yAxisID: 'myScale',
+                        borderColor: '#ff6384',
+                        backgroundColor: "#ff6384"
+                    },{
+                        label: 'Valor',
+                        data: data,
+                        borderWidth: 1,
+                        borderColor: '#36a2eb',
+                        backgroundColor: "#36a2eb"
+                    }]
                 },
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
+                options: {
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
                     },
-                    myScale: {
-                        position: 'right'
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        },
+                        myScale: {
+                            position: 'right'
+                        }
                     }
                 }
+            });
+        } else {
+            if(graph.data.datasets[1].label == "Budget"){
+                graph.data.datasets.splice(1,1)
             }
-        });
+            graph.data.labels = labels
+            graph.data.datasets[0].data = acumulative;
+            graph.data.datasets[1].data = data;
+            graph.update()
+        }
     }
 
     async function show_expenses_graph(){
@@ -607,17 +614,12 @@
                         stacked: true
                     },
                     myScale: {
-                        // type: 'logarithmic',
-                        position: 'right', // `axis` is determined by the position as `'y'`
+                        position: 'right',
                     }
                 },
                 plugins: {
                     tooltip: {
                         filter: (tooltipItem) => tooltipItem.raw > 0,
-                        /*itemSort: function(a, b) {
-                            console.log(b.dataset.label)
-                            return (b.raw - a.raw) || b.dataset.label == "Acumulado" ||b.dataset.label == "Budget";
-                        }*/
                     },
                     legend: {
                         labels: {
@@ -666,21 +668,17 @@
         let monthsDiff = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
 
         if (event.shiftKey) {
-            d2.setMonth(d2.getMonth() + direction);
+            monthsDiff += direction;
+            
+            if (monthsDiff < 0) monthsDiff = 0; 
         } else if (event.ctrlKey) {
             let shiftAmount = (monthsDiff + 1) * direction;
             d1.setMonth(d1.getMonth() + shiftAmount);
-            d2.setMonth(d2.getMonth() + shiftAmount);
-        } 
-        else {
+        } else {
             d1.setMonth(d1.getMonth() + direction);
-            d2.setMonth(d2.getMonth() + direction);
         }
 
-        if(d1 > d2) {
-            if (event.currentTarget.classList.contains('rounded-start')) d1 = new Date(d2);
-            else d2 = new Date(d1);
-        }
+        d2 = new Date(d1.getFullYear(), d1.getMonth() + monthsDiff + 1, 0);
 
         input1.value = d1.toISOString().split('T')[0];
         input2.value = d2.toISOString().split('T')[0];
@@ -767,7 +765,6 @@
                         <div class="col-1 d-block d-sm-none"></div>
                     `)
             }
-
 
             document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML(
                 "beforeend",
@@ -869,7 +866,7 @@
 
     search_expenses()
 
-    const icons = {
+    icons = {
         left: { default: 'ti-chevron-left', shift: 'ti-minus', ctrl: 'ti-chevrons-left' },
         right: { default: 'ti-chevron-right', shift: 'ti-plus', ctrl: 'ti-chevrons-right'  }
     };
