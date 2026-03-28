@@ -1,6 +1,40 @@
 let graph
 let graphBalance
 
+function initTooltips() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+}
+
+function edit_expense(id){
+    fetch("edit_expense?" + new URLSearchParams({
+        "id": id,
+        "name": document.getElementsByClassName("editnome")[0].value,
+        "value": document.getElementsByClassName("editmoney_value")[0].value,
+        "category_id": document.getElementsByClassName("editcategory")[0].value,
+        "date": document.getElementsByClassName("editdate")[0].value}),
+    {
+        method: "POST"
+    })
+    .then((response) => response.text())
+    .then(() => {
+        search_expenses()
+        Swal.fire({
+            position: 'top-end',
+            icon: 'success',
+            title: 'Despesa alterada com sucesso',
+            showConfirmButton: false,
+            timer: 2000,
+            toast: true
+        })
+    })
+    .catch((error) => {
+        console.warn(error);
+    });
+}
+
 function delete_expense(id){
     fetch("delete_expense?" + new URLSearchParams({
         "id": id}), {method: "POST", redirect: 'follow'})
@@ -85,6 +119,7 @@ function loadPage(href, pushState){
         if(e !== undefined && e.includes("/verifyaccount")){ // Verify if user was logged out
           window.location.replace(window.location.protocol + "//" + window.location.host+"/login")
         }
+        initTooltips();
     })
 
     attSideBarMenu()

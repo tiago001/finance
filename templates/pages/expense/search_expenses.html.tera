@@ -101,10 +101,7 @@
     document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
 
     document.addEventListener('DOMContentLoaded', function () {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
-        })
+        initTooltips()
     });
     
     expenses = null
@@ -686,33 +683,6 @@
         search_expenses()
     }
 
-    function edit_expense(id){
-        fetch("edit_expense?" + new URLSearchParams({
-            "id": id,
-            "name": document.getElementsByClassName("editnome")[0].value,
-            "value": document.getElementsByClassName("editmoney_value")[0].value,
-            "category_id": document.getElementsByClassName("editcategory")[0].value,
-            "date": document.getElementsByClassName("editdate")[0].value}),
-        {
-            method: "POST"
-        })
-        .then((response) => response.text())
-        .then(() => {
-            search_expenses()
-            Swal.fire({
-                position: 'top-end',
-                icon: 'success',
-                title: 'Despesa alterada com sucesso',
-                showConfirmButton: false,
-                timer: 2000,
-                toast: true
-            })
-        })
-        .catch((error) => {
-            console.warn(error);
-        });
-    }
-
     function fill_expenses(json){
         document.getElementsByClassName("expenses")[0].innerHTML = ''
         document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend",
@@ -872,8 +842,16 @@
     };
 
     function toggleShiftIcons(key) {
+        if(key != "Shift" && key != "Control") {
+            return
+        }
+
         const iconLeft = document.querySelector('#btn-previous i');
         const iconRight = document.querySelector('#btn-next i');
+
+        if(iconLeft == null || iconRight == null){
+            return
+        }
 
         iconLeft.classList.remove(icons.left.default, icons.left.shift, icons.left.ctrl);
         iconRight.classList.remove(icons.right.default, icons.right.shift, icons.right.ctrl);
@@ -890,6 +868,10 @@
     function resetIcons(){
         const iconLeft = document.querySelector('#btn-previous i');
         const iconRight = document.querySelector('#btn-next i');
+
+        if(iconLeft == null || iconRight == null){
+            return
+        }
 
         iconLeft.classList.remove(icons.left.default, icons.left.shift, icons.left.ctrl);
         iconRight.classList.remove(icons.right.default, icons.right.shift, icons.right.ctrl);

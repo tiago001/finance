@@ -304,33 +304,6 @@
             });
         }
 
-        function edit_expense(id){
-            fetch("edit_expense?" + new URLSearchParams({
-                "id": id,
-                "name": document.getElementsByClassName("editnome")[0].value,
-                "value": document.getElementsByClassName("editmoney_value")[0].value,
-                "category_id": document.getElementsByClassName("editcategory")[0].value,
-                "date": document.getElementsByClassName("editdate")[0].value}),
-            {
-                method: "POST"
-            })
-            .then((response) => response.text())
-            .then(() => {
-                search_expenses()
-                Swal.fire({
-                    position: 'top-end',
-                    icon: 'success',
-                    title: 'Despesa alterada com sucesso',
-                    showConfirmButton: false,
-                    timer: 2000,
-                    toast: true
-                })
-            })
-            .catch((error) => {
-                console.warn(error);
-            });
-        }
-
         function fill_expenses(json){
             document.getElementsByClassName("expenses")[0].innerHTML = ''
             let searchType = document.getElementsByClassName("search_type")[0].value
