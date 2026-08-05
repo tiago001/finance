@@ -282,6 +282,7 @@
                     document.getElementsByClassName("nome")[0].value = ""
                     document.getElementsByClassName("money_value")[0].value = ""
                     document.getElementsByClassName("category")[0].selectedIndex = 0
+                    lastSearchedValue = ""
                     if(document.getElementsByClassName("date")[0].getAttribute("locked") == "false") {
                         let date = new Date();
                         document.getElementsByClassName("date")[0].valueAsDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())

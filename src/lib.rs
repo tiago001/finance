@@ -9,3 +9,6 @@ pub mod stock_update;
 pub mod db;
 pub mod error;
 pub mod filters;
+pub mod template;
+
+pub use template::Template;

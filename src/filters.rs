@@ -1,38 +1,25 @@
-use rocket_dyn_templates::tera::{Value, Error, Result};
-use std::collections::HashMap;
+use chrono::{DateTime, NaiveDateTime, Utc};
+use tera::{Error, Kwargs, State, Value};
 
-use chrono::{NaiveDateTime, DateTime, Utc};
+pub fn tofixed(value: &Value, kwargs: Kwargs, _state: &State) -> Result<Value, Error> {
+    let precision = kwargs.get::<usize>("precision").unwrap_or(Some(2)).unwrap_or(2);
 
-pub fn tofixed(value: &Value, args: &HashMap<String, Value>) -> Result<Value> {
-    let precision = match args.get("precision") {
-        Some(Value::Number(n)) => n.as_u64().unwrap_or(2) as usize,
-        _ => 2,
-    };
-
-    match value {
-        Value::Number(n) => {
-            if let Some(f) = n.as_f64() {
-                Ok(Value::String(format!("{:.precision$}", f, precision = precision)))
-            } else if let Some(i) = n.as_i64() {
-                Ok(Value::String(format!("{:.precision$}", i as f64, precision = precision)))
-            } else {
-                Err(Error::msg("Valor numérico inválido"))
-            }
+    if let Some(f) = value.as_f64() {
+        Ok(Value::from(format!("{:.precision$}", f, precision = precision)))
+    } else if let Some(s) = value.as_str() {
+        if let Ok(f) = s.parse::<f64>() {
+            Ok(Value::from(format!("{:.precision$}", f, precision = precision)))
+        } else {
+            Err(Error::message("String não pode ser convertida para número"))
         }
-        Value::String(s) => {
-            if let Ok(f) = s.parse::<f64>() {
-                Ok(Value::String(format!("{:.precision$}", f, precision = precision)))
-            } else {
-                Err(Error::msg("String não pode ser convertida para número"))
-            }
-        }
-        _ => Err(Error::msg("Filtro tofixed só funciona com números ou strings numéricas"))
+    } else {
+        Err(Error::message("Filtro tofixed só funciona com números ou strings numéricas"))
     }
 }
 
-pub fn format_date(value: &Value, _args: &HashMap<String, Value>) -> Result<Value> {
-    let data_str = value.as_str().ok_or_else(|| Error::msg("Valor não é uma string"))?;
-    
+pub fn format_date(value: &Value, _kwargs: Kwargs, _state: &State) -> Result<Value, Error> {
+    let data_str = value.as_str().ok_or_else(|| Error::message("Valor não é uma string"))?;
+
     let input_format = "%Y-%m-%d %H:%M:%S%.f";
     let output_format = "%d/%m/%Y %H:%M:%S%.f";
 
@@ -40,10 +27,11 @@ pub fn format_date(value: &Value, _args: &HashMap<String, Value>) -> Result<Valu
         Ok(naive_dt) => {
             let dt_utc = DateTime::<Utc>::from_naive_utc_and_offset(naive_dt, Utc);
             let formatted = dt_utc.format(output_format).to_string();
-            Ok(Value::String(formatted))
+            Ok(Value::from(formatted))
         }
-        Err(_) => {
-            Err(Error::msg(format!("Não foi possível parsear a data: {}", data_str)))
-        }
+        Err(_) => Err(Error::message(format!(
+            "Não foi possível parsear a data: {}",
+            data_str
+        ))),
     }
 }

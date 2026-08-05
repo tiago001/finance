@@ -1,30 +1,32 @@
-#[macro_use] extern crate rocket;
+#[macro_use]
+extern crate rocket;
 
 use entity::income_view::IncomeView;
-use rocket::http::Status;
 use rocket::fs::FileServer;
-use rocket::response::Redirect;
+use rocket::http::Status;
 use rocket::request::FromRequest;
-use rocket::{tokio, Request};
 use rocket::request::{self, Outcome};
-use rocket_db_pools::{Database, Connection, sqlx};
-use rocket_dyn_templates::Template;
+use rocket::response::Redirect;
+use rocket::{tokio, Request};
+use rocket_db_pools::{sqlx, Connection, Database};
 
 use rocket_prometheus::PrometheusMetrics;
 use rocket_sentry::RocketSentry;
 use serde_json::json;
 
-use finance::{db::Logs, user_routes, expense_routes, income_routes, settings_routes, investment_routes};
-use finance::{user_routes::AuthenticatedUser, user_routes::redirect_to_login};
 use finance::stock_update;
+use finance::{
+    db::Logs, expense_routes, income_routes, investment_routes, settings_routes, user_routes,
+    Template,
+};
 
-use entity::{settings::Settings, categories::Categories, investments::Investment};
+use finance::{user_routes::redirect_to_login, user_routes::AuthenticatedUser};
+
+use entity::{categories::Categories, investments::Investment, settings::Settings};
 
 use entity::expense_view::ExpenseView;
 
 use tokio_cron_scheduler::{Job, JobScheduler, JobSchedulerError};
-
-use finance::filters::{format_date, tofixed};
 
 use dotenv::dotenv;
 
@@ -41,7 +43,6 @@ impl<'r> FromRequest<'r> for FetchMode {
     type Error = FetchModeError;
 
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-
         let keys: Vec<_> = req.headers().get("load-mode").collect();
         match keys.len() {
             0 => Outcome::Success(FetchMode("navigate".to_string())),
@@ -58,87 +59,86 @@ async fn rocket() -> _ {
     tokio::spawn(async {
         match run_scheduled_task().await {
             Ok(..) => println!("task scheduled successfully"),
-            Err(e) => println!("error initiating task {}", e)
+            Err(e) => println!("error initiating task {}", e),
         };
     });
 
     let prometheus = PrometheusMetrics::new();
 
     rocket::build()
-    .attach(Logs::init())
-    .mount("/", routes![
-            expense_routes::save_expense,
-            expense_routes::get_expense,
-            expense_routes::search_expenses, 
-            expense_routes::search_expenses_category,
-            expense_routes::edit_expense,
-            expense_routes::delete_expense,
-            expense_routes::get_balance,
-            expense_routes::predict_category,
-            income_routes::save_income,
-            income_routes::search_income,
-            income_routes::delete_income,
-            income_routes::edit_income,
-            income_routes::get_income,
-            user_routes::get_user_info,
-            user_routes::create_account,
-            user_routes::verify_account,
-            user_routes::logout,
-            user_routes::login,
-            user_routes::login_logged_user,
-            user_routes::register,
-            user_routes::register_logged_user,
-            settings_routes::save_settings,
-            settings_routes::get_settings,
-            settings_routes::save_category,
-            settings_routes::delete_category,
-            settings_routes::get_budget_categories,
-            settings_routes::save_budget_categories,
-            settings_routes::import_expenses,
-            index,
-            index_pwa,
-            settings,
-            searchexpenses,
-            addexpenses,
-            dashboard,
-            editexpense,
-            editincome,
-            income,
-            investment,
-            investment_routes::add_investment,
-            investment_routes::search_investment,
-            investment_routes::save_investment
-        ]
-    ).register("/",catchers![unauthorized])
-    .mount("/", FileServer::from("static")) // Enable for development
-    .attach(RocketSentry::fairing())
-    .attach(Template::custom(|engines| {
-        engines.tera.register_filter("tofixed", tofixed);
-        engines.tera.register_filter("format_date", format_date);
-    }))
-    .attach(prometheus.clone())
-    .mount("/metrics", prometheus)
+        .attach(Logs::init())
+        .mount(
+            "/",
+            routes![
+                expense_routes::save_expense,
+                expense_routes::get_expense,
+                expense_routes::search_expenses,
+                expense_routes::search_expenses_category,
+                expense_routes::edit_expense,
+                expense_routes::delete_expense,
+                expense_routes::get_balance,
+                expense_routes::predict_category,
+                income_routes::save_income,
+                income_routes::search_income,
+                income_routes::delete_income,
+                income_routes::edit_income,
+                income_routes::get_income,
+                user_routes::get_user_info,
+                user_routes::create_account,
+                user_routes::verify_account,
+                user_routes::logout,
+                user_routes::login,
+                user_routes::login_logged_user,
+                user_routes::register,
+                user_routes::register_logged_user,
+                settings_routes::save_settings,
+                settings_routes::get_settings,
+                settings_routes::save_category,
+                settings_routes::delete_category,
+                settings_routes::get_budget_categories,
+                settings_routes::save_budget_categories,
+                settings_routes::import_expenses,
+                index,
+                index_pwa,
+                settings,
+                searchexpenses,
+                addexpenses,
+                dashboard,
+                editexpense,
+                editincome,
+                income,
+                investment,
+                investment_routes::add_investment,
+                investment_routes::search_investment,
+                investment_routes::save_investment
+            ],
+        )
+        .register("/", catchers![unauthorized])
+        .mount("/", FileServer::from("static")) // Enable for development
+        .attach(RocketSentry::fairing())
+        .attach(Template::fairing())
+        .attach(prometheus.clone())
+        .mount("/metrics", prometheus)
 }
 
-async fn run_scheduled_task() -> Result<(), JobSchedulerError>{
+async fn run_scheduled_task() -> Result<(), JobSchedulerError> {
     let sched = JobScheduler::new().await?;
 
-    sched.add(
-        Job::new_async("0 0 1 * * *", |_uuid, _l| {
+    sched
+        .add(Job::new_async("0 0 1 * * *", |_uuid, _l| {
             Box::pin(async move {
                 match stock_update::update().await {
                     Ok(..) => println!("task completed successfully"),
-                    Err(e) => println!("error running task {}", e)
+                    Err(e) => println!("error running task {}", e),
                 };
             })
-        })?
-    ).await?;
+        })?)
+        .await?;
 
     sched.start().await?;
 
     Ok(())
 }
-
 
 #[get("/")]
 async fn index(mode: FetchMode, user: AuthenticatedUser) -> Template {
@@ -160,55 +160,93 @@ async fn index_pwa(mode: FetchMode, user: AuthenticatedUser) -> Template {
 
 #[get("/settings")]
 async fn settings(mode: FetchMode, mut db: Connection<Logs>, user: AuthenticatedUser) -> Template {
-    let stream = match sqlx::query_as!(Settings,
-            "SELECT * FROM settings WHERE user_id = ?",
-            user.user_id
-        ).fetch_one(db.as_mut()).await {
-            Ok(result) => result,
-            Err(..) => Settings{user_id: 0, budget: None}
-        };
+    let stream = match sqlx::query_as!(
+        Settings,
+        "SELECT * FROM settings WHERE user_id = ?",
+        user.user_id
+    )
+    .fetch_one(db.as_mut())
+    .await
+    {
+        Ok(result) => result,
+        Err(..) => Settings {
+            user_id: 0,
+            budget: None,
+        },
+    };
 
     let categories: Vec<Categories> = (sqlx::query_as! {Categories,
-        "SELECT * FROM categories WHERE user_id = ?",
-        user.user_id}
-        .fetch_all(db.as_mut())
-        .await).unwrap_or_default();
+    "SELECT * FROM categories WHERE user_id = ?",
+    user.user_id}
+    .fetch_all(db.as_mut())
+    .await)
+        .unwrap_or_default();
     if mode.0 == "navigate" {
-        Template::render("pages/extended/settings", json!({"username": user.name,"settings": stream, "categories": categories}))
+        Template::render(
+            "pages/extended/settings",
+            json!({"username": user.name,"settings": stream, "categories": categories}),
+        )
     } else {
-        Template::render("pages/settings", json!({"username": user.name,"settings": stream, "categories": categories}))
+        Template::render(
+            "pages/settings",
+            json!({"username": user.name,"settings": stream, "categories": categories}),
+        )
     }
 }
 
 #[get("/searchexpenses")]
-async fn searchexpenses(mut db: Connection<Logs>, mode: FetchMode, user: AuthenticatedUser) -> Template {
-    let categories = sqlx::query_as!(Categories,
-            "SELECT * FROM categories WHERE user_id = ? and category_type = 'expenses'",
-            user.user_id
-        )
-        .fetch_all(db.as_mut())
-        .await.unwrap();
+async fn searchexpenses(
+    mut db: Connection<Logs>,
+    mode: FetchMode,
+    user: AuthenticatedUser,
+) -> Template {
+    let categories = sqlx::query_as!(
+        Categories,
+        "SELECT * FROM categories WHERE user_id = ? and category_type = 'expenses'",
+        user.user_id
+    )
+    .fetch_all(db.as_mut())
+    .await
+    .unwrap();
 
     if mode.0 == "navigate" {
-        Template::render("pages/extended/search_expenses", json!({"username": user.name, "categories": categories}))
+        Template::render(
+            "pages/extended/search_expenses",
+            json!({"username": user.name, "categories": categories}),
+        )
     } else {
-        Template::render("pages/expense/search_expenses", json!({"username": user.name, "categories": categories}))
+        Template::render(
+            "pages/expense/search_expenses",
+            json!({"username": user.name, "categories": categories}),
+        )
     }
 }
 
 #[get("/addexpenses")]
-async fn addexpenses(mut db: Connection<Logs>, mode: FetchMode, user: AuthenticatedUser) -> Template {
-    let categories = sqlx::query_as!(Categories,
-            "SELECT * FROM categories WHERE user_id = ? and category_type = 'expenses'",
-            user.user_id
-        )
-        .fetch_all(db.as_mut())
-        .await.unwrap();
+async fn addexpenses(
+    mut db: Connection<Logs>,
+    mode: FetchMode,
+    user: AuthenticatedUser,
+) -> Template {
+    let categories = sqlx::query_as!(
+        Categories,
+        "SELECT * FROM categories WHERE user_id = ? and category_type = 'expenses'",
+        user.user_id
+    )
+    .fetch_all(db.as_mut())
+    .await
+    .unwrap();
 
     if mode.0 == "navigate" {
-        Template::render("pages/extended/add_expense", json!({"username": user.name, "categories": categories}))
+        Template::render(
+            "pages/extended/add_expense",
+            json!({"username": user.name, "categories": categories}),
+        )
     } else {
-        Template::render("pages/expense/add_expense", json!({"username": user.name, "categories": categories}))
+        Template::render(
+            "pages/expense/add_expense",
+            json!({"username": user.name, "categories": categories}),
+        )
     }
 }
 
@@ -223,72 +261,108 @@ async fn dashboard(mode: FetchMode, user: AuthenticatedUser) -> Template {
 
 #[get("/editexpense?<id>")]
 async fn editexpense(mut db: Connection<Logs>, user: AuthenticatedUser, id: i64) -> Template {
-    let categories = sqlx::query_as!(Categories,
-            "SELECT * FROM categories WHERE user_id = ? and category_type = 'expenses'",
-            user.user_id
-        )
-        .fetch_all(db.as_mut())
-        .await.unwrap();
+    let categories = sqlx::query_as!(
+        Categories,
+        "SELECT * FROM categories WHERE user_id = ? and category_type = 'expenses'",
+        user.user_id
+    )
+    .fetch_all(db.as_mut())
+    .await
+    .unwrap();
 
-    let expense = sqlx::query_as!(ExpenseView,
-            "SELECT * FROM expenses_view WHERE user_id = ? AND id = ?",
-            user.user_id, id
-        )
-        .fetch_one(db.as_mut())
-        .await.unwrap();
+    let expense = sqlx::query_as!(
+        ExpenseView,
+        "SELECT * FROM expenses_view WHERE user_id = ? AND id = ?",
+        user.user_id,
+        id
+    )
+    .fetch_one(db.as_mut())
+    .await
+    .unwrap();
 
-    Template::render("pages/expense/edit_expense",json!({"username": user.name, "categories": categories, "expense": expense}))
+    Template::render(
+        "pages/expense/edit_expense",
+        json!({"username": user.name, "categories": categories, "expense": expense}),
+    )
 }
 
 #[get("/editincome?<id>")]
 async fn editincome(mut db: Connection<Logs>, user: AuthenticatedUser, id: i64) -> Template {
-    let categories = sqlx::query_as!(Categories,
+    let categories = sqlx::query_as!(
+        Categories,
         "SELECT * FROM categories WHERE user_id = ? and category_type = 'incomes'",
         user.user_id
     )
     .fetch_all(db.as_mut())
-    .await.unwrap();
+    .await
+    .unwrap();
 
-    let income = sqlx::query_as!(IncomeView,
-            "SELECT * FROM incomes_view WHERE user_id = ? AND id = ?",
-            user.user_id, id
-        )
-        .fetch_one(db.as_mut())
-        .await.unwrap();
+    let income = sqlx::query_as!(
+        IncomeView,
+        "SELECT * FROM incomes_view WHERE user_id = ? AND id = ?",
+        user.user_id,
+        id
+    )
+    .fetch_one(db.as_mut())
+    .await
+    .unwrap();
 
-    Template::render("pages/income/edit_income",json!({"username": user.name, "categories": categories, "income": income}))
+    Template::render(
+        "pages/income/edit_income",
+        json!({"username": user.name, "categories": categories, "income": income}),
+    )
 }
 
 #[get("/income")]
 async fn income(mut db: Connection<Logs>, mode: FetchMode, user: AuthenticatedUser) -> Template {
-    let categories = sqlx::query_as!(Categories,
+    let categories = sqlx::query_as!(
+        Categories,
         "SELECT * FROM categories WHERE user_id = ? and category_type = 'incomes'",
         user.user_id
     )
     .fetch_all(db.as_mut())
-    .await.unwrap();
+    .await
+    .unwrap();
 
     if mode.0 == "navigate" {
-        Template::render("pages/extended/income", json!({"username": user.name, "categories": categories}))
+        Template::render(
+            "pages/extended/income",
+            json!({"username": user.name, "categories": categories}),
+        )
     } else {
-        Template::render("pages/income/income", json!({"username": user.name, "categories": categories}))
+        Template::render(
+            "pages/income/income",
+            json!({"username": user.name, "categories": categories}),
+        )
     }
 }
 
-#[get("/investment")]              
-async fn investment(mut db: Connection<Logs>, mode: FetchMode, user: AuthenticatedUser) -> Template {
-    let investments: Vec<Investment> = sqlx::query_as!(Investment,
-                "SELECT id, stock, name, quantity, user_id
+#[get("/investment")]
+async fn investment(
+    mut db: Connection<Logs>,
+    mode: FetchMode,
+    user: AuthenticatedUser,
+) -> Template {
+    let investments: Vec<Investment> = sqlx::query_as!(
+        Investment,
+        "SELECT id, stock, name, quantity, user_id
                 FROM investments where user_id = ?",
-                user.user_id
-            )
-            .fetch_all(db.as_mut())
-            .await.unwrap();
+        user.user_id
+    )
+    .fetch_all(db.as_mut())
+    .await
+    .unwrap();
 
     if mode.0 == "navigate" {
-        Template::render("pages/extended/investment", json!({"username": user.name, "investments": investments}))
+        Template::render(
+            "pages/extended/investment",
+            json!({"username": user.name, "investments": investments}),
+        )
     } else {
-        Template::render("pages/investment/investment", json!({"username": user.name, "investments": investments}))
+        Template::render(
+            "pages/investment/investment",
+            json!({"username": user.name, "investments": investments}),
+        )
     }
 }
 
