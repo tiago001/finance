@@ -23,6 +23,10 @@ pub fn format_date(value: &Value, _kwargs: Kwargs, _state: &State) -> Result<Val
     let input_format = "%Y-%m-%d %H:%M:%S%.f";
     let output_format = "%d/%m/%Y %H:%M:%S%.f";
 
+    if let Ok(naive_date) = chrono::NaiveDate::parse_from_str(data_str, "%Y-%m-%d") {
+        return Ok(Value::from(naive_date.format("%d/%m/%Y").to_string()));
+    }
+
     match NaiveDateTime::parse_from_str(data_str, input_format) {
         Ok(naive_dt) => {
             let dt_utc = DateTime::<Utc>::from_naive_utc_and_offset(naive_dt, Utc);

@@ -1,10 +1,10 @@
-use std::io::Cursor;
-use std::path::Path;
 use rocket::http::{ContentType, Status};
 use rocket::request::Request;
 use rocket::response::{Responder, Response};
 use serde::Serialize;
 use serde_json::Value;
+use std::io::Cursor;
+use std::path::Path;
 use tera::{Context, Tera};
 
 use crate::filters::{format_date, tofixed};
@@ -15,7 +15,11 @@ pub struct Template {
     context: Value,
 }
 
-fn walk_and_collect(dir: &Path, base_dir: &Path, templates: &mut Vec<(String, String)>) -> std::io::Result<()> {
+fn walk_and_collect(
+    dir: &Path,
+    base_dir: &Path,
+    templates: &mut Vec<(String, String)>,
+) -> std::io::Result<()> {
     if dir.is_dir() {
         for entry in std::fs::read_dir(dir)? {
             let entry = entry?;
@@ -145,5 +149,3 @@ mod tests {
         assert!(names.contains(&"pages/home"));
     }
 }
-
-

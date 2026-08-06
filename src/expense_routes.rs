@@ -1,48 +1,101 @@
 use std::collections::HashMap;
-use std::ops::{Sub, Add};
+use std::ops::{Add, Sub};
 
 use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, Utc};
-use entity::expense_view::ExpenseView as ExpenseView;
+use entity::expense_view::ExpenseView;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket_db_pools::{sqlx, Connection};
 use serde::Serialize;
-use time::{PrimitiveDateTime, OffsetDateTime};
+use serde_json::json;
+use time::{OffsetDateTime, PrimitiveDateTime};
 
-use crate::user_routes::AuthenticatedUser;
 use crate::db::Logs;
+use crate::user_routes::AuthenticatedUser;
+use crate::Template;
 
 #[post("/save_expense?<name>&<value>&<category_id>&<date>")]
-pub async fn save_expense(mut db: Connection<Logs>, name: &str, value: f64, category_id: &str, date: &str, user: AuthenticatedUser) -> String {
+pub async fn save_expense(
+    mut db: Connection<Logs>,
+    name: &str,
+    value: f64,
+    category_id: &str,
+    date: &str,
+    user: AuthenticatedUser,
+) -> String {
     let now = OffsetDateTime::now_utc(); //.to_offset(offset!(-3))
 
-    sqlx::query!("INSERT INTO expenses
+    sqlx::query!(
+        "INSERT INTO expenses
         (name, value, category_id, date, user_id, created_date)
         VALUES(?, ?, ?, ?, ?, ?)",
-        name, value, category_id, date, user.user_id, PrimitiveDateTime::new(now.date(), now.time()))
-        .execute(db.as_mut()).await.unwrap();
+        name,
+        value,
+        category_id,
+        date,
+        user.user_id,
+        PrimitiveDateTime::new(now.date(), now.time())
+    )
+    .execute(db.as_mut())
+    .await
+    .unwrap();
 
     "ok".to_string()
 }
 
 #[post("/edit_expense?<id>&<name>&<value>&<category_id>&<date>")]
-pub async fn edit_expense(mut db: Connection<Logs>,id: i64, name: Option<&str>, value: Option<f64>, category_id: Option<i64>, date: Option<&str>, user: AuthenticatedUser) -> String {
-
+pub async fn edit_expense(
+    mut db: Connection<Logs>,
+    id: i64,
+    name: Option<&str>,
+    value: Option<f64>,
+    category_id: Option<i64>,
+    date: Option<&str>,
+    user: AuthenticatedUser,
+) -> String {
     if name.is_some() && value.is_some() && category_id.is_some() && date.is_some() {
         sqlx::query!("UPDATE expenses SET name = ?, value = ?, category_id = ?, `date` = ? WHERE id = ? and user_id = ?",
             name, value, category_id, date, id, user.user_id).execute(db.as_mut()).await.unwrap();
     } else if name.is_some() {
-        sqlx::query!("UPDATE expenses SET name = ? WHERE id = ? and user_id = ?",
-            name, id, user.user_id).execute(db.as_mut()).await.unwrap();
+        sqlx::query!(
+            "UPDATE expenses SET name = ? WHERE id = ? and user_id = ?",
+            name,
+            id,
+            user.user_id
+        )
+        .execute(db.as_mut())
+        .await
+        .unwrap();
     } else if value.is_some() {
-        sqlx::query!("UPDATE expenses SET value = ? WHERE id = ? and user_id = ?",
-            value, id, user.user_id).execute(db.as_mut()).await.unwrap();
+        sqlx::query!(
+            "UPDATE expenses SET value = ? WHERE id = ? and user_id = ?",
+            value,
+            id,
+            user.user_id
+        )
+        .execute(db.as_mut())
+        .await
+        .unwrap();
     } else if category_id.is_some() {
-        sqlx::query!("UPDATE expenses SET category_id = ? WHERE id = ? and user_id = ?",
-            category_id, id, user.user_id).execute(db.as_mut()).await.unwrap();
+        sqlx::query!(
+            "UPDATE expenses SET category_id = ? WHERE id = ? and user_id = ?",
+            category_id,
+            id,
+            user.user_id
+        )
+        .execute(db.as_mut())
+        .await
+        .unwrap();
     } else if date.is_some() {
-        sqlx::query!("UPDATE expenses SET date = ? WHERE id = ? and user_id = ?",
-            date, id, user.user_id).execute(db.as_mut()).await.unwrap();
+        sqlx::query!(
+            "UPDATE expenses SET date = ? WHERE id = ? and user_id = ?",
+            date,
+            id,
+            user.user_id
+        )
+        .execute(db.as_mut())
+        .await
+        .unwrap();
     }
 
     "ok".to_string()
@@ -50,18 +103,28 @@ pub async fn edit_expense(mut db: Connection<Logs>,id: i64, name: Option<&str>, 
 
 #[get("/get_expense?<id>")]
 pub async fn get_expense(mut db: Connection<Logs>, id: i64, user: AuthenticatedUser) -> String {
-    let stream = sqlx::query_as!(ExpenseView,
+    let stream = sqlx::query_as!(
+        ExpenseView,
         "SELECT * FROM expenses_view WHERE user_id = ? AND id = ?",
-        user.user_id, id
+        user.user_id,
+        id
     )
     .fetch_one(db.as_mut())
-    .await.unwrap();
+    .await
+    .unwrap();
 
     serde_json::to_string(&stream).unwrap()
 }
 
 #[get("/search_expenses?<name>&<value1>&<value2>&<category>")]
-pub async fn search_expenses(mut db: Connection<Logs>, name: &str, category: Option<&str>, value1: &str, value2: Option<&str>, user: AuthenticatedUser) -> String {
+pub async fn search_expenses(
+    mut db: Connection<Logs>,
+    name: &str,
+    category: Option<&str>,
+    value1: &str,
+    value2: Option<&str>,
+    user: AuthenticatedUser,
+) -> String {
     let mut stream: Vec<ExpenseView> = vec![];
     if name == "category" {
         if category == Some("Indefinido") {
@@ -85,8 +148,11 @@ pub async fn search_expenses(mut db: Connection<Logs>, name: &str, category: Opt
             .await.unwrap();
         }
     } else if name == "currentMonth" {
-        let naive_datetime: NaiveDateTime = NaiveDate::parse_from_str(value1, "%Y-%m-%d").unwrap().and_hms_opt(0,0,0).unwrap();
-        let utc: DateTime<Utc> = DateTime::<Utc>::from_naive_utc_and_offset (naive_datetime, Utc);
+        let naive_datetime: NaiveDateTime = NaiveDate::parse_from_str(value1, "%Y-%m-%d")
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
+        let utc: DateTime<Utc> = DateTime::<Utc>::from_naive_utc_and_offset(naive_datetime, Utc);
 
         stream = sqlx::query_as!(ExpenseView, "SELECT * FROM expenses_view WHERE user_id = ? AND MONTH(`date`) = ? AND YEAR(`date`) = ? ORDER BY date DESC, id DESC", 
         user.user_id, utc.month(), utc.year())
@@ -97,27 +163,55 @@ pub async fn search_expenses(mut db: Connection<Logs>, name: &str, category: Opt
         .fetch_all(db.as_mut())
         .await.unwrap();
     } else if name == "lastAddedExpenses" {
-        stream = sqlx::query_as!(ExpenseView, "SELECT * FROM expenses_view WHERE user_id = ? ORDER BY created_date desc LIMIT 100", user.user_id)
+        stream = sqlx::query_as!(
+            ExpenseView,
+            "SELECT * FROM expenses_view WHERE user_id = ? ORDER BY created_date desc LIMIT 100",
+            user.user_id
+        )
         .fetch_all(db.as_mut())
-        .await.unwrap();
+        .await
+        .unwrap();
     }
 
     serde_json::to_string(&stream).unwrap()
 }
 
 #[get("/search_expenses_category?<value1>&<value2>")]
-pub async fn search_expenses_category(mut db: Connection<Logs>, user: AuthenticatedUser, value1: &str, value2: &str) -> String {
+pub async fn search_expenses_category(
+    mut db: Connection<Logs>,
+    user: AuthenticatedUser,
+    value1: &str,
+    value2: &str,
+) -> String {
     #[derive(Serialize, Debug, Clone)]
-    struct Record {category: Option<String>, sum: Option<f64>, month: Option<i64>}
+    struct Record {
+        category: Option<String>,
+        sum: Option<f64>,
+        month: Option<i64>,
+    }
 
     #[derive(Serialize, Debug, Clone)]
-    struct ExpensesCategory {category: Option<String>, months: Vec<MonthExpenses>}
+    struct ExpensesCategory {
+        category: Option<String>,
+        months: Vec<MonthExpenses>,
+    }
     #[derive(Serialize, Debug, Clone)]
-    struct MonthExpenses{sum: Option<f64>, month: Option<i64>, year: i64}
+    struct MonthExpenses {
+        sum: Option<f64>,
+        month: Option<i64>,
+        year: i64,
+    }
     #[derive(Serialize, Debug, Clone)]
-    struct Return{categories: Vec<ExpensesCategory>, months: Vec<Months>}
+    struct Return {
+        categories: Vec<ExpensesCategory>,
+        months: Vec<Months>,
+    }
     #[derive(Serialize, Debug, Clone)]
-    struct Months{month: i64, year: i64, sum: f64}
+    struct Months {
+        month: i64,
+        year: i64,
+        sum: f64,
+    }
 
     let stream = sqlx::query_as!(Record, "SELECT sum(value) as sum, category, month(`date`) as month
         FROM expenses_view WHERE `date` between ? and ? and user_id = ? group by category,month(`date`) order by 3,2",
@@ -127,22 +221,38 @@ pub async fn search_expenses_category(mut db: Connection<Logs>, user: Authentica
 
     let mut expenses: Vec<ExpensesCategory> = vec![];
     let mut months: Vec<Months> = vec![];
-    
+
     for s in stream.clone().into_iter() {
-        let naive_datetime: NaiveDateTime = NaiveDate::parse_from_str(value2, "%Y-%m-%d").unwrap().and_hms_opt(0,0,0).unwrap();
-        let mut utc: DateTime<Utc> = DateTime::<Utc>::from_naive_utc_and_offset (naive_datetime, Utc).sub(chrono::Months::new(3));
+        let naive_datetime: NaiveDateTime = NaiveDate::parse_from_str(value2, "%Y-%m-%d")
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
+        let mut utc: DateTime<Utc> =
+            DateTime::<Utc>::from_naive_utc_and_offset(naive_datetime, Utc)
+                .sub(chrono::Months::new(3));
 
         let expense = expenses.iter_mut().find(|e| e.category == s.category);
         if expense.is_none() {
-            let mut e = ExpensesCategory{ category: s.category, months: Vec::new()};
+            let mut e = ExpensesCategory {
+                category: s.category,
+                months: Vec::new(),
+            };
             for _ in 0..3 {
                 utc = utc.add(chrono::Months::new(1));
-                e.months.push(MonthExpenses{sum: Some(0.0), month: Some(utc.month() as i64), year: utc.year() as i64});
+                e.months.push(MonthExpenses {
+                    sum: Some(0.0),
+                    month: Some(utc.month() as i64),
+                    year: utc.year() as i64,
+                });
                 if months.len() < 3 {
-                    months.push(Months{month: utc.month() as i64, year: utc.year() as i64, sum: 0.0});
+                    months.push(Months {
+                        month: utc.month() as i64,
+                        year: utc.year() as i64,
+                        sum: 0.0,
+                    });
                 }
             }
-            
+
             expenses.push(e);
         }
     }
@@ -150,7 +260,11 @@ pub async fn search_expenses_category(mut db: Connection<Logs>, user: Authentica
     for s in stream.into_iter() {
         let expense = expenses.iter_mut().find(|e| e.category == s.category);
         if expense.is_some() {
-            let expense_month = expense.unwrap().months.iter_mut().find(|m| m.month == s.month);
+            let expense_month = expense
+                .unwrap()
+                .months
+                .iter_mut()
+                .find(|m| m.month == s.month);
 
             expense_month.unwrap().sum = s.sum;
         }
@@ -161,22 +275,35 @@ pub async fn search_expenses_category(mut db: Connection<Logs>, user: Authentica
         }
     }
 
-    let retorno = Return{categories: expenses, months};
+    let retorno = Return {
+        categories: expenses,
+        months,
+    };
 
     serde_json::to_string(&retorno).unwrap()
 }
 
 #[post("/delete_expense?<id>")]
-pub async fn delete_expense(mut db: Connection<Logs>,id: i64, user: AuthenticatedUser) -> String {
-
-    sqlx::query!("DELETE from expenses WHERE id = ? and user_id = ?",
-        id, user.user_id).execute(db.as_mut()).await.unwrap();
+pub async fn delete_expense(mut db: Connection<Logs>, id: i64, user: AuthenticatedUser) -> String {
+    sqlx::query!(
+        "DELETE from expenses WHERE id = ? and user_id = ?",
+        id,
+        user.user_id
+    )
+    .execute(db.as_mut())
+    .await
+    .unwrap();
 
     "ok".to_string()
 }
 
 #[derive(Serialize, Debug, Clone)]
-struct Balance {value: f64, month: i64, year: i64, balance_type: String}
+struct Balance {
+    value: f64,
+    month: i64,
+    year: i64,
+    balance_type: String,
+}
 
 #[derive(Serialize, Debug)]
 pub struct BalanceResponse {
@@ -188,7 +315,11 @@ pub struct BalanceResponse {
 }
 
 #[get("/get_balance?<months>")]
-pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: AuthenticatedUser) -> Result<Json<BalanceResponse>, String> {
+pub async fn get_balance(
+    mut db: Connection<Logs>,
+    months: u32,
+    user: AuthenticatedUser,
+) -> Result<Json<BalanceResponse>, String> {
     let records = sqlx::query!(
         "SELECT sum(value) as value, month(`date`) as month, year(`date`) as year, 'incomes' as balance_type
         FROM incomes 
@@ -208,7 +339,7 @@ pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: Authentica
 
     let mut data_map: HashMap<(i64, i64, String), f64> = HashMap::new();
     for rec in records {
-        if rec.year.is_some() && rec.month.is_some(){
+        if rec.year.is_some() && rec.month.is_some() {
             let key = (rec.year.unwrap(), rec.month.unwrap(), rec.balance_type);
             data_map.insert(key, rec.value.unwrap_or(0.0));
         }
@@ -228,16 +359,38 @@ pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: Authentica
         let m = current_date.month() as i64;
 
         let incomes_value = *data_map.get(&(y, m, "incomes".to_string())).unwrap_or(&0.0);
-        let expenses_value = *data_map.get(&(y, m, "expenses".to_string())).unwrap_or(&0.0);
+        let expenses_value = *data_map
+            .get(&(y, m, "expenses".to_string()))
+            .unwrap_or(&0.0);
         let month_diff = incomes_value - expenses_value;
         cumulative_balance += month_diff;
 
         let label = format!("{}-{}", m, y);
-        
-        incomes.push(Balance { value: incomes_value, month: m, year: y, balance_type: "incomes".into() });
-        expenses.push(Balance { value: expenses_value, month: m, year: y, balance_type: "expenses".into() });
-        balance_month.push(Balance { value: month_diff, month: m, year: y, balance_type: "balance_month".into() });
-        balance.push(Balance { value: cumulative_balance, month: m, year: y, balance_type: "balance".into() });
+
+        incomes.push(Balance {
+            value: incomes_value,
+            month: m,
+            year: y,
+            balance_type: "incomes".into(),
+        });
+        expenses.push(Balance {
+            value: expenses_value,
+            month: m,
+            year: y,
+            balance_type: "expenses".into(),
+        });
+        balance_month.push(Balance {
+            value: month_diff,
+            month: m,
+            year: y,
+            balance_type: "balance_month".into(),
+        });
+        balance.push(Balance {
+            value: cumulative_balance,
+            month: m,
+            year: y,
+            balance_type: "balance".into(),
+        });
         labels.push(label);
 
         current_date = current_date.add(chrono::Months::new(1));
@@ -245,7 +398,7 @@ pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: Authentica
 
     Ok(Json(BalanceResponse {
         expenses,
-        incomes,    
+        incomes,
         balance_month,
         balance,
         labels,
@@ -253,7 +406,11 @@ pub async fn get_balance(mut db: Connection<Logs>, months: u32, user: Authentica
 }
 
 #[get("/predict_category?<name>")]
-pub async fn predict_category(mut db: Connection<Logs>, name: &str, user: AuthenticatedUser) -> Result<Json<i64>, Status> {
+pub async fn predict_category(
+    mut db: Connection<Logs>,
+    name: &str,
+    user: AuthenticatedUser,
+) -> Result<Json<i64>, Status> {
     let category_id = sqlx::query_scalar!(
         "SELECT category_id FROM expenses_view WHERE user_id = ? AND name = ? order by id desc limit 1",
         user.user_id, name
@@ -265,4 +422,83 @@ pub async fn predict_category(mut db: Connection<Logs>, name: &str, user: Authen
     .unwrap_or(0);
 
     Ok(Json(category_id))
+}
+
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct ReportExpenses {
+    pub name: Option<String>,
+    pub total: Option<f64>,
+    pub category: Option<String>,
+    pub count: i64,
+    pub min_date: Option<time::Date>,
+    pub max_date: Option<time::Date>,
+}
+
+#[get("/report_expenses?<name>&<value1>&<value2>&<category>")]
+pub async fn report_expenses(
+    mut db: Connection<Logs>,
+    name: &str,
+    category: Option<&str>,
+    value1: &str,
+    value2: Option<&str>,
+    user: AuthenticatedUser,
+) -> Template {
+    let stream = if category == Some("Indefinido") || category.is_none() {
+        sqlx::query_as!(
+            ReportExpenses,
+            r#"SELECT 
+                trim(name) as "name", 
+                sum(value) as "total: f64", 
+                category as "category", 
+                count(id) as "count!", 
+                min(date) as "min_date", 
+                max(date) as "max_date"
+            FROM expenses_view ev
+            where user_id = ?
+            and `date` between ? and ?
+            group by trim(name), category
+            order by sum(value) desc
+            limit 100;"#,
+            user.user_id,
+            value1,
+            value2,
+        )
+        .fetch_all(db.as_mut())
+        .await
+        .unwrap()
+    } else {
+        sqlx::query_as!(
+            ReportExpenses,
+            r#"SELECT 
+                trim(name) as "name", 
+                sum(value) as "total: f64", 
+                category as "category", 
+                count(id) as "count!", 
+                min(date) as "min_date", 
+                max(date) as "max_date"
+            FROM expenses_view ev
+            where user_id = ?
+            and `date` between ? and ?
+            and category = ? 
+            group by trim(name), category
+            order by sum(value) desc
+            limit 100;"#,
+            user.user_id,
+            value1,
+            value2,
+            category,
+        )
+        .fetch_all(db.as_mut())
+        .await
+        .unwrap()
+    };
+
+    // SELECT category, round(sum(value), 2), count(id), min(date), max(date)
+    // FROM expenses_view ev
+    // where user_id = ?
+    // group by category
+    // order by sum(value) desc
+    // limit 100;
+
+    Template::render("pages/expense/report_expenses", json!({"expenses": stream}))
 }

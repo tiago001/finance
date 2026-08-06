@@ -1,7 +1,7 @@
 <div class="input-group mb-3 row">
     <div class="col-12 px-1 back-dashboard" style="display: none;">
         <a href="dashboard">
-            <button class="btn btn-sm btn-primary  float-end float-sm-start"> 
+            <button class="btn btn-sm btn-primary  float-end float-sm-start">
                 <i class="ti ti-arrow-back-up"></i>Dashboard
             </button>
         </a>
@@ -17,7 +17,7 @@
         <select class="form-select category_select" aria-label="Default select example">
             <option value="Indefinido" selected>Todas categorias</option>
             {% for category in categories %}
-                <option value="{{category.category}}">{{category.category}}</option>
+            <option value="{{category.category}}">{{category.category}}</option>
             {% endfor %}
         </select>
     </div>
@@ -37,40 +37,34 @@
     <div class="col-md-7 d-none d-md-block d-lg-none"></div>
     <div class="col-3 col-sm-7 col-md-2 col-lg-1 date p-1 row">
         <div class="col-6 p-0">
-            <button type="button" 
-                    id="btn-previous"
-                    class="btn btn-primary w-100 px-0 rounded-0 rounded-start btn-nav" 
-                    onclick="navigate_months(event, -1)"
-                    data-bs-toggle="tooltip" 
-                    data-bs-placement="top" 
-                    data-bs-html="true"
-                    title="<b>Clique:</b> Retroceder 1 mês<br><b>Shift:</b> Remover 1 mês<br><b>Ctrl:</b> Pular janela inteira">
+            <button type="button" id="btn-previous" class="btn btn-primary w-100 px-0 rounded-0 rounded-start btn-nav"
+                onclick="navigate_months(event, -1)" data-bs-toggle="tooltip" data-bs-placement="top"
+                data-bs-html="true"
+                title="<b>Clique:</b> Retroceder 1 mês<br><b>Shift:</b> Remover 1 mês<br><b>Ctrl:</b> Pular janela inteira">
                 <i class="ti ti-chevron-left"></i>
             </button>
         </div>
         <div class="col-6 p-0">
-            <button type="button" 
-                    id="btn-next"
-                    class="btn btn-primary w-100 px-0 rounded-0 rounded-end btn-nav" 
-                    onclick="navigate_months(event, 1)"
-                    data-bs-toggle="tooltip" 
-                    data-bs-placement="top" 
-                    data-bs-html="true"
-                    title="<b>Clique:</b> Avançar 1 mês<br><b>Shift:</b> Adicionar 1 mês<br><b>Ctrl:</b> Pular janela inteira">
+            <button type="button" id="btn-next" class="btn btn-primary w-100 px-0 rounded-0 rounded-end btn-nav"
+                onclick="navigate_months(event, 1)" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true"
+                title="<b>Clique:</b> Avançar 1 mês<br><b>Shift:</b> Adicionar 1 mês<br><b>Ctrl:</b> Pular janela inteira">
                 <i class="ti ti-chevron-right"></i>
             </button>
         </div>
     </div>
     <div class="col-9 col-sm-2 col-md-3 col-lg-2 p-1">
         <button type="button" class="btn btn-primary w-100" onclick="search_expenses()">Buscar Despesas</button>
-    </div>    
+    </div>
 </div>
 
 <div class="row">
     <div class="col-12 col-sm-12 col-md-12">
         <div class="chart mb-4">
-            <button class="btn btn-sm btn-primary float-end change-graph-btn" onclick="change_graph()">Trocar gráfico</button>
-            <canvas id="graph" ></canvas>
+            <button class="btn btn-sm btn-primary float-end show-report-btn ms-1" onclick="show_report()"
+                data-bs-toggle="modal" data-bs-target="#exampleModal"><i class="ti ti-report-money"></i></button>
+            <button class="btn btn-sm btn-primary float-end change-graph-btn" onclick="change_graph()">Trocar
+                gráfico</button>
+            <canvas id="graph"></canvas>
         </div>
     </div>
 </div>
@@ -83,6 +77,7 @@
     .chart {
         min-height: 250px;
     }
+
     @media screen and (min-width: 480px) {
         .chart {
             min-height: 390px
@@ -92,73 +87,73 @@
 
 <script>
     var today = new Date();
-    var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
+    var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
     var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    
+
     graphType = "total"
-    
+
     document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
     document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
 
     document.addEventListener('DOMContentLoaded', function () {
         initTooltips()
     });
-    
+
     expenses = null
 
     var params = new URLSearchParams(window.location.search);
 
-    if(Array.from(params.entries()).length > 0) {
+    if (Array.from(params.entries()).length > 0) {
         for (let item of document.getElementsByClassName("back-dashboard")) {
             item.classList.remove("d-none")
             item.classList.add("d-block")
         }
     }
 
-    if(params.get("category") != null){
+    if (params.get("category") != null) {
         document.getElementsByClassName("category_select")[0].value = params.get("category")
     }
-    if(params.get("startdate")){
+    if (params.get("startdate")) {
         document.getElementsByClassName("date1")[0].value = params.get("startdate");
     }
-    if(params.get("enddate")){
+    if (params.get("enddate")) {
         document.getElementsByClassName("date2")[0].value = params.get("enddate");
     }
 
-    function search_expenses(){
+    function search_expenses() {
         fetch("search_expenses?" + new URLSearchParams({
             "name": document.getElementsByClassName("search")[0].value,
             "value1": document.getElementsByClassName("date1")[0].value,
             "value2": document.getElementsByClassName("date2")[0].value,
             "category": document.getElementsByClassName("category_select")[0].value
-        }), {redirect: 'follow'})
-        .then((response) => {
-            if (response.redirected) window.location.href = response.url;
-            return response.json()
-        })
-        .then((json) => {
-            expenses = json
-            fill_expenses(json)
-            months = getMonthsCount()
+        }), { redirect: 'follow' })
+            .then((response) => {
+                if (response.redirected) window.location.href = response.url;
+                return response.json()
+            })
+            .then((json) => {
+                expenses = json
+                fill_expenses(json)
+                months = getMonthsCount()
 
-            if(months > 12){
-                show_expenses_graph_yearly()
-                $(".change-graph-btn").hide()
-            } else if(months > 1){
-                $(".change-graph-btn").hide()
-                show_expenses_graph_monthly()
-            } else {
-                $(".change-graph-btn").show()
-                if(graphType == "total"){
-                    show_expenses_graph()
+                if (months > 12) {
+                    show_expenses_graph_yearly()
+                    $(".change-graph-btn").hide()
+                } else if (months > 1) {
+                    $(".change-graph-btn").hide()
+                    show_expenses_graph_monthly()
                 } else {
-                    show_expenses_graph_category()
+                    $(".change-graph-btn").show()
+                    if (graphType == "total") {
+                        show_expenses_graph()
+                    } else {
+                        show_expenses_graph_category()
+                    }
                 }
-            }
-        })
-        .catch((error) => {
-            console.warn(error);
-        });
+            })
+            .catch((error) => {
+                console.warn(error);
+            });
 
         updateURLParams()
     }
@@ -169,7 +164,7 @@
         const endDate = document.getElementsByClassName("date2")[0].value;
 
         const url = new URL(window.location);
-        
+
         if (category) {
             url.searchParams.set("category", category);
         } else {
@@ -191,12 +186,12 @@
         var date = new Date(year, month, 1);
         var days = [];
         while (date.getMonth() === month) {
-          days.push(new Date(date));
-          date.setDate(date.getDate() + 1);
+            days.push(new Date(date));
+            date.setDate(date.getDate() + 1);
         }
         return days;
     }
-    
+
     async function show_expenses_graph_yearly() {
         let json = expenses;
 
@@ -231,7 +226,7 @@
         labels.forEach(month => {
             let d = yearlyData[month];
             data.push(d.value.toFixed(2));
-            
+
             total += d.value
             acumulative.push(total.toFixed(2));
         });
@@ -269,7 +264,7 @@
         });
     }
 
-    async function show_expenses_graph_monthly(){
+    async function show_expenses_graph_monthly() {
         let json = expenses
 
         let ctx = document.getElementById('graph');
@@ -278,10 +273,10 @@
 
         let startDate = new Date(document.getElementsByClassName("date1")[0].value.replace(/-/g, '\/'))
         let endDate = new Date(document.getElementsByClassName("date2")[0].value.replace(/-/g, '\/'))
-        
+
         let monthlyData = {};
         let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-        
+
         while (current <= endDate) {
             let monthKey = current.toISOString().substring(0, 7);
             monthlyData[monthKey] = { value: 0 };
@@ -303,12 +298,12 @@
         labels.forEach(month => {
             let d = monthlyData[month];
             data.push(d.value.toFixed(2));
-            
+
             total += d.value
             acumulative.push(total.toFixed(2));
         });
 
-        if(graph == undefined) {
+        if (graph == undefined) {
             graph = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -320,7 +315,7 @@
                         yAxisID: 'myScale',
                         borderColor: '#ff6384',
                         backgroundColor: "#ff6384"
-                    },{
+                    }, {
                         label: 'Valor',
                         data: data,
                         borderWidth: 1,
@@ -345,8 +340,8 @@
                 }
             });
         } else {
-            if(graph.data.datasets[1].label == "Budget"){
-                graph.data.datasets.splice(1,1)
+            if (graph.data.datasets[1].label == "Budget") {
+                graph.data.datasets.splice(1, 1)
             }
             graph.data.labels = labels
             graph.data.datasets[0].data = acumulative;
@@ -355,10 +350,10 @@
         }
     }
 
-    async function show_expenses_graph(){
+    async function show_expenses_graph() {
         let json = expenses
 
-        if(graph){
+        if (graph) {
             graph.destroy()
         }
         let ctx = document.getElementById('graph');
@@ -373,35 +368,35 @@
         let daysInMonth = getDaysInMonth(month, year)
 
         let budgetValue = null
-        
+
         let settings = await get_settings();
         budgetValue = settings.budget;
 
         daysInMonth.forEach((v, pos) => {
             let dayFound = false
-            for (let index = json.length-1; index >= 0; index--) {
+            for (let index = json.length - 1; index >= 0; index--) {
                 let e = json[index];
 
-                if(e.date == new Date(v).toISOString().split('T')[0]){
+                if (e.date == new Date(v).toISOString().split('T')[0]) {
                     dayFound = true
 
                     found = false
                     datas.forEach(d => {
-                        if(d.date == e.date){
+                        if (d.date == e.date) {
                             d.value = d.value + e.value
                             found = true
                         }
                     });
-                
-                    if(found == false){
-                        datas.push({"date" : e.date, "value" : e.value, "budget": (budgetValue/daysInMonth.length*(pos+1))})
+
+                    if (found == false) {
+                        datas.push({ "date": e.date, "value": e.value, "budget": (budgetValue / daysInMonth.length * (pos + 1)) })
                     }
                 }
-                
+
             }
 
-            if(!dayFound) {
-                datas.push({"date" : new Date(v).toISOString().split('T')[0], "value" : 0, "budget": (budgetValue/daysInMonth.length*(pos+1))})
+            if (!dayFound) {
+                datas.push({ "date": new Date(v).toISOString().split('T')[0], "value": 0, "budget": (budgetValue / daysInMonth.length * (pos + 1)) })
             }
         });
 
@@ -430,14 +425,14 @@
                     yAxisID: 'myScale',
                     borderColor: '#ff6384',
                     backgroundColor: "#ff6384"
-                },{
+                }, {
                     type: 'line',
                     label: 'Budget',
                     data: budget,
                     yAxisID: 'myScale',
                     borderColor: '#3bb000',
                     backgroundColor: "#1c7a11"
-                },{
+                }, {
                     label: 'Valor',
                     data: data,
                     borderWidth: 1,
@@ -464,10 +459,10 @@
         });
     }
 
-    async function show_expenses_graph_category(){
+    async function show_expenses_graph_category() {
         let json = expenses
 
-        if(graph){
+        if (graph) {
             graph.destroy()
         }
         let ctx = document.getElementById('graph');
@@ -483,7 +478,7 @@
         let daysInMonth = getDaysInMonth(month, year)
 
         let budgetValue = null
-        
+
         let settings = await get_settings();
         budgetValue = settings.budget;
 
@@ -493,21 +488,21 @@
             .filter((value, index, self) => self.indexOf(value) === index)
 
         jsonCategories.forEach(e => {
-            categories.push({name: e, data: []});
+            categories.push({ name: e, data: [] });
         })
 
         categories.forEach(c => {
             daysInMonth.forEach((v, pos) => {
                 let dayFound = false
                 let value = 0
-                for (let index = json.length-1; index >= 0; index--) {
+                for (let index = json.length - 1; index >= 0; index--) {
                     let e = json[index];
-                    
-                    if(e.date == new Date(v).toISOString().split('T')[0] && e.category == c.name){
+
+                    if (e.date == new Date(v).toISOString().split('T')[0] && e.category == c.name) {
                         value = value + e.value
                     }
                 }
-    
+
                 c.data.push(value)
             });
         })
@@ -529,29 +524,29 @@
 
         daysInMonth.forEach((v, pos) => {
             let dayFound = false
-            for (let index = json.length-1; index >= 0; index--) {
+            for (let index = json.length - 1; index >= 0; index--) {
                 let e = json[index];
 
-                if(e.date == new Date(v).toISOString().split('T')[0]){
+                if (e.date == new Date(v).toISOString().split('T')[0]) {
                     dayFound = true
 
                     found = false
                     datas.forEach(d => {
-                        if(d.date == e.date){
+                        if (d.date == e.date) {
                             d.value = d.value + e.value
                             found = true
                         }
                     });
-                
-                    if(found == false){
-                        datas.push({"date" : e.date, "value" : e.value, "budget": (budgetValue/daysInMonth.length*(pos+1))})
+
+                    if (found == false) {
+                        datas.push({ "date": e.date, "value": e.value, "budget": (budgetValue / daysInMonth.length * (pos + 1)) })
                     }
                 }
-                
+
             }
 
-            if(!dayFound) {
-                datas.push({"date" : new Date(v).toISOString().split('T')[0], "value" : 0, "budget": (budgetValue/daysInMonth.length*(pos+1))})
+            if (!dayFound) {
+                datas.push({ "date": new Date(v).toISOString().split('T')[0], "value": 0, "budget": (budgetValue / daysInMonth.length * (pos + 1)) })
             }
         });
 
@@ -580,7 +575,7 @@
             backgroundColor: "#1c7a11"
         })
         data.forEach(d => {
-            if(d.data.filter((num) => num > 0).length > 0){
+            if (d.data.filter((num) => num > 0).length > 0) {
                 dataset.push(d)
             }
         })
@@ -629,8 +624,8 @@
     }
 
 
-    function change_graph(){
-        if(graphType == "total"){
+    function change_graph() {
+        if (graphType == "total") {
             graphType = "category"
             show_expenses_graph_category()
         } else {
@@ -639,16 +634,16 @@
         }
     }
 
-    function get_settings(){
+    function get_settings() {
         return new Promise((resolve, reject) => {
-            fetch("get_settings", {redirect: 'follow'})
-            .then((response) => {
-                if (response.redirected) window.location.href = response.url;
-                return response.json()
-            })
-            .then((json) => {
-                resolve(json)
-            });
+            fetch("get_settings", { redirect: 'follow' })
+                .then((response) => {
+                    if (response.redirected) window.location.href = response.url;
+                    return response.json()
+                })
+                .then((json) => {
+                    resolve(json)
+                });
         })
     }
 
@@ -666,8 +661,8 @@
 
         if (event.shiftKey) {
             monthsDiff += direction;
-            
-            if (monthsDiff < 0) monthsDiff = 0; 
+
+            if (monthsDiff < 0) monthsDiff = 0;
         } else if (event.ctrlKey) {
             let shiftAmount = (monthsDiff + 1) * direction;
             d1.setMonth(d1.getMonth() + shiftAmount);
@@ -683,7 +678,7 @@
         search_expenses()
     }
 
-    function fill_expenses(json){
+    function fill_expenses(json) {
         document.getElementsByClassName("expenses")[0].innerHTML = ''
         document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend",
             `
@@ -703,7 +698,7 @@
             `
         )
         document.getElementsByClassName("expenses")[0].insertAdjacentHTML("beforeend", `<div class="row future-expenses p-0" style="background-color: #eeeeee;border-radius: 5px;"></div>`);
-        
+
         let total = 0
         let lastDate = ""
 
@@ -711,15 +706,15 @@
             total += e.value
 
             tagExpense = "expenses"
-            if(new Date(e.date+" 00:00") > new Date()) {
+            if (new Date(e.date + " 00:00") > new Date()) {
                 tagExpense = "future-expenses"
             }
 
-            if(e.date != lastDate){
+            if (e.date != lastDate) {
                 document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML(
                     "beforeend",
                     `<div class="col-11 mt-2 text-center d-block d-sm-none">
-                            <i class="ti ti-calendar"></i> ${new Date(e.date+"T00:00").toLocaleString().substr(0,10)}
+                            <i class="ti ti-calendar"></i> ${new Date(e.date + "T00:00").toLocaleString().substr(0, 10)}
                         </div>`)
                 document.getElementsByClassName(tagExpense)[0].insertAdjacentHTML("beforeend",
                     `
@@ -749,7 +744,7 @@
                         ${e.category} 
                     </div>
                     <div class="col-12 col-sm-2 text-center d-none d-sm-block ${e.date != lastDate ? "border-top-grey" : ""}">
-                        ${e.date != lastDate ? new Date(e.date+"T00:00").toLocaleString().substr(0,10) : ""}
+                        ${e.date != lastDate ? new Date(e.date + "T00:00").toLocaleString().substr(0, 10) : ""}
                     </div>
                     <div class="col-1 text-center p-0 ${e.date != lastDate ? "border-top-grey" : ""}">
                         <button class="btn btn-sm btn-light py-0" onclick="open_edit_expense(${e.id})" data-bs-toggle="modal" data-bs-target="#exampleModal">
@@ -762,9 +757,9 @@
             lastDate = e.date
         })
 
-        if(document.getElementsByClassName("future-expenses ")[0].childNodes.length > 0){
-            document.getElementsByClassName("future-expenses")[0].insertAdjacentHTML("beforeend", 
-            `<div class="col-12 text-center border-top-grey">
+        if (document.getElementsByClassName("future-expenses ")[0].childNodes.length > 0) {
+            document.getElementsByClassName("future-expenses")[0].insertAdjacentHTML("beforeend",
+                `<div class="col-12 text-center border-top-grey">
                 Despesas futuras 
                 <i class="ti ti-arrow-narrow-up"></i>
             </div>`
@@ -772,7 +767,7 @@
         }
 
         document.getElementsByClassName("expenses")[0].insertAdjacentHTML("afterbegin",
-        `
+            `
             <div class="col-6"></div>
             <div class="col-1 col-sm-3"></div>
             <div class="col-5 col-sm-2 text-center">
@@ -781,55 +776,57 @@
             <div class="col-1 d-none d-sm-block"></div>
         `
         )
-    
-        $('.name').on('blur', function(e){
-            if(e.target.textContent.trim() != e.target.getAttribute("value")) {
-                e.target.setAttribute("value", e.target.textContent.trim()) 
+
+        $('.name').on('blur', function (e) {
+            if (e.target.textContent.trim() != e.target.getAttribute("value")) {
+                e.target.setAttribute("value", e.target.textContent.trim())
                 fetch("edit_expense?" + new URLSearchParams({
                     "name": e.target.textContent.trim(),
-                    "id": e.target.getAttribute("expense")}),
-                {
-                    method: "POST"
-                })
-                .then((response) => response.text())
-                .then((html) => {
-                    Swal.fire({
-                        position: 'top-end',
-                        icon: 'success',
-                        title: 'Despesa salva com sucesso',
-                        showConfirmButton: false,
-                        timer: 2000,
-                        toast: true
+                    "id": e.target.getAttribute("expense")
+                }),
+                    {
+                        method: "POST"
+                    })
+                    .then((response) => response.text())
+                    .then((html) => {
+                        Swal.fire({
+                            position: 'top-end',
+                            icon: 'success',
+                            title: 'Despesa salva com sucesso',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            toast: true
                         })
-                })
-                .catch((error) => {
-                    console.warn(error);
-                });
+                    })
+                    .catch((error) => {
+                        console.warn(error);
+                    });
             }
         })
-        $('.valor').on('blur', function(e){
-            if(e.target.textContent.trim() != e.target.getAttribute("value")) {
-                e.target.setAttribute("value", e.target.textContent.trim()) 
+        $('.valor').on('blur', function (e) {
+            if (e.target.textContent.trim() != e.target.getAttribute("value")) {
+                e.target.setAttribute("value", e.target.textContent.trim())
                 fetch("edit_expense?" + new URLSearchParams({
                     "value": e.target.textContent.trim(),
-                    "id": e.target.getAttribute("expense")}),
-                {
-                    method: "POST"
-                })
-                .then((response) => response.text())
-                .then((html) => {
-                    Swal.fire({
-                        position: 'top-end',
-                        icon: 'success',
-                        title: 'Despesa salva com sucesso',
-                        showConfirmButton: false,
-                        timer: 2000,
-                        toast: true
+                    "id": e.target.getAttribute("expense")
+                }),
+                    {
+                        method: "POST"
+                    })
+                    .then((response) => response.text())
+                    .then((html) => {
+                        Swal.fire({
+                            position: 'top-end',
+                            icon: 'success',
+                            title: 'Despesa salva com sucesso',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            toast: true
                         })
-                })
-                .catch((error) => {
-                    console.warn(error);
-                });
+                    })
+                    .catch((error) => {
+                        console.warn(error);
+                    });
             }
         })
     }
@@ -838,38 +835,38 @@
 
     icons = {
         left: { default: 'ti-chevron-left', shift: 'ti-minus', ctrl: 'ti-chevrons-left' },
-        right: { default: 'ti-chevron-right', shift: 'ti-plus', ctrl: 'ti-chevrons-right'  }
+        right: { default: 'ti-chevron-right', shift: 'ti-plus', ctrl: 'ti-chevrons-right' }
     };
 
     function toggleShiftIcons(key) {
-        if(key != "Shift" && key != "Control") {
+        if (key != "Shift" && key != "Control") {
             return
         }
 
         const iconLeft = document.querySelector('#btn-previous i');
         const iconRight = document.querySelector('#btn-next i');
 
-        if(iconLeft == null || iconRight == null){
+        if (iconLeft == null || iconRight == null) {
             return
         }
 
         iconLeft.classList.remove(icons.left.default, icons.left.shift, icons.left.ctrl);
         iconRight.classList.remove(icons.right.default, icons.right.shift, icons.right.ctrl);
 
-        if(key == "Shift") {
+        if (key == "Shift") {
             iconLeft.classList.add(icons.left.shift);
             iconRight.classList.add(icons.right.shift);
-        } else if(key == "Control") {
+        } else if (key == "Control") {
             iconLeft.classList.add(icons.left.ctrl);
             iconRight.classList.add(icons.right.ctrl);
         }
     }
 
-    function resetIcons(){
+    function resetIcons() {
         const iconLeft = document.querySelector('#btn-previous i');
         const iconRight = document.querySelector('#btn-next i');
 
-        if(iconLeft == null || iconRight == null){
+        if (iconLeft == null || iconRight == null) {
             return
         }
 
@@ -887,4 +884,22 @@
     document.addEventListener('keyup', (e) => {
         resetIcons();
     });
+
+    function show_report() {
+        var exampleModal = document.getElementById('exampleModal')
+        var modalTitle = exampleModal.querySelector('.modal-title')
+
+        modalTitle.textContent = 'Relatorio de despesas'
+
+        $(".modal-body").html("")
+        $(".modal-body").load("report_expenses?" + new URLSearchParams({
+            "name": document.getElementsByClassName("search")[0].value,
+            "value1": document.getElementsByClassName("date1")[0].value,
+            "value2": document.getElementsByClassName("date2")[0].value,
+            "category": document.getElementsByClassName("category_select")[0].value
+        }))
+
+        $(".modal-footer .btn-danger").hide()
+        $(".modal-footer .btn-primary").hide()
+    }
 </script>

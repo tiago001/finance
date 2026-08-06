@@ -1,0 +1,44 @@
+{% if expenses | length > 0 %}
+<div class="table-responsive">
+    <table class="table table-borderless table-sm align-middle text-nowrap mb-0">
+        <thead>
+            <tr class="border-bottom text-muted fs-2">
+                <th scope="col" class="ps-0">Nome</th>
+                <th scope="col" class="text-center">Qtd</th>
+                <th scope="col" class="text-center">Categoria</th>
+                <th scope="col" class="text-end">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for expense in expenses %}
+            <tr class="border-bottom border-light">
+                <td class="ps-0">
+                    <span class="text-body">{{ expense.name }}</span>
+                    <div class="d-flex align-items-center gap-1 fs-1">
+                        <i class="ti ti-calendar text-body-secondary"></i>
+                        {{ expense.min_date | default(value="-") | format_date }} - {{
+                        expense.max_date | default(value="-") | format_date }}
+
+                    </div>
+                </td>
+                <td class="text-center fs-2">
+                    {{ expense.count }}
+                </td>
+                <td class="text-center fs-2">
+                    {{ expense.category | default(value="Sem categoria") }}
+                </td>
+                <td class="text-end fs-2">
+                    <span class="float-start">R$</span>
+                    <span>{{ expense.total | default(value=0) |
+                        tofixed(precision=2) }}</span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center py-4 text-secondary">
+    <span class="fs-3">Nenhuma despesa encontrada.</span>
+</div>
+{% endif %}
