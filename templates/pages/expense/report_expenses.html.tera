@@ -1,44 +1,173 @@
-{% if expenses | length > 0 %}
-<div class="table-responsive">
-    <table class="table table-borderless table-sm align-middle text-nowrap mb-0">
-        <thead>
-            <tr class="border-bottom text-muted fs-2">
-                <th scope="col" class="ps-0">Nome</th>
-                <th scope="col" class="text-center">Qtd</th>
-                <th scope="col" class="text-center">Categoria</th>
-                <th scope="col" class="text-end">Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for expense in expenses %}
-            <tr class="border-bottom border-light">
-                <td class="ps-0">
-                    <span class="text-body">{{ expense.name }}</span>
-                    <div class="d-flex align-items-center gap-1 fs-1">
-                        <i class="ti ti-calendar text-body-secondary"></i>
-                        {{ expense.min_date | default(value="-") | format_date }} - {{
-                        expense.max_date | default(value="-") | format_date }}
+<div class="d-flex justify-content-end mb-2">
+    <ul class="nav nav-pills gap-1" id="reportViewTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active btn-sm py-1 px-3 fs-2" id="cat-view-tab" data-bs-toggle="pill"
+                data-bs-target="#cat-view-pane" type="button" role="tab" aria-controls="cat-view-pane"
+                aria-selected="true"><i class="ti ti-category me-1"></i>Por Categoria</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link btn-sm py-1 px-3 fs-2" id="all-view-tab" data-bs-toggle="pill"
+                data-bs-target="#all-view-pane" type="button" role="tab" aria-controls="all-view-pane"
+                aria-selected="false"><i class="ti ti-list me-1"></i>Todas as Despesas</button>
+        </li>
+    </ul>
+</div>
 
-                    </div>
-                </td>
-                <td class="text-center fs-2">
-                    {{ expense.count }}
-                </td>
-                <td class="text-center fs-2">
-                    {{ expense.category | default(value="Sem categoria") }}
-                </td>
-                <td class="text-end fs-2">
-                    <span class="float-start">R$</span>
-                    <span>{{ expense.total | default(value=0) |
-                        tofixed(precision=2) }}</span>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="tab-content" id="reportViewTabContent">
+    <!-- View 1: Expandable Categories -->
+    <div class="tab-pane fade show active" id="cat-view-pane" role="tabpanel" aria-labelledby="cat-view-tab"
+        tabindex="0">
+        {% if categories | length > 0 %}
+        <div class="table-responsive">
+            <table class="table table-borderless table-sm align-middle text-nowrap mb-0">
+                <thead>
+                    <tr class="border-bottom text-muted fs-2">
+                        <th scope="col" class="ps-0">Categoria</th>
+                        <th scope="col" class="text-center">Qtd</th>
+                        <th scope="col" class="text-end">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cat in categories %}
+                    <tr class="border-bottom border-light cursor-pointer category-row" data-bs-toggle="collapse"
+                        data-bs-target="#cat-details-{{ loop.index }}" aria-expanded="false" style="cursor: pointer;">
+                        <td class="ps-0">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="ti ti-chevron-right text-muted chevron-icon"></i>
+                                <div>
+                                    <span class="text-body fw-bold">{{ cat.category | default(value="Sem categoria")
+                                        }}</span>
+                                    <div class="d-flex align-items-center gap-1 fs-1">
+                                        <i class="ti ti-calendar text-body-secondary"></i>
+                                        {% if cat.min_date == cat.max_date %}
+                                        {{ cat.max_date | default(value="-") | format_date }}
+                                        {% else %}
+                                        {{ cat.min_date | default(value="-") | format_date }} - {{ cat.max_date |
+                                        default(value="-") | format_date }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-center fs-2">
+                            {{ cat.count }}
+                        </td>
+                        <td class="text-end fs-2 fw-semibold">
+                            <span class="float-start">R$</span>
+                            <span>{{ cat.total | default(value=0) | tofixed(precision=2) }}</span>
+                        </td>
+                    </tr>
+                    <tr class="collapse" id="cat-details-{{ loop.index }}">
+                        <td colspan="3" class="p-0 bg-body-tertiary">
+                            <div class="ps-4 pe-2 py-2 border-bottom">
+                                <table class="table table-borderless table-sm align-middle text-nowrap mb-0">
+                                    <thead>
+                                        <tr class="text-muted fs-1 border-bottom">
+                                            <th scope="col" class="ps-0">Despesa</th>
+                                            <th scope="col" class="text-center">Qtd</th>
+                                            <th scope="col" class="text-end">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for expense in expenses %}
+                                        {% if expense.category == cat.category %}
+                                        <tr class="border-bottom border-light">
+                                            <td class="ps-0">
+                                                <span class="text-body">{{ expense.name }}</span>
+                                                <div class="d-flex align-items-center gap-1 text-muted fs-1">
+                                                    <i class="ti ti-calendar text-body-secondary"></i>
+                                                    {% if expense.min_date == expense.max_date %}
+                                                    {{ expense.max_date | default(value="-") | format_date }}
+                                                    {% else %}
+                                                    {{ expense.min_date | default(value="-") | format_date }} - {{
+                                                    expense.max_date | default(value="-") | format_date }}
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                {{ expense.count }}
+                                            </td>
+                                            <td class="text-end">
+                                                <span class="float-start">R$</span>
+                                                <span>{{ expense.total | default(value=0) | tofixed(precision=2)
+                                                    }}</span>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-secondary">
+            <span class="fs-3">Nenhuma categoria encontrada.</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- View 2: All Expenses Flat List -->
+    <div class="tab-pane fade" id="all-view-pane" role="tabpanel" aria-labelledby="all-view-tab" tabindex="0">
+        {% if expenses | length > 0 %}
+        <div class="table-responsive">
+            <table class="table table-borderless table-sm align-middle text-nowrap mb-0">
+                <thead>
+                    <tr class="border-bottom text-muted fs-2">
+                        <th scope="col" class="ps-0">Nome</th>
+                        <th scope="col" class="text-center">Qtd</th>
+                        <th scope="col" class="text-center">Categoria</th>
+                        <th scope="col" class="text-end">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in expenses %}
+                    <tr class="border-bottom border-light">
+                        <td class="ps-0">
+                            <span class="text-body">{{ expense.name }}</span>
+                            <div class="d-flex align-items-center gap-1 fs-1">
+                                <i class="ti ti-calendar text-body-secondary"></i>
+                                {% if expense.min_date == expense.max_date %}
+                                {{ expense.max_date | default(value="-") | format_date }}
+                                {% else %}
+                                {{ expense.min_date | default(value="-") | format_date }} - {{ expense.max_date |
+                                default(value="-") | format_date }}
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="text-center fs-2">
+                            {{ expense.count }}
+                        </td>
+                        <td class="text-center fs-2">
+                            {{ expense.category | default(value="Sem categoria") }}
+                        </td>
+                        <td class="text-end fs-2">
+                            <span class="float-start">R$</span>
+                            <span>{{ expense.total | default(value=0) | tofixed(precision=2) }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-secondary">
+            <span class="fs-3">Nenhuma despesa encontrada.</span>
+        </div>
+        {% endif %}
+    </div>
 </div>
-{% else %}
-<div class="text-center py-4 text-secondary">
-    <span class="fs-3">Nenhuma despesa encontrada.</span>
-</div>
-{% endif %}
+
+<style>
+    .chevron-icon {
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .category-row[aria-expanded="true"] .chevron-icon {
+        transform: rotate(90deg);
+    }
+</style>

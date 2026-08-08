@@ -434,6 +434,15 @@ pub struct ReportExpenses {
     pub max_date: Option<time::Date>,
 }
 
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct ReportCategoryExpenses {
+    pub category: Option<String>,
+    pub total: Option<f64>,
+    pub count: i64,
+    pub min_date: Option<time::Date>,
+    pub max_date: Option<time::Date>,
+}
+
 #[get("/report_expenses?<name>&<value1>&<value2>&<category>")]
 pub async fn report_expenses(
     mut db: Connection<Logs>,
@@ -443,7 +452,7 @@ pub async fn report_expenses(
     value2: Option<&str>,
     user: AuthenticatedUser,
 ) -> Template {
-    let stream = if category == Some("Indefinido") || category.is_none() {
+    let expenses = if category == Some("Indefinido") || category.is_none() {
         sqlx::query_as!(
             ReportExpenses,
             r#"SELECT 
@@ -493,12 +502,59 @@ pub async fn report_expenses(
         .unwrap()
     };
 
-    // SELECT category, round(sum(value), 2), count(id), min(date), max(date)
-    // FROM expenses_view ev
-    // where user_id = ?
-    // group by category
-    // order by sum(value) desc
-    // limit 100;
+    let categories = if category == Some("Indefinido") || category.is_none() {
+        sqlx::query_as!(
+            ReportCategoryExpenses,
+            r#"SELECT 
+                category as "category", 
+                round(sum(value), 2) as "total: f64", 
+                count(id) as "count!", 
+                min(date) as "min_date", 
+                max(date) as "max_date"
+            FROM expenses_view ev
+            where user_id = ?
+            and `date` between ? and ?
+            group by category
+            order by sum(value) desc
+            limit 100;"#,
+            user.user_id,
+            value1,
+            value2,
+        )
+        .fetch_all(db.as_mut())
+        .await
+        .unwrap()
+    } else {
+        sqlx::query_as!(
+            ReportCategoryExpenses,
+            r#"SELECT 
+                category as "category", 
+                round(sum(value), 2) as "total: f64", 
+                count(id) as "count!", 
+                min(date) as "min_date", 
+                max(date) as "max_date"
+            FROM expenses_view ev
+            where user_id = ?
+            and `date` between ? and ?
+            and category = ?
+            group by category
+            order by sum(value) desc
+            limit 100;"#,
+            user.user_id,
+            value1,
+            value2,
+            category,
+        )
+        .fetch_all(db.as_mut())
+        .await
+        .unwrap()
+    };
 
-    Template::render("pages/expense/report_expenses", json!({"expenses": stream}))
+    Template::render(
+        "pages/expense/report_expenses",
+        json!({
+            "expenses": expenses,
+            "categories": categories
+        }),
+    )
 }

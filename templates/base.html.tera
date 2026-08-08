@@ -1,84 +1,92 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <link rel="manifest" href="manifest.json" />
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    {# <meta http-equiv="Content-Security-Policy" content="
+
+<head>
+  <link rel="manifest" href="manifest.json" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {#
+  <meta http-equiv="Content-Security-Policy" content="
     default-src 'self';
     script-src 'self' https:;
     style-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;
     font-src 'self' https://fonts.gstatic.com;object-src;
     base-uri 'none';
     require-trusted-types-for 'script';" /> #}
-    <title>Projeto Finanças</title>
-    <link rel="shortcut icon" type="image/png" href="../assets/images/logos/favicon.ico" />
-    {# <link rel="stylesheet" href="../assets/css/styles.min.css" /> #}
-    <link rel="stylesheet" href="../assets/css/styles.css" />
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="manifest" href="manifest.json" />
-    </head>
-    <body data-bs-theme="light">
-        {% block content %}{% endblock content %}
-    </body>
-    {# <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('Service Worker registered!', reg))
-            .catch(err => console.err('Service Worker failed:', err));
-        });
-      }
-    </script> #}
+  <title>Projeto Finanças</title>
+  <link rel="shortcut icon" type="image/png" href="../assets/images/logos/favicon.ico" />
+  {#
+  <link rel="stylesheet" href="../assets/css/styles.min.css" /> #}
+  <link rel="stylesheet" href="../assets/css/styles.css" />
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="manifest" href="manifest.json" />
+</head>
 
-    <script src="../assets/libs/jquery/dist/jquery.min.js"></script>
-    <script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../assets/js/app.min.js"></script>
-    <script src="../assets/js/sidebarmenu.js"></script>
+<body data-bs-theme="light">
+  {% block content %}{% endblock content %}
+</body>
+{#
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('Service Worker registered!', reg))
+        .catch(err => console.err('Service Worker failed:', err));
+    });
+  }
+</script> #}
 
-    <!-- JQUERY MASK -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js" integrity="sha512-pHVGpX7F/27yZ0ISY+VVjyULApbDlD0/X0rgGbTqCE7WFW5MezNTWG/dnhtbBuICzsd0WQPgpE4REBLv+UqChw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="../assets/libs/jquery/dist/jquery.min.js"></script>
+<script src="../assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../assets/js/app.min.js"></script>
+<script src="../assets/js/sidebarmenu.js"></script>
 
-    <!-- CHART -->
-    <script src="assets/libs/chartjs/chart.js"></script>
-    <!-- CHART COLORS-->
-    <script src="assets/libs/chartjs/chartjs-plugin-autocolors.js"></script>
-    <!-- SWEETALERT -->
-    <script src="assets/libs/sweetalert/sweetalert2.js"></script>
+<!-- JQUERY MASK -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"
+  integrity="sha512-pHVGpX7F/27yZ0ISY+VVjyULApbDlD0/X0rgGbTqCE7WFW5MezNTWG/dnhtbBuICzsd0WQPgpE4REBLv+UqChw=="
+  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-    <script src='https://js-de.sentry-cdn.com/1eeaca6844f9adde574f668c374008da.min.js' crossorigin="anonymous"></script>
+<!-- CHART -->
+<script src="assets/libs/chartjs/chart.js"></script>
+<!-- CHART COLORS-->
+<script src="assets/libs/chartjs/chartjs-plugin-autocolors.js"></script>
+<!-- SWEETALERT -->
+<script src="assets/libs/sweetalert/sweetalert2.js"></script>
+
+<script src='https://js-de.sentry-cdn.com/1eeaca6844f9adde574f668c374008da.min.js' crossorigin="anonymous"></script>
 
 
-    <script>
-        window.sentryOnLoad = function () {
-          Sentry.init({
-            dsn: "https://1eeaca6844f9adde574f668c374008da@o4507855350988800.ingest.de.sentry.io/4507855357149264",
-      
-            // Alternatively, use `process.env.npm_package_version` for a dynamic release version
-            // if your build tool supports it.
-            release: "finance@0.1.1",
-            integrations: [
-              Sentry.browserTracingIntegration(),
-              Sentry.replayIntegration(),
-            ],
-      
-            // Set tracesSampleRate to 1.0 to capture 100%
-            // of transactions for tracing.
-            // We recommend adjusting this value in production
-            tracesSampleRate: 0.5,
-      
-            // Set `tracePropagationTargets` to control for which URLs trace propagation should be enabled
-            tracePropagationTargets: [
-              "https://projetofinancas.com.br",
-            ],
-      
-            // Capture Replay for 10% of all sessions,
-            // plus for 100% of sessions with an error
-            replaysSessionSampleRate: 0.1,
-            replaysOnErrorSampleRate: 1.0,
-          });
-        };
-      </script>
+<script>
+  window.sentryOnLoad = function () {
+    Sentry.init({
+      dsn: "https://1eeaca6844f9adde574f668c374008da@o4507855350988800.ingest.de.sentry.io/4507855357149264",
 
-    <script src="js/app.js"></script>
+      // Alternatively, use `process.env.npm_package_version` for a dynamic release version
+      // if your build tool supports it.
+      release: "finance@0.1.2",
+      integrations: [
+        Sentry.browserTracingIntegration(),
+        Sentry.replayIntegration(),
+      ],
+
+      // Set tracesSampleRate to 1.0 to capture 100%
+      // of transactions for tracing.
+      // We recommend adjusting this value in production
+      tracesSampleRate: 0.5,
+
+      // Set `tracePropagationTargets` to control for which URLs trace propagation should be enabled
+      tracePropagationTargets: [
+        "https://projetofinancas.com.br",
+      ],
+
+      // Capture Replay for 10% of all sessions,
+      // plus for 100% of sessions with an error
+      replaysSessionSampleRate: 0.1,
+      replaysOnErrorSampleRate: 1.0,
+    });
+  };
+</script>
+
+<script src="js/app.js"></script>
+
 </html>
