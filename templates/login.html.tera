@@ -41,7 +41,7 @@
                                     <input type="text" id="id" name="id" value="0" placeholder="0" hidden>
                                     <div class="mb-3">
                                         <label for="email" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="email" name="email"
+                                        <input type="email" class="form-control" id="email" name="email" value="{{ email | default(value="") }}"
                                             aria-describedby="emailHelp">
                                     </div>
                                     <div class="mb-4">

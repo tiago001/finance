@@ -141,8 +141,21 @@ pub async fn logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
     Flash::success(Redirect::to("/login"), "Logged out succesfully!")
 }
 
-fn login_error() -> Flash<Redirect> {
+fn login_error(cookies: &CookieJar<'_>, email: Option<String>) -> Flash<Redirect> {
+    if let Some(e) = email {
+        cookies.add(Cookie::build(("login_email", e)).build());
+    }
     Flash::error(Redirect::to("/login"), "Incorrect email or password")
+}
+
+fn register_error(cookies: &CookieJar<'_>, email: Option<&str>, name: Option<&str>, msg: &str) -> Flash<Redirect> {
+    if let Some(e) = email {
+        cookies.add(Cookie::build(("register_email", e.to_string())).build());
+    }
+    if let Some(n) = name {
+        cookies.add(Cookie::build(("register_name", n.to_string())).build());
+    }
+    Flash::error(Redirect::to("/register"), msg.to_string())
 }
 
 #[derive(FromForm)]
@@ -155,15 +168,13 @@ pub struct InfoLogin {
 #[post("/createaccount", data = "<user_form>")]
 pub async fn create_account(
     mut db: Connection<Logs>,
+    cookies: &CookieJar<'_>,
     user_form: Form<InfoLogin>,
 ) -> Flash<Redirect> {
     let user = user_form.into_inner();
 
     if user.email.is_empty() || user.password.is_empty() || user.name.is_none() {
-        return Flash::error(
-            Redirect::to("/register"),
-            "Please enter a valid email and password",
-        );
+        return register_error(cookies, Some(&user.email), user.name.as_deref(), "Please enter a valid email and password");
     }
 
     let stored_user: Option<Users> = match sqlx::query_as!(
@@ -179,7 +190,7 @@ pub async fn create_account(
     };
 
     if stored_user.is_some() {
-        return Flash::error(Redirect::to("/register"), "User already registered");
+        return register_error(cookies, Some(&user.email), user.name.as_deref(), "User already registered");
     }
 
     let mut salt = [0u8; 16];
@@ -199,7 +210,7 @@ pub async fn create_account(
     let hash = match argon2::hash_encoded(user.password.as_bytes(), &salt, &hash_config) {
         Ok(result) => result,
         Err(_) => {
-            return Flash::error(Redirect::to("/register"), "Issue creating account");
+            return register_error(cookies, Some(&user.email), user.name.as_deref(), "Issue creating account");
         }
     };
 
@@ -232,19 +243,40 @@ pub async fn verify_account(
     .fetch_one(db.as_mut())
     .await
     {
-        Ok(model) => model,
-        Err(_) => return login_error(),
+        Ok(model) => Some(model),
+        Err(_) => None,
     };
 
-    let is_password_correct =
-        match argon2::verify_encoded(&stored_user.password, user.password.as_bytes()) {
-            Ok(result) => result,
-            Err(_) => return Flash::error(Redirect::to("/login"), "Incorrect email or password"),
-        };
+    let is_password_correct = match stored_user {
+        Some(ref model) => {
+            match argon2::verify_encoded(&model.password, user.password.as_bytes()) {
+                Ok(result) => result,
+                Err(_) => false,
+            }
+        },
+        None => {
+            // Mitigate timing attacks by performing a dummy hash
+            let dummy_salt = [0u8; 16];
+            let hash_config = Config {
+                ad: &[],
+                hash_length: 32,
+                lanes: 1,
+                mem_cost: 65536,
+                secret: &[],
+                time_cost: 1,
+                variant: Variant::Argon2id,
+                version: Version::Version13,
+            };
+            let _ = argon2::hash_encoded(user.password.as_bytes(), &dummy_salt, &hash_config);
+            false
+        }
+    };
 
     if !is_password_correct {
-        return login_error();
+        return login_error(cookies, Some(user.email));
     }
+
+    let stored_user = stored_user.unwrap();
 
     let now = OffsetDateTime::now_utc();
 
@@ -277,10 +309,13 @@ pub async fn get_user_info(mut db: Connection<Logs>, user: AuthenticatedUser) ->
 }
 
 #[get("/login")]
-pub async fn login(flash: Option<FlashMessage<'_>>, _user: UnauthenticatedUser) -> Template {
+pub async fn login(flash: Option<FlashMessage<'_>>, _user: UnauthenticatedUser, cookies: &CookieJar<'_>) -> Template {
+    let email = cookies.get("login_email").map(|c| c.value().to_string()).unwrap_or_default();
+    cookies.remove(Cookie::from("login_email"));
+
     Template::render(
         "login",
-        json!({"message": flash.map(FlashMessage::into_inner)}),
+        json!({"message": flash.map(FlashMessage::into_inner), "email": email}),
     )
 }
 
@@ -290,10 +325,20 @@ pub async fn login_logged_user(_user: AuthenticatedUser) -> Redirect {
 }
 
 #[get("/register")]
-pub async fn register(flash: Option<FlashMessage<'_>>, _user: UnauthenticatedUser) -> Template {
+pub async fn register(flash: Option<FlashMessage<'_>>, _user: UnauthenticatedUser, cookies: &CookieJar<'_>) -> Template {
+    let email = cookies.get("register_email").map(|c| c.value().to_string()).unwrap_or_default();
+    cookies.remove(Cookie::from("register_email"));
+
+    let name = cookies.get("register_name").map(|c| c.value().to_string()).unwrap_or_default();
+    cookies.remove(Cookie::from("register_name"));
+
     Template::render(
         "register",
-        json!({"message": flash.map(FlashMessage::into_inner)}),
+        json!({
+            "message": flash.map(FlashMessage::into_inner),
+            "email": email,
+            "name": name
+        }),
     )
 }
 

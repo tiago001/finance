@@ -1,5 +1,5 @@
 <div>
-    
+
     <div class="row">
         <div style="display: none;">
             <div class="col-6 date d-flex">
@@ -9,270 +9,337 @@
                 <input type="date" class="form-control date2" data-provide="datepicker">
             </div>
         </div>
-        <div class="col-12 p-0">
-            <p class="fs-4 text-center text-md-start ps-md-3">Valor gasto por categoria</p>
-        </div>
-        <div class="col-12 col-lg-5 p-0">
-            <div class="row category_values">
-                
+
+        <div class="col-12 col-lg-6 d-flex align-items-stretch">
+            <div class="card w-100">
+                <div class="card-body">
+                    <h5 class="card-title fw-semibold mb-4">Valores por Categoria</h5>
+                    <div class="category_values">
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-12 col-sm-6 col-md-6 col-lg-4 py-2 py-sm-0">
-            <canvas id="myChart"></canvas>
-        </div>
-        <div class="col-12 col-sm-6 col-md-6 col-lg-3 align-content-around">
-            <div class="row expenses-month py-2"></div>
-        </div>
-        <div class="col-4 col-sm-6 col-md-10"></div>
-        <div class="col-8 col-sm-6 col-md-2 d-flex">
-            <div class="input-group input-group-sm">
-                <input type="text" id="balance-months" class="form-control" value="6">
-                <span class="input-group-text">meses</span>
+
+        <div class="col-12 col-lg-6 d-flex align-items-stretch">
+            <div class="card w-100">
+                <div class="card-body">
+                    <h5 class="card-title fw-semibold mb-4">Distribuição</h5>
+                    <div class="row">
+                        <div class="col-12 col-sm-6 col-md-6 col-lg-4 py-2 py-sm-0 pe-0">
+                            <canvas id="myChart"></canvas>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-6 col-lg-8 align-content-around ps-0">
+                            <div class="expenses-month p-2"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <button class="btn btn-sm btn-primary mx-1 px-3" onclick="get_balance()"><span class="ti ti-search"></span> </button>
         </div>
-        <div class="col-12" style="min-height: 300px;">
-            <canvas id="balanceChart"></canvas>
+
+        <div class="col-12 d-flex align-items-stretch">
+            <div class="card w-100">
+                <div class="card-body">
+                    <div class="d-sm-flex d-block align-items-center justify-content-between mb-4">
+                        <div class="mb-3 mb-sm-0">
+                            <h5 class="card-title fw-semibold">Evolução do Saldo</h5>
+                        </div>
+                        <div class="d-flex" style="width: 250px;">
+                            <div class="input-group input-group-sm">
+                                <input type="text" id="balance-months" class="form-control" value="6">
+                                <span class="input-group-text">meses</span>
+                            </div>
+                            <button class="btn btn-sm btn-primary mx-1 px-3" onclick="get_balance()"><span
+                                    class="ti ti-search"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div style="min-height: 300px;">
+                        <canvas id="balanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
-        
+
     </div>
 </div>
 
 <script>
-    function search_expenses_category(){
+    function search_expenses_category() {
         fetch("search_expenses_category?" + new URLSearchParams({
             "value1": document.getElementsByClassName("date1")[0].value,
             "value2": document.getElementsByClassName("date2")[0].value
-        }), {redirect: 'follow'})
-        .then((response) => {
-            if (response.redirected) window.location.href = response.url;
-            return response.json()
-        })
-        .then((json) => {
-            document.getElementsByClassName("category_values")[0].innerHTML = `<div class="col-3 col-sm-6 fs-4">Categoria</div>`
-    
-            let label = []
-            let sum = []
-    
-            let endMonth = new Date(document.getElementsByClassName("date2")[0].value.replace(/-/g, '\/')).getMonth()+1
-
-            json.months.forEach(m => {
-                document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
-                    "beforeend",
-                    `<div class="col-3 col-sm-2 text-center fs-4 month-category">Mês ${m.month}</div>`
-                )
+        }), { redirect: 'follow' })
+            .then((response) => {
+                if (response.redirected) window.location.href = response.url;
+                return response.json()
             })
+            .then((json) => {
+                const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-            /*$('.month-category').first()[0].insertAdjacentHTML("afterbegin", `
-                <button type="button" class="btn btn-primary p-0" onclick="previous_month()"><i class="ti ti-chevron-left"></i></button>`)
-            $('.month-category').last()[0].insertAdjacentHTML("beforeend", `
-                <button type="button" class="btn btn-primary p-0" onclick="previous_month()"><i class="ti ti-chevron-right"></i></button>`)*/
-
-            let totalMes = json.months[json.months.length - 1].sum
-
-            json.categories.forEach(e => {
-                document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
-                    "beforeend",
-                    `
-                    <div class="col-3 col-sm-6 text-truncate border-top-grey">
-                    ${e.category} 
-                    </div>
-                    `
-                )
-
-                e.months.forEach(m => {
-                    document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
-                        "beforeend",
-                        `
-                            <div class="col-3 col-sm-2 text-center border-top-grey" onclick="search_expenses('${e.category}',${m.year},${m.month})">
-                                <span class="cursor-pointer">${m.sum.toFixed(2)}</span>
-                            </div>
-                        `
-                    )
-                })
-            })
-
-            json.categories.sort(function(a,b) {
-                return a.months[a.months.length - 1].sum < b.months[b.months.length - 1].sum ? 1 : -1
-            })
-
-            json.categories.forEach(e => {
-                e.months.forEach(m => {
-                    if(m.month == endMonth && m.sum > 0){
-                        label.push(e.category)
-                        sum.push(m.sum)
-
-                        document.getElementsByClassName("expenses-month")[0].insertAdjacentHTML(
-                            "beforeend",
-                            `
-                                <div class="col-6 border-top-grey">${e.category}</div>
-                                <div class="col-3 text-center border-top-grey">${m.sum.toFixed(2)}</div>
-                                <div class="col-3 text-center border-top-grey">${(m.sum * 100 / totalMes).toFixed(1)}% </div>
-                            `
-                        )
-                    }
-                })
-            })
-    
-            document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
-                "beforeend",
-                `
-                <div class="col-3 col-sm-6 border-top-grey" style=\"font-weight: bold;font-size: 17px;\">
-                    Total
-                </div>
-                `
-            )
-
-            json.months.forEach(m => {
-                document.getElementsByClassName("category_values")[0].insertAdjacentHTML(
-                    "beforeend",
-                    `
-                        <div class="col-3 col-sm-2 text-center border-top-grey" style=\"font-weight: bold;font-size: 17px;\" onclick="search_expenses(null,${m.year},${m.month})">
-                            <span class="cursor-pointer">${m.sum.toFixed(2)}</span>
-                        </div>
-                    `
-                )
-            })
-            
-            if(graph){
-                graph.destroy()
-            }
-    
-            const ctx = document.getElementById('myChart');
-
-            graph = new Chart(ctx, {
-                options: {
-                    maintainAspectRatio: false
-                },
-                type: 'doughnut',
-                data: {
-                    labels: label,
-                    datasets: [{
-                        label: 'Sum',
-                        data: sum,
-                        borderWidth: 1
-                    }]
+                let rightTitle = "";
+                if (json.months && json.months.length > 0) {
+                    let lastMonthData = json.months[json.months.length - 1];
+                    let lastMonthName = monthNames[lastMonthData.month - 1];
+                    let lastMonthYear = lastMonthData.year.toString().slice(-2);
+                    rightTitle = `Gastos ${lastMonthName}/${lastMonthYear}`;
                 }
+
+                let endMonth = new Date(document.getElementsByClassName("date2")[0].value.replace(/-/g, '\/')).getMonth() + 1
+                let totalMes = json.months[json.months.length - 1].sum
+
+                let tableHTML = `<div class="table-responsive">
+                    <table class="table table-sm text-nowrap align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th class="border-bottom-0 py-1"><h6 class="fw-semibold mb-0 fs-4">Categoria</h6></th>`;
+
+                json.months.forEach(m => {
+                    const shortYear = m.year.toString().slice(-2);
+                    const monthName = monthNames[m.month - 1];
+                    tableHTML += `<th class="border-bottom-0 text-end py-1"><h6 class="fw-semibold mb-0 fs-4">${monthName}/${shortYear}</h6></th>`;
+                });
+
+                tableHTML += `</tr>
+                        </thead>
+                        <tbody>`;
+
+                json.categories.forEach(e => {
+                    tableHTML += `<tr>
+                        <td class="border-bottom-0 py-1"><h6 class="fw-normal mb-0 text-truncate" style="max-width: 120px;">${e.category}</h6></td>`;
+
+                    e.months.forEach(m => {
+                        tableHTML += `<td class="border-bottom-0 text-end py-1" onclick="search_expenses('${e.category}',${m.year},${m.month})">
+                            <span class="cursor-pointer">${m.sum === 0 ? '-' : m.sum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </td>`;
+                    });
+                    tableHTML += `</tr>`;
+                });
+
+                tableHTML += `<tr>
+                    <td class="border-bottom-0 py-1"><h6 class="fw-semibold mb-0 fs-4">Total</h6></td>`;
+
+                json.months.forEach(m => {
+                    tableHTML += `<td class="border-bottom-0 text-end py-1" onclick="search_expenses(null,${m.year},${m.month})">
+                        <span class="cursor-pointer fs-4 fw-semibold">${m.sum === 0 ? '-' : m.sum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </td>`;
+                });
+
+                tableHTML += `</tr></tbody></table></div>`;
+                document.getElementsByClassName("category_values")[0].innerHTML = tableHTML;
+
+                let label = []
+                let sum = []
+
+                json.categories.sort(function (a, b) {
+                    return a.months[a.months.length - 1].sum < b.months[b.months.length - 1].sum ? 1 : -1
+                })
+
+                const chartColors = [
+                    '#36A2EB', '#FF6384', '#FF9F40', '#FFCD56', '#4BC0C0', '#9966FF', '#C9CBCF',
+                    '#007bff', '#dc3545', '#ffc107', '#28a745', '#17a2b8', '#6610f2', '#fd7e14'
+                ];
+                let bgColors = [];
+
+                let tableHTML2 = `<div class="table-responsive">
+                    <table class="table table-sm text-nowrap align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th class="border-bottom-0 py-1" colspan="3"><h6 class="fw-semibold mb-0 fs-4 text-center">${rightTitle}</h6></th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+                json.categories.forEach(e => {
+                    e.months.forEach(m => {
+                        if (m.month == endMonth && m.sum > 0) {
+                            label.push(e.category)
+                            sum.push(m.sum)
+                            let color = chartColors[(label.length - 1) % chartColors.length];
+                            bgColors.push(color);
+
+                            tableHTML2 += `<tr>
+                                <td class="border-bottom-0 py-1">
+                                    <span style="display:inline-block; width:12px; height:12px; background-color:${color}; border-radius:50%; margin-right:5px; vertical-align: middle;"></span>
+                                    <span class="fw-normal mb-0 text-truncate" style="max-width: 120px; display: inline-block; vertical-align: middle;">${e.category}</span>
+                                </td>
+                                <td class="border-bottom-0 text-end py-1">${m.sum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td class="border-bottom-0 text-end py-1">${(m.sum * 100 / totalMes).toFixed(1)}%</td>
+                            </tr>`;
+                        }
+                    })
+                })
+
+                tableHTML2 += `</tbody></table></div>`;
+                document.getElementsByClassName("expenses-month")[0].innerHTML = tableHTML2;
+
+                if (graph) {
+                    graph.destroy()
+                }
+
+                const ctx = document.getElementById('myChart');
+
+                graph = new Chart(ctx, {
+                    options: {
+                        maintainAspectRatio: false,
+                        legend: {
+                            display: false
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    },
+                    type: 'doughnut',
+                    data: {
+                        labels: label,
+                        datasets: [{
+                            label: 'Sum',
+                            data: sum,
+                            backgroundColor: bgColors,
+                            borderWidth: 1
+                        }]
+                    }
+                });
+
+            })
+            .catch((error) => {
+                console.warn(error);
             });
-    
-        })
-        .catch((error) => {
-            console.warn(error);
-        });
     }
 
-    function search_expenses(category, year, month){
+    function search_expenses(category, year, month) {
         month = month - 1
-        let startdate = new Date(year,month,1,0,0).toISOString().split("T")[0]
-        let enddate = new Date(year,(month+1),0,0,0).toISOString().split("T")[0]
+        let startdate = new Date(year, month, 1, 0, 0).toISOString().split("T")[0]
+        let enddate = new Date(year, (month + 1), 0, 0, 0).toISOString().split("T")[0]
 
-        if(category != null){
-            loadPage(window.location.protocol + "//" + window.location.host+"/searchexpenses?category="+category.replace(" ","+")+"&startdate="+startdate+"&enddate="+enddate, true)
+        if (category != null) {
+            loadPage(window.location.protocol + "//" + window.location.host + "/searchexpenses?category=" + category.replace(" ", "+") + "&startdate=" + startdate + "&enddate=" + enddate, true)
         } else {
-            loadPage(window.location.protocol + "//" + window.location.host+"/searchexpenses?startdate="+startdate+"&enddate="+enddate, true)
+            loadPage(window.location.protocol + "//" + window.location.host + "/searchexpenses?startdate=" + startdate + "&enddate=" + enddate, true)
         }
     }
 
     var today = new Date();
-    var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
-    var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth()-2, 1);
+    var lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    var firstDayOfMonth = new Date(today.getFullYear(), today.getMonth() - 2, 1);
 
     document.getElementsByClassName("date1")[0].valueAsDate = firstDayOfMonth
     document.getElementsByClassName("date2")[0].valueAsDate = lastDayOfMonth
 
     search_expenses_category()
 
-    function get_balance(){
+    function get_balance() {
 
-        fetch("get_balance?" +new URLSearchParams({
+        fetch("get_balance?" + new URLSearchParams({
             "months": document.getElementById("balance-months").value
-        }), {redirect: 'follow'})
-         .then((response) => {
-            if (response.redirected) window.location.href = response.url;
-            return response.json()
-        })
-        .then((json) => {
-            let dataset = []
-            
-            let legend = {
-                ["balance-month"] : false,
-                ["balance"] : true,
-                ["expenses"] : false,
-                ["incomes"] : false,
-            }
-            if(graphBalance != undefined){
-                legend["balance-month"] = graphBalance.legend.legendItems.filter(legend => legend.text == "Balance - Month")[0].hidden
-                legend["balance"] = graphBalance.legend.legendItems.filter(legend => legend.text == "Balance")[0].hidden
-                legend["expenses"] = graphBalance.legend.legendItems.filter(legend => legend.text == "Expenses")[0].hidden
-                legend["incomes"] = graphBalance.legend.legendItems.filter(legend => legend.text == "Incomes")[0].hidden
-            }
+        }), { redirect: 'follow' })
+            .then((response) => {
+                if (response.redirected) window.location.href = response.url;
+                return response.json()
+            })
+            .then((json) => {
+                let dataset = []
 
-            dataset.push({
-                type: 'line',
-                label: 'Balance - Month',
-                data: json.balance_month.map(item => item.value),
-                borderColor: '#3bb000',
-                backgroundColor: "#3bb000",
-                hidden: legend["balance-month"]
-            })
-            dataset.push({
-                type: 'line',
-                label: 'Balance',
-                data: json.balance.map(item => item.value),
-                borderColor: '#236b00',
-                backgroundColor: "#236b00",
-                hidden: legend["balance"]
-            })
-            dataset.push({
-                type: 'bar',
-                label: 'Expenses',
-                data: json.expenses.map(item => item.value), // -Math.abs(item.value)
-                borderColor: '#ed686c',
-                backgroundColor: "#ed686c",
-                hidden: legend["expenses"]
-            })
-            dataset.push({
-                type: 'bar',
-                label: 'Incomes',
-                data: json.incomes.map(item => item.value),
-                borderColor: '#36a2eb',
-                backgroundColor: "#36a2eb",
-                hidden: legend["incomes"]
-            })
-            
-            if(graphBalance){
-                graphBalance.destroy()
-            }
-            let ctx = document.getElementById('balanceChart');
+                let legend = {
+                    ["balance-month"]: false,
+                    ["balance"]: true,
+                    ["expenses"]: false,
+                    ["incomes"]: false,
+                }
+                if (graphBalance != undefined) {
+                    legend["balance-month"] = graphBalance.legend.legendItems.filter(legend => legend.text == "Saldo Mês")[0].hidden
+                    legend["balance"] = graphBalance.legend.legendItems.filter(legend => legend.text == "Saldo Total")[0].hidden
+                    legend["expenses"] = graphBalance.legend.legendItems.filter(legend => legend.text == "Despesas")[0].hidden
+                    legend["incomes"] = graphBalance.legend.legendItems.filter(legend => legend.text == "Receitas")[0].hidden
+                }
 
-    
-            graphBalance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: json.labels,
-                    datasets: dataset
-                },
-                options: {
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                      },
-                    maintainAspectRatio: false,
-                    onClick: (e) => {
-                        console.log(e)
+                dataset.push({
+                    type: 'line',
+                    label: 'Saldo Mês',
+                    data: json.balance_month.map(item => item.value),
+                    borderColor: '#3bb000',
+                    backgroundColor: "#3bb000",
+                    hidden: legend["balance-month"]
+                })
+                dataset.push({
+                    type: 'line',
+                    label: 'Saldo Total',
+                    data: json.balance.map(item => item.value),
+                    borderColor: '#236b00',
+                    backgroundColor: "#236b00",
+                    hidden: legend["balance"]
+                })
+                dataset.push({
+                    type: 'bar',
+                    label: 'Despesas',
+                    data: json.expenses.map(item => item.value), // -Math.abs(item.value)
+                    borderColor: '#ed686c',
+                    backgroundColor: "#ed686c",
+                    hidden: legend["expenses"]
+                })
+                dataset.push({
+                    type: 'bar',
+                    label: 'Receitas',
+                    data: json.incomes.map(item => item.value),
+                    borderColor: '#36a2eb',
+                    backgroundColor: "#36a2eb",
+                    hidden: legend["incomes"]
+                })
+
+                if (graphBalance) {
+                    graphBalance.destroy()
+                }
+                let ctx = document.getElementById('balanceChart');
+
+                graphBalance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: json.labels,
+                        datasets: dataset
                     },
-                    /*plugins: {
-                        legend: {
-                            onClick: (e) => {
-                                console.log(e)
-                                console.log(e.chart.legend.legendItems.filter(legend => legend.text == "Balance")[0].hidden)
-                                e.chart.legend.legendItems.filter(legend => legend.text == "Balance")[0].hidden = false
+                    options: {
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
+                        maintainAspectRatio: false,
+                        onClick: (e) => {
+                            console.log(e)
+                        },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    callback: function (value, index, ticks) {
+                                        const label = this.getLabelForValue(value);
+                                        const [mesNum, ano] = label.split('-');
+                                        const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                                        const nomeMes = meses[parseInt(mesNum, 10) - 1];
+                                        return nomeMes ? `${nomeMes}/${ano.slice(2)}` : label;
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20
+                                }
                             }
                         }
-                    }*/
-                },
+                        /*plugins: {
+                            legend: {
+                                onClick: (e) => {
+                                    console.log(e)
+                                    console.log(e.chart.legend.legendItems.filter(legend => legend.text == "Balance")[0].hidden)
+                                    e.chart.legend.legendItems.filter(legend => legend.text == "Balance")[0].hidden = false
+                                }
+                            }
+                        }*/
+                    },
+                });
             });
-        });
 
     }
 
